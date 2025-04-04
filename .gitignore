@@ -1,0 +1,53 @@
+# .gitignore for Spring Boot + React project structure
+
+# Root-level files (Optional)
+.DS_Store
+Thumbs.db
+
+# Back-End (Spring Boot)
+Back-End/target/
+Back-End/.mvn/
+Back-End/.idea/
+Back-End/*.iml
+Back-End/*.log
+Back-End/*.jar
+Back-End/*.war
+Back-End/*.zip
+Back-End/*.tar.gz
+Back-End/mvnw
+Back-End/mvnw.cmd
+Back-End/gradle-wrapper.jar
+Back-End/gradle-wrapper.properties
+Back-End/build/
+Back-End/.settings/
+
+# Front-End (React)
+my-app/node_modules/
+my-app/npm-debug.log
+my-app/yarn-error.log
+my-app/package-lock.json
+my-app/yarn.lock
+my-app/build/
+
+# IDE specific
+# IntelliJ IDEA
+*.iml
+.idea/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VSCode
+.vscode/
+
+# Java specific (Spring Boot)
+Back-End/hs_err_pid*
+
+# Logs
+*.log
+
+# Optional: Exclude application properties for Spring Boot if needed
+# Back-End/src/main/resources/application.properties
+# Back-End/src/main/resources/application.yml
