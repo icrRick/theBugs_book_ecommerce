@@ -12,4 +12,9 @@ public class AuthorDTO {
         private String name;
         private String urlImage;
         private String urlLink;
+
+        public AuthorDTO(Integer id, String name) {
+                this.id = id;
+                this.name = name;
+        }
 }
