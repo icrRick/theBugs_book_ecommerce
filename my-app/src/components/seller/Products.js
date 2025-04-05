@@ -19,6 +19,7 @@ const Products = () => {
       };
       const fetchData = async (page = 1) => {
             try {
+                  console.log("Page " + page);
                   console.log(getToken());
                   const response = await axios.get(
                         "http://localhost:8080/api/seller/productList",
@@ -220,7 +221,9 @@ const Products = () => {
                                                             <div className="relative group">
                                                                   <img
                                                                         src={
-                                                                              product.images[0]?.name
+                                                                              product
+                                                                                    .images[0]
+                                                                                    ?.name
                                                                         }
                                                                         alt={
                                                                               product.name

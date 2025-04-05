@@ -1,17 +1,5 @@
 package com.thebugs.back_end.services;
 
-import com.thebugs.back_end.controllers.AddressController;
-import com.thebugs.back_end.dto.CartItemDTO;
-import com.thebugs.back_end.dto.ProductCartItemDTO;
-import com.thebugs.back_end.entities.Order;
-import com.thebugs.back_end.entities.OrderItem;
-import com.thebugs.back_end.entities.User;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service

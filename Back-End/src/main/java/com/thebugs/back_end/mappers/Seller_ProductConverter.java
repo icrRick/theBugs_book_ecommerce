@@ -1,0 +1,92 @@
+package com.thebugs.back_end.mappers;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.thebugs.back_end.beans.Seller_ProductBean;
+import com.thebugs.back_end.dto.AuthorDTO;
+import com.thebugs.back_end.dto.GenreDTO;
+import com.thebugs.back_end.dto.ImageDTO;
+import com.thebugs.back_end.dto.Seller_ProductDTO;
+import com.thebugs.back_end.entities.Image;
+import com.thebugs.back_end.entities.Product;
+import com.thebugs.back_end.entities.ProductAuthor;
+import com.thebugs.back_end.entities.ProductGenre;
+import com.thebugs.back_end.entities.Publisher;
+import com.thebugs.back_end.entities.Shop;
+import com.thebugs.back_end.repository.ImageJPA;
+import com.thebugs.back_end.repository.PublisherJPA;
+import com.thebugs.back_end.repository.ShopJPA;
+import com.thebugs.back_end.services.Seller_ProductAuthorService;
+import com.thebugs.back_end.services.Seller_ProductGenreService;
+
+@Component
+public class Seller_ProductConverter {
+    @Autowired
+    private ShopJPA g_ShopJPA;
+    @Autowired
+    private PublisherJPA g_PublisherJPA;
+    @Autowired
+    private ImageJPA g_ImageJPA;
+
+    @Autowired
+    private Seller_ProductGenreService g_ProductGenreService;
+    @Autowired
+    private Seller_ProductAuthorService g_ProductAuthorService;
+
+    public Product fromBeanToEntity(Seller_ProductBean bean) {
+        if (bean == null) {
+            return null;
+        }
+        Product product = new Product();
+        product.setName(bean.getName());
+        product.setPrice(bean.getPrice());
+        product.setQuantity(bean.getQuantity());
+        product.setWeight(bean.getWeight());
+        product.setDescription(bean.getDescription());
+        product.setActive(true);
+        Shop shop = g_ShopJPA.findById(bean.getShopId()).orElse(null);
+        Publisher publisher = g_PublisherJPA.findById(bean.getPublisher_id()).orElse(null);
+        product.setShop(shop);
+        product.setPublisher(publisher);
+        List<ProductGenre> productGenres = g_ProductGenreService.getProductGenres(bean.getGenres_id(), product);
+        product.setProductGenres(productGenres);
+        List<ProductAuthor> productAuthors = g_ProductAuthorService.getProductAuthors(bean.getAuthors_id(),
+                product);
+        product.setProductAuthors(productAuthors);
+
+        List<Image> images = g_ImageJPA.findAllById(bean.getImages_id_remove());
+        product.setImages(images);
+        return product;
+    }
+
+    public Seller_ProductDTO fromEntityToDTO(Product product) {
+        if (product == null) {
+            return null;
+        }
+
+        return new Seller_ProductDTO(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getQuantity(),
+                product.getWeight(),
+                product.getDescription(),
+                product.getActive(),
+                product.getShop().getId(),
+                product.getPublisher().getId(),
+                product.getImages() != null ? product.getImages().stream()
+                        .map(image -> new ImageDTO(image.getId(), image.getImageName()))
+                        .collect(Collectors.toList()) : null,
+                product.getProductGenres() != null ? product.getProductGenres().stream()
+                        .map(genre -> new GenreDTO(genre.getGenre().getId(), genre.getGenre().getName()))
+                        .collect(Collectors.toList()) : null,
+                product.getProductAuthors() != null ? product.getProductAuthors().stream()
+                        .map(author -> new AuthorDTO(author.getAuthor().getId(), author.getAuthor().getName()))
+                        .collect(Collectors.toList()) : null);
+
+    }
+}

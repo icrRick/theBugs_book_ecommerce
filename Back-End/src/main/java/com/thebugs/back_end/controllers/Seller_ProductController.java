@@ -26,8 +26,9 @@ import com.thebugs.back_end.beans.Seller_ProductBean;
 import com.thebugs.back_end.dto.AuthorDTO;
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.dto.PublisherDTO;
-import com.thebugs.back_end.dto.SellerProductDTO;
-import com.thebugs.back_end.mappers.IrRick_SellerMapper;
+import com.thebugs.back_end.dto.Seller_ProductDTO;
+import com.thebugs.back_end.entities.Product;
+import com.thebugs.back_end.mappers.Seller_ProductConverter;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.AuthorService;
 import com.thebugs.back_end.services.GenreService;
@@ -50,6 +51,9 @@ public class Seller_ProductController {
     private PublisherService g_PublisherService;
     @Autowired
     GenreService g_GenreService;
+
+    @Autowired
+    Seller_ProductConverter g_ProductConverter;
 
     @GetMapping("/genresList")
     public ResponseEntity<ResponseData> getPage(@RequestParam(required = false) String keyword,
@@ -149,8 +153,8 @@ public class Seller_ProductController {
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
 
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        Page<SellerProductDTO> pageResult = g_ProductCRUDService.getProductsByShopId(pageable, shopId);
-        List<SellerProductDTO> products = pageResult.getContent();
+        Page<Seller_ProductDTO> pageResult = g_ProductCRUDService.getProductsByShopId(pageable, shopId);
+        List<Seller_ProductDTO> products = pageResult.getContent();
         long totalItems = pageResult.getTotalElements();
         Map<String, Object> result = new HashMap<>();
         result.put("products", products);
@@ -201,9 +205,8 @@ public class Seller_ProductController {
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
         productSellerBean.setShopId(shopId);
         // Gọi service để tạo sản phẩm
-        SellerProductDTO sellerProductDTO = IrRick_SellerMapper.fromProductBeanToDTO(productSellerBean);
-
-        Map<String, Object> result = g_ProductCRUDService.createProduct(sellerProductDTO, images);
+        Product product = g_ProductConverter.fromBeanToEntity(productSellerBean);
+        Map<String, Object> result = g_ProductCRUDService.createProduct(product, images);
 
         // Tạo ResponseData
         ResponseData responseData = new ResponseData();
@@ -211,7 +214,7 @@ public class Seller_ProductController {
         responseData.setMessage((String) result.get("message"));
         Object data = result.get("data");
         if (data != null) {
-            responseData.setData((SellerProductDTO) data);
+            responseData.setData((Seller_ProductDTO) data);
         }
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }

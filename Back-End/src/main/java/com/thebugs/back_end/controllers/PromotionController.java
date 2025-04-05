@@ -63,7 +63,7 @@ public class PromotionController {
                 }
 
         }
-
+        
         @GetMapping("/get/{id}")
         public ResponseEntity<PromotionDTO> getPromotionById(@PathVariable Integer id) {
                 try {
@@ -73,9 +73,7 @@ public class PromotionController {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
                 }
         }
-
-
-
+        
         @PostMapping("/delete")
         public ResponseEntity<ResponseData> deletePromotion(@RequestParam Integer id) {
                 ResponseData responseData = new ResponseData();

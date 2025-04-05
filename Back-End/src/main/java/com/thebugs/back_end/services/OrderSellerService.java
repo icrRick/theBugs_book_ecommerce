@@ -7,9 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import com.thebugs.back_end.controllers.AddressController;
 import com.thebugs.back_end.dto.OrderSimpleDTO;
-import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.repository.OrderJPA;
 
 @Service

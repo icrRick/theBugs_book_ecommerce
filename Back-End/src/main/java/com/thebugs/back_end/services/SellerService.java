@@ -3,7 +3,6 @@ package com.thebugs.back_end.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.thebugs.back_end.entities.OrderStatus;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.repository.ShopJPA;
 
@@ -12,8 +11,6 @@ public class SellerService {
 
         @Autowired
         private ShopJPA shopJPA;
-        @Autowired
-        private UserService userService;
 
         public boolean registerSeller() {
 

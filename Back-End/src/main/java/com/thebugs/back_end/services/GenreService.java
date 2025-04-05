@@ -8,12 +8,10 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import com.thebugs.back_end.controllers.AddressController;
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.mappers.GenreMapper;
 import com.thebugs.back_end.repository.GenreJPA;
-import com.thebugs.back_end.repository.ProductGenreJPA;
 
 @Service
 public class GenreService {

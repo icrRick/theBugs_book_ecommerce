@@ -16,7 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Seller_ProductBean {
+    private Integer id;
 
+    private List<Integer> images_id_remove;
+    
     @NotBlank(message = "Tên sản phẩm không được bỏ trống")
     private String name;
 
@@ -59,7 +62,7 @@ public class Seller_ProductBean {
                 ", description='" + description + '\'' +
                 ", shopId=" + shopId +
                 ", publisher=" + publisher_id +
-                ", images=" + (images != null ? images.size() : 0) + " images" + 
+                ", images=" + (images != null ? images.size() : 0) + " images" +
                 ", genres=" + genres_id +
                 ", authors=" + authors_id +
                 '}';

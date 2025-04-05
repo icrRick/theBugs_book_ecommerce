@@ -3,11 +3,9 @@ package com.thebugs.back_end.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.PublisherJPA;
 
 import jakarta.transaction.Transactional;
