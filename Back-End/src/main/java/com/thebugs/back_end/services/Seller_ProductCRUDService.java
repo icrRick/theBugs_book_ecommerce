@@ -171,5 +171,44 @@ public class Seller_ProductCRUDService {
             return result;
         }
     }
+    @SuppressWarnings("finally")
+    public HashMap<String, Object> updateProduct(SellerProductDTO productDTO,
+            List<MultipartFile> realImages) {
+        Product product = fromDTOtoEntity(productDTO);
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        StringBuffer message = new StringBuffer();
+        Boolean status = true;
+        int statusCode = 200;
+        try {
+            Product savedProduct = g_ProductJPA.save(product);
+            if (savedProduct != null && savedProduct.getId() != null) {
+                statusCode = 201;
+                if (realImages != null && !realImages.isEmpty()) {
+                    List<Image> images = uploadImage(realImages, savedProduct);
+                    if (images == null) {
+                        statusCode = 500;
+                        message.append("ERROR: Lỗi không thể upload hình ảnh");
+                    }
+                    product.setImages(images);
+                }
+                SellerProductDTO data = SellerProductDTO.fromEntityToDTO(savedProduct);
+                result.put("data", data);
+                addBreakLineForMessage(message, "Thêm sản phẩm thành công");
 
+            } else {
+                statusCode = 201;
+                status = false;
+                addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
+            }
+        } catch (Exception e) {
+            statusCode = 500;
+            status = false;
+            addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+        } finally {
+            result.put("status", status);
+            result.put("message", message.toString());
+            result.put("statusCode", statusCode);
+            return result;
+        }
+    }
 }

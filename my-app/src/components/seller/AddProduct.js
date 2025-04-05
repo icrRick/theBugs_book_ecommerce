@@ -182,21 +182,27 @@ const AddProduct = () => {
             fetch("http://localhost:8080/api/seller/productCreate", {
                   method: "POST",
                   headers: {
-                        Authorization: `Bearer ${getToken()}`, // Token Authorization
+                        Authorization: `Bearer ${getToken()}`,
                   },
-                  body: formDataToSend, // Gửi toàn bộ data dưới dạng JSON
+                  body: formDataToSend,
             })
-                  .then((response) => response.json())
+                  .then(async (response) => {
+                        const data = await response.json(); // Phải chờ và return
+                        console.log("Data from BE RE: ", response);
+                        if (response.status === 400 && data?.data) {
+                              // Server trả về mã lỗi và chi tiết lỗi
+                              setErrors(data.data.errorMap); // Dữ liệu lỗi từ BE
+                        }
+                        return data; // Return để .then sau nhận được
+                  })
                   .then((data) => {
                         console.log("Data from BE: ", data);
                         setIsLoading(false);
+
                         if (data.status) {
                               const lines = data.message.split("\n");
-
                               lines.forEach((line) => {
-                                    // Kiểm tra nếu line chứa từ "Error" (chạy không phân biệt chữ hoa chữ thường)
                                     if (line.toLowerCase().includes("error")) {
-                                          // Loại bỏ phần "Error:" khỏi dòng trước khi hiển thị
                                           showErrorToast(
                                                 line
                                                       .replace(/error:/i, "")
@@ -206,13 +212,9 @@ const AddProduct = () => {
                                           showSuccessToast(line);
                                     }
                               });
-                              // showSuccessToast(`${data.message}`);
                               navigate("/seller/products");
                         } else {
-                              if (data.data.statusCode == 400) {
-                                    setErrors(data.data.errorMap);
-                              } 
-                              showErrorToast(`${data.message}`);
+                              showErrorToast(data.message);
                         }
                   })
                   .catch((error) => {

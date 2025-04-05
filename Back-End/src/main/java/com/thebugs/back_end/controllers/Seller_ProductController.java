@@ -187,7 +187,6 @@ public class Seller_ProductController {
             if (images == null || images.isEmpty()) {
                 errorMap.put("images", "Vui lòng thêm ít nhất 1 ảnh cho sản phẩm");
             }
-            errors.put("statusCode", 400);
             errors.put("errorMap", errorMap);
 
             // Tạo response với thông báo lỗi chi tiết theo trường
