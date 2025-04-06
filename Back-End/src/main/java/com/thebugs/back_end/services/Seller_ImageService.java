@@ -17,9 +17,9 @@ public class Seller_ImageService {
     @Autowired
     private ImageJPA g_ImageJPA;
 
-    protected boolean removeOldImage(List<Image> images) {
+    protected boolean removeOldImage(List<Integer> imageIdToDelete) {
         try {
-            g_ImageJPA.deleteAll(images); // Xóa tất cả các ảnh
+            g_ImageJPA.deleteAllById(imageIdToDelete); // Xóa tất cả các ảnh
             return true; // Trả về true nếu xóa thành công
         } catch (Exception e) {
             return false;

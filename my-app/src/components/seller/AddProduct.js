@@ -9,9 +9,9 @@ import Loading from "../../utils/Loading";
 const AddProduct = () => {
       const navigate = useNavigate();
       const [isLoading, setIsLoading] = useState(false);
+      const [errors, setErrors] = useState({});
 
-      // Mock data cho các options - trong thực tế sẽ lấy từ API
-      // Mock data cho các options - trong thực tế sẽ lấy từ API
+      // Mock data for options
       const [authorOptions, setAuthorOptions] = useState([]);
       const [categoryOptions, setCategoryOptions] = useState([]);
       const [publisherOptions, setPublisherOptions] = useState([]);
@@ -27,7 +27,8 @@ const AddProduct = () => {
             publisher: {},
             images: [],
       });
-      const [errors, setErrors] = useState({});
+
+      // Fetching initial data
       useEffect(() => {
             const fetchAllData = async () => {
                   const headers = {
@@ -36,7 +37,6 @@ const AddProduct = () => {
                   };
 
                   try {
-                        // Gọi song song 3 API
                         const [authorsRes, publishersRes, genresRes] =
                               await Promise.all([
                                     axios.get(
@@ -53,55 +53,46 @@ const AddProduct = () => {
                                     ),
                               ]);
 
-                        // Xử lý dữ liệu authors
-                        const authors = authorsRes.data.data.arrayList || [];
                         setAuthorOptions(
-                              authors.map((author) => ({
+                              authorsRes.data.data.arrayList.map((author) => ({
                                     id: author.id,
                                     label: author.name,
                               }))
                         );
-
-                        // Xử lý dữ liệu publishers
-                        const publishers =
-                              publishersRes.data.data.arrayList || [];
                         setPublisherOptions(
-                              publishers.map((publisher) => ({
-                                    id: publisher.id,
-                                    label: publisher.name,
-                              }))
+                              publishersRes.data.data.arrayList.map(
+                                    (publisher) => ({
+                                          id: publisher.id,
+                                          label: publisher.name,
+                                    })
+                              )
                         );
-
-                        // Xử lý dữ liệu genres
-                        const genres = genresRes.data.data.arrayList || [];
                         setCategoryOptions(
-                              genres.map((genre) => ({
+                              genresRes.data.data.arrayList.map((genre) => ({
                                     id: genre.id,
                                     label: genre.name,
                               }))
                         );
                   } catch (error) {
-                        console.error("Lỗi khi fetch dữ liệu: ", error);
+                        console.error("Error fetching data: ", error);
                   }
             };
 
             fetchAllData();
       }, []);
 
+      // Handle input changes for text and number fields
       const handleInputChange = (e) => {
             const { name, value } = e.target;
-
-            const numericFields = ["price", "weight", "quantity"];
-            const newValue = numericFields.includes(name)
-                  ? Number(value)
-                  : value;
-
             setFormData((prev) => ({
                   ...prev,
-                  [name]: newValue,
+                  [name]: ["price", "weight", "quantity"].includes(name)
+                        ? Number(value)
+                        : value,
             }));
       };
 
+      // Handle changes for select dropdowns (authors, categories, publisher)
       const handleSelectChange = (selectedOptions, { name }) => {
             setFormData((prev) => ({
                   ...prev,
@@ -109,49 +100,26 @@ const AddProduct = () => {
             }));
       };
 
-      const handleArrayInputChange = (index, field, value) => {
-            setFormData((prev) => {
-                  const newArray = [...prev[field]];
-                  newArray[index] = value;
-                  return {
-                        ...prev,
-                        [field]: newArray,
-                  };
-            });
-      };
-
-      const addNewField = (field) => {
-            setFormData((prev) => ({
-                  ...prev,
-                  [field]: [...prev[field], ""],
-            }));
-      };
-
-      const removeField = (field, index) => {
-            setFormData((prev) => ({
-                  ...prev,
-                  [field]: prev[field].filter((_, i) => i !== index),
-            }));
-      };
-
+      // Handle image file selection and validation
       const handleImageChange = (e) => {
-            const files = e.target.files;
+            const files = Array.from(e.target.files);
             setFormData((prev) => ({
                   ...prev,
-                  images: prev.images ? [...prev.images, ...files] : files,
+                  images: [...prev.images, ...files],
             }));
-            setErrors((prev) => ({
-                  ...prev,
-                  images: null,
-            }));
+            setErrors((prev) => ({ ...prev, images: null }));
       };
+
+      // Convert list of objects to list of ids
       const convertListObjectToListId = (objectList) => {
-            return objectList.map((objectI) => objectI.id);
+            return objectList.map((obj) => obj.id);
       };
+
+      // Submit the form
       const handleSubmit = (e) => {
             e.preventDefault();
             setIsLoading(true);
-            const formDataToSend = new FormData();
+
             const productData = {
                   name: formData.title,
                   description: formData.description,
@@ -162,7 +130,8 @@ const AddProduct = () => {
                   genres_id: convertListObjectToListId(formData.categories),
                   publisher_id: formData.publisher.id,
             };
-            console.log("Sended Data: ", productData);
+
+            const formDataToSend = new FormData();
             formDataToSend.append(
                   "product",
                   new Blob([JSON.stringify(productData)], {
@@ -170,38 +139,30 @@ const AddProduct = () => {
                   })
             );
 
-            // Gửi ảnh
-            if (formData.images != null && formData.images.length > 0) {
-                  formData.images.forEach((image) => {
-                        formDataToSend.append("images", image);
-                  });
+            // Add images to form data
+            if (formData.images?.length) {
+                  formData.images.forEach((image) =>
+                        formDataToSend.append("images", image)
+                  );
             }
-            console.log("Form data: ", formData);
 
-            // Fetch POST request
+            // Send request to create or update the product
             fetch("http://localhost:8080/api/seller/productCreate", {
                   method: "POST",
-                  headers: {
-                        Authorization: `Bearer ${getToken()}`,
-                  },
+                  headers: { Authorization: `Bearer ${getToken()}` },
                   body: formDataToSend,
             })
                   .then(async (response) => {
-                        const data = await response.json(); // Phải chờ và return
-                        console.log("Data from BE RE: ", response);
+                        const data = await response.json();
                         if (response.status === 400 && data?.data) {
-                              // Server trả về mã lỗi và chi tiết lỗi
-                              setErrors(data.data.errorMap); // Dữ liệu lỗi từ BE
+                              setErrors(data.data.errorMap);
                         }
-                        return data; // Return để .then sau nhận được
+                        return data;
                   })
                   .then((data) => {
-                        console.log("Data from BE: ", data);
                         setIsLoading(false);
-
                         if (data.status) {
-                              const lines = data.message.split("\n");
-                              lines.forEach((line) => {
+                              data.message.split("\n").forEach((line) => {
                                     if (line.toLowerCase().includes("error")) {
                                           showErrorToast(
                                                 line
@@ -218,9 +179,11 @@ const AddProduct = () => {
                         }
                   })
                   .catch((error) => {
+                        setIsLoading(false);
                         showErrorToast(error.message);
                   });
       };
+
       if (isLoading) {
             return <Loading />;
       }
@@ -490,7 +453,9 @@ const AddProduct = () => {
                                                                               categoryOptions
                                                                         }
                                                                         value={
-                                                                              formData.categories
+                                                                              formData
+                                                                                    .categories
+                                                                                    .id
                                                                         }
                                                                         onChange={(
                                                                               selected
@@ -544,7 +509,9 @@ const AddProduct = () => {
                                                                               authorOptions
                                                                         }
                                                                         value={
-                                                                              formData.authors
+                                                                              formData
+                                                                                    .authors
+                                                                                    .id
                                                                         }
                                                                         onChange={(
                                                                               selected

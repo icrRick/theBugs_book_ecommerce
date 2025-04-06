@@ -42,6 +42,7 @@ public class Seller_ProductConverter {
             return null;
         }
         Product product = new Product();
+        product.setId(bean.getId());
         product.setName(bean.getName());
         product.setPrice(bean.getPrice());
         product.setQuantity(bean.getQuantity());
@@ -57,9 +58,10 @@ public class Seller_ProductConverter {
         List<ProductAuthor> productAuthors = g_ProductAuthorService.getProductAuthors(bean.getAuthors_id(),
                 product);
         product.setProductAuthors(productAuthors);
-
-        List<Image> images = g_ImageJPA.findAllById(bean.getImages_id_remove());
-        product.setImages(images);
+        if (bean.getOldImage() != null && !bean.getOldImage().isEmpty()) {
+            List<Image> images = g_ImageJPA.findAllById(bean.getOldImage());
+            product.setImages(images);
+        }
         return product;
     }
 

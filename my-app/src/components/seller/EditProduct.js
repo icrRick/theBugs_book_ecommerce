@@ -1,24 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Select from "react-select";
 import { getToken } from "../../utils/cookie";
 import axios from "axios";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
+import Loading from "../../utils/Loading";
 
 const EditProduct = () => {
       const { productId } = useParams();
+      const navigate = useNavigate();
+
+      const [errors, setErrors] = useState({});
+      const [isLoading, setIsLoading] = useState(false);
       const [authorOptions, setAuthorOptions] = useState([]);
       const [categoryOptions, setCategoryOptions] = useState([]);
       const [publisherOptions, setPublisherOptions] = useState([]);
-      // Mock data cho các options - trong thực tế sẽ lấy từ API
+      const [formData, setFormData] = useState({
+            name: "",
+            description: "",
+            weight: "",
+            price: "",
+            quantity: "",
+            categories: [],
+            authors: [],
+            publisher: [],
+            publisher_id: 0,
+            images: [],
+            newImages: [],
+      });
+
+      const allImages = [...formData.images, ...(formData.newImages || [])];
+
+      // Fetch dữ liệu options (authors, publishers, categories)
       useEffect(() => {
-            const fetchAllData = async () => {
+            const fetchOptions = async () => {
                   const headers = {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${getToken()}`,
                   };
 
                   try {
-                        // Gọi song song 3 API
+                        // Fetch options (authors, publishers, categories)
                         const [authorsRes, publishersRes, genresRes] =
                               await Promise.all([
                                     axios.get(
@@ -35,86 +57,98 @@ const EditProduct = () => {
                                     ),
                               ]);
 
-                        // Xử lý dữ liệu authors
-                        const authors = authorsRes.data.data.arrayList || [];
+                        // Map data to options
                         setAuthorOptions(
-                              authors.map((author) => ({
-                                    id: author.id,
-                                    label: author.name,
-                              }))
+                              mapToSelectOptions(authorsRes.data.data.arrayList)
                         );
-
-                        // Xử lý dữ liệu publishers
-                        const publishers =
-                              publishersRes.data.data.arrayList || [];
                         setPublisherOptions(
-                              publishers.map((publisher) => ({
-                                    id: publisher.id,
-                                    label: publisher.name,
-                              }))
+                              mapToSelectOptions(
+                                    publishersRes.data.data.arrayList
+                              )
                         );
-
-                        // Xử lý dữ liệu genres
-                        const genres = genresRes.data.data.arrayList || [];
                         setCategoryOptions(
-                              genres.map((genre) => ({
-                                    id: genre.id,
-                                    label: genre.name,
-                              }))
+                              mapToSelectOptions(genresRes.data.data.arrayList)
                         );
                   } catch (error) {
-                        console.error("Lỗi khi fetch dữ liệu: ", error);
+                        console.error("Error fetching options data:", error);
                   }
             };
 
-            fetchAllData();
-      }, []);
+            fetchOptions();
+      }, []); // Chỉ chạy 1 lần khi component mount
 
-      const [formData, setFormData] = useState({
-            title: "",
-            description: "",
-            weight: "",
-            price: "",
-            quantity: "",
-            categories: [],
-            authors: [],
-            publisher: [],
-            images: [],
-      });
-
-      // Giả lập việc lấy dữ liệu sản phẩm từ API
+      // Fetch dữ liệu sản phẩm khi productId thay đổi
       useEffect(() => {
-            // Trong thực tế, đây sẽ là API call để lấy thông tin sản phẩm
+            if (!productId) return;
+
             const fetchProductData = async () => {
-                  // Mock data
-                  const mockProduct = {
-                        title: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh",
-                        description:
-                              "Một tác phẩm nổi tiếng của Nguyễn Nhật Ánh",
-                        weight: "300",
-                        price: "85000",
-                        quantity: "100",
-                        categories: [{ value: "cat1", label: "Văn học" }],
-                        authors: [
-                              { value: "author1", label: "Nguyễn Nhật Ánh" },
-                        ],
-                        publisher: [{ value: "pub2", label: "NXB Trẻ" }],
-                        images: [],
+                  const headers = {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${getToken()}`,
                   };
 
-                  setFormData(mockProduct);
+                  try {
+                        const { data } = await axios.get(
+                              "http://localhost:8080/api/seller/getProductById",
+                              {
+                                    headers,
+                                    params: { productId: Number(productId) },
+                              }
+                        );
+
+                        if (data?.data) {
+                              const product = data.data;
+                              setFormData({
+                                    ...product,
+                                    newImages: [],
+                                    authors: mapToSelectOptions(
+                                          product.authors
+                                    ),
+                                    categories: mapToSelectOptions(
+                                          product.genres
+                                    ),
+                                    publisher: product.publisher_id,
+                              });
+                        } else {
+                              console.error("Invalid product data structure");
+                        }
+                  } catch (error) {
+                        console.error("Error fetching product data:", error);
+                  }
             };
 
-            if (productId) {
-                  fetchProductData();
-            }
-      }, [productId]);
+            fetchProductData();
+      }, [productId]); // Khi productId thay đổi
 
+      useEffect(() => {
+            // Kiểm tra nếu publisherOptions có dữ liệu
+            if (publisherOptions.length > 0) {
+                  const selectedPublisher = publisherOptions.find(
+                        (publisher) => publisher.value === formData.publisher_id
+                  );
+                  console.log("Selected: ");
+                  console.log(selectedPublisher);
+                  if (
+                        selectedPublisher &&
+                        formData.publisher !== selectedPublisher
+                  ) {
+                        setFormData((prev) => ({
+                              ...prev,
+                              publisher: selectedPublisher,
+                        }));
+                  }
+            }
+            console.log("Publisher Options: ", publisherOptions);
+      }, [publisherOptions, formData.publisher_id, formData.publisher]); // Effect chỉ chạy lại khi publisherOptions hoặc publisher_id thay đổi
+      useEffect(() => {
+            console.log("FormData: ", formData);
+      }, [formData]);
       const handleInputChange = (e) => {
             const { name, value } = e.target;
+            const numericFields = ["price", "weight", "quantity"];
             setFormData((prev) => ({
                   ...prev,
-                  [name]: value,
+                  [name]: numericFields.includes(name) ? Number(value) : value,
             }));
       };
 
@@ -129,15 +163,104 @@ const EditProduct = () => {
             const files = Array.from(e.target.files);
             setFormData((prev) => ({
                   ...prev,
-                  images: [...prev.images, ...files],
+                  newImages: [...prev.newImages, ...files],
             }));
+      };
+
+      const handleImageRemove = (e, index, id) => {
+            if (id) {
+                  setFormData((prev) => ({
+                        ...prev,
+                        images: prev.images.filter((img) => img.id !== id),
+                  }));
+            } else {
+                  const adjustedIndex = index - formData.images.length;
+                  setFormData((prev) => ({
+                        ...prev,
+                        newImages: prev.newImages.filter(
+                              (_, i) => i !== adjustedIndex
+                        ),
+                  }));
+            }
       };
 
       const handleSubmit = (e) => {
             e.preventDefault();
-            console.log("Updated product data:", formData);
+            setIsLoading(true);
+
+            const productData = {
+                  id: formData.id,
+                  name: formData.name,
+                  description: formData.description,
+                  weight: formData.weight,
+                  price: formData.price,
+                  quantity: formData.quantity,
+                  authors_id: extractIds(formData.authors),
+                  genres_id: extractIds(formData.categories),
+                  publisher_id: formData.publisher.value,
+                  oldImage: formData.images.map((img) => img.id),
+            };
+            console.log("Sended data: ", productData);
+            const formDataToSend = new FormData();
+            formDataToSend.append(
+                  "product",
+                  new Blob([JSON.stringify(productData)], {
+                        type: "application/json",
+                  })
+            );
+
+            formData.newImages.forEach((image) => {
+                  formDataToSend.append("images", image);
+            });
+
+            fetch("http://localhost:8080/api/seller/productUpdate", {
+                  method: "POST",
+                  headers: {
+                        Authorization: `Bearer ${getToken()}`,
+                  },
+                  body: formDataToSend,
+            })
+                  .then(async (response) => {
+                        const data = await response.json();
+                        if (response.status === 400 && data?.data?.errorMap) {
+                              setErrors(data.data.errorMap);
+                        }
+                        return data;
+                  })
+                  .then((data) => {
+                        setIsLoading(false);
+                        if (data.status) {
+                              data.message.split("\n").forEach((line) => {
+                                    if (line.toLowerCase().includes("error")) {
+                                          showErrorToast(
+                                                line
+                                                      .replace(/error:/i, "")
+                                                      .trim()
+                                          );
+                                    } else {
+                                          showSuccessToast(line);
+                                    }
+                              });
+                              navigate("/seller/products");
+                        } else {
+                              showErrorToast(data.message);
+                        }
+                  })
+                  .catch((error) => {
+                        setIsLoading(false);
+                        showErrorToast(error.message);
+                  });
       };
 
+      const extractIds = (items) => items.map((item) => item.value);
+
+      const mapToSelectOptions = (list) => {
+            if (!Array.isArray(list)) return [];
+            return list.map((item) => ({ value: item.id, label: item.name }));
+      };
+      if (isLoading) {
+            return <Loading />;
+      }
       return (
             <div className="my-6">
                   {/* Header Section */}
@@ -199,9 +322,9 @@ const EditProduct = () => {
                                                             <div className="mt-2">
                                                                   <input
                                                                         type="text"
-                                                                        name="title"
+                                                                        name="name"
                                                                         value={
-                                                                              formData.title
+                                                                              formData.name
                                                                         }
                                                                         onChange={
                                                                               handleInputChange
@@ -210,6 +333,14 @@ const EditProduct = () => {
                                                                         placeholder="Nhập tên sách..."
                                                                         required
                                                                   />
+                                                                  {errors.name && (
+                                                                        <div className="text-red-500 text-sm mt-1">
+                                                                              {
+                                                                                    errors.name
+                                                                              }{" "}
+                                                                              {/* Hiển thị thông báo lỗi */}
+                                                                        </div>
+                                                                  )}
                                                             </div>
                                                       </div>
 
@@ -237,6 +368,14 @@ const EditProduct = () => {
                                                                         min="0"
                                                                         required
                                                                   />
+                                                                  {errors.weight && (
+                                                                        <div className="text-red-500 text-sm mt-1">
+                                                                              {
+                                                                                    errors.weight
+                                                                              }{" "}
+                                                                              {/* Hiển thị thông báo lỗi */}
+                                                                        </div>
+                                                                  )}
                                                             </div>
                                                       </div>
 
@@ -262,6 +401,14 @@ const EditProduct = () => {
                                                                         min="0"
                                                                         required
                                                                   />
+                                                                  {errors.quantity && (
+                                                                        <div className="text-red-500 text-sm mt-1">
+                                                                              {
+                                                                                    errors.quantity
+                                                                              }{" "}
+                                                                              {/* Hiển thị thông báo lỗi */}
+                                                                        </div>
+                                                                  )}
                                                             </div>
                                                       </div>
 
@@ -287,6 +434,14 @@ const EditProduct = () => {
                                                                         min="0"
                                                                         required
                                                                   />
+                                                                  {errors.price && (
+                                                                        <div className="text-red-500 text-sm mt-1">
+                                                                              {
+                                                                                    errors.price
+                                                                              }{" "}
+                                                                              {/* Hiển thị thông báo lỗi */}
+                                                                        </div>
+                                                                  )}
                                                             </div>
                                                       </div>
                                                 </div>
@@ -314,6 +469,14 @@ const EditProduct = () => {
                                                             placeholder="Mô tả chi tiết về cuốn sách..."
                                                             required
                                                       />
+                                                      {errors.description && (
+                                                            <div className="text-red-500 text-sm mt-1">
+                                                                  {
+                                                                        errors.description
+                                                                  }{" "}
+                                                                  {/* Hiển thị thông báo lỗi */}
+                                                            </div>
+                                                      )}
                                                 </div>
                                           </div>
 
@@ -466,7 +629,6 @@ const EditProduct = () => {
                                                             </label>
                                                             <div className="mt-2 border">
                                                                   <Select
-                                                                        isMulti
                                                                         name="publisher"
                                                                         options={
                                                                               publisherOptions
@@ -484,9 +646,10 @@ const EditProduct = () => {
                                                                                     }
                                                                               )
                                                                         }
-                                                                        className="basic-multi-select"
+                                                                        className="basic-single-select"
                                                                         classNamePrefix="select"
                                                                         placeholder="Chọn nhà xuất bản..."
+                                                                        isSearchable
                                                                         styles={{
                                                                               control: (
                                                                                     base
@@ -496,14 +659,49 @@ const EditProduct = () => {
                                                                                           "45px",
                                                                                     borderRadius:
                                                                                           "0.5rem",
-                                                                                    border: "none",
+                                                                                    border: "1px solid #ccc",
                                                                                     boxShadow:
-                                                                                          "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+                                                                                          "none",
+                                                                                    backgroundColor:
+                                                                                          "#fff",
                                                                                     "&:hover":
                                                                                           {
                                                                                                 borderColor:
                                                                                                       "#2563eb",
                                                                                           },
+                                                                              }),
+                                                                              menu: (
+                                                                                    base
+                                                                              ) => ({
+                                                                                    ...base,
+                                                                                    borderRadius:
+                                                                                          "0.5rem",
+                                                                                    boxShadow:
+                                                                                          "0 1px 2px rgba(0, 0, 0, 0.05)",
+                                                                                    backgroundColor:
+                                                                                          "#fff",
+                                                                              }),
+                                                                              option: (
+                                                                                    base,
+                                                                                    {
+                                                                                          isFocused,
+                                                                                          isSelected,
+                                                                                          isActive,
+                                                                                    }
+                                                                              ) => ({
+                                                                                    ...base,
+                                                                                    backgroundColor:
+                                                                                          isActive
+                                                                                                ? "#ff4d4d" // Màu đỏ khi active
+                                                                                                : isFocused
+                                                                                                ? "#cfe4ff"
+                                                                                                : "#fff",
+                                                                                    "&:active":
+                                                                                          {
+                                                                                                backgroundColor:
+                                                                                                      "#B2D4FF",
+                                                                                          },
+                                                                                    color: "black",
                                                                               }),
                                                                         }}
                                                                         required
@@ -565,7 +763,7 @@ const EditProduct = () => {
                                                                   </svg>
                                                                   <div className="mt-4 flex text-sm leading-6 text-gray-600">
                                                                         <label
-                                                                              htmlFor="images"
+                                                                              htmlFor="newImages"
                                                                               className="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500 transition-colors duration-200"
                                                                         >
                                                                               <span>
@@ -574,8 +772,8 @@ const EditProduct = () => {
                                                                                     lên
                                                                               </span>
                                                                               <input
-                                                                                    id="images"
-                                                                                    name="images"
+                                                                                    id="newImages"
+                                                                                    name="newImages"
                                                                                     type="file"
                                                                                     multiple
                                                                                     className="sr-only"
@@ -601,10 +799,9 @@ const EditProduct = () => {
                                                                   </p>
                                                             </div>
                                                       </div>
-                                                      {formData.images.length >
-                                                            0 && (
+                                                      {allImages.length > 0 && (
                                                             <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-                                                                  {formData.images.map(
+                                                                  {allImages.map(
                                                                         (
                                                                               image,
                                                                               index
@@ -617,9 +814,18 @@ const EditProduct = () => {
                                                                               >
                                                                                     <div className="aspect-h-7 aspect-w-10 block w-full overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
                                                                                           <img
-                                                                                                src={URL.createObjectURL(
-                                                                                                      image
-                                                                                                )}
+                                                                                                // src={
+                                                                                                //       URL.createObjectURL(
+                                                                                                //       image.name
+                                                                                                //       )
+                                                                                                // }
+                                                                                                src={
+                                                                                                      image.id
+                                                                                                            ? image.name
+                                                                                                            : URL.createObjectURL(
+                                                                                                                    image
+                                                                                                              )
+                                                                                                }
                                                                                                 alt={`Preview ${
                                                                                                       index +
                                                                                                       1
@@ -628,23 +834,35 @@ const EditProduct = () => {
                                                                                           />
                                                                                           <button
                                                                                                 type="button"
-                                                                                                onClick={() => {
-                                                                                                      setFormData(
-                                                                                                            (
-                                                                                                                  prev
-                                                                                                            ) => ({
-                                                                                                                  ...prev,
-                                                                                                                  images: prev.images.filter(
-                                                                                                                        (
-                                                                                                                              _,
-                                                                                                                              i
-                                                                                                                        ) =>
-                                                                                                                              i !==
-                                                                                                                              index
-                                                                                                                  ),
-                                                                                                            })
-                                                                                                      );
-                                                                                                }}
+                                                                                                onClick={
+                                                                                                      (
+                                                                                                            e
+                                                                                                      ) =>
+                                                                                                            handleImageRemove(
+                                                                                                                  e,
+                                                                                                                  index,
+                                                                                                                  image.id
+                                                                                                            ) // Truyền `e`, `index`, và `id` của ảnh
+                                                                                                }
+                                                                                                // onClick={
+                                                                                                //       () => {
+                                                                                                //             setFormData(
+                                                                                                //                   (
+                                                                                                //                         prev
+                                                                                                //                   ) => ({
+                                                                                                //                         ...prev,
+                                                                                                //                         images: prev.images.filter(
+                                                                                                //                               (
+                                                                                                //                                     _,
+                                                                                                //                                     i
+                                                                                                //                               ) =>
+                                                                                                //                                     i !==
+                                                                                                //                                     index
+                                                                                                //                         ),
+                                                                                                //                   })
+                                                                                                //             );
+                                                                                                //       }
+                                                                                                // }
                                                                                                 className="absolute right-2 top-2 rounded-full bg-gray-900/70 p-1.5 text-white opacity-0 shadow-sm transition-opacity duration-200 hover:bg-gray-900 group-hover:opacity-100"
                                                                                           >
                                                                                                 <svg

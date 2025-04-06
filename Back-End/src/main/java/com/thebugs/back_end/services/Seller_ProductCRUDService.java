@@ -1,5 +1,6 @@
 package com.thebugs.back_end.services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,11 @@ public class Seller_ProductCRUDService {
             }
         }
         return products.map(g_ProductConverter::fromEntityToDTO);
+    }
+
+    public Seller_ProductDTO findProductByIdAndShopId(Integer shopId, Integer productId) {
+        Product product = g_ProductJPA.findProductByIdAndShopId(shopId, productId);
+        return g_ProductConverter.fromEntityToDTO(product);
     }
 
     @SuppressWarnings("finally")
@@ -78,23 +84,21 @@ public class Seller_ProductCRUDService {
     }
 
     @SuppressWarnings("finally")
-    public HashMap<String, Object> updateProduct(Product product,
+    public HashMap<String, Object> updateProduct(Product product, List<Integer> oldImage,
             List<MultipartFile> realImages) {
         HashMap<String, Object> result = new HashMap<String, Object>();
         StringBuffer message = new StringBuffer();
         Boolean status = true;
         int statusCode = 200;
-        if (product.getImages() != null && !product.getImages().isEmpty()) {
-            if (g_ImageService.removeOldImage(product.getImages())) {
+       
+        if (realImages != null && !realImages.isEmpty()) {
+            List<Image> images = g_ImageService.uploadImage(realImages, product);
+            if (images == null) {
                 statusCode = 500;
-                message.append("Lỗi không thể xóa ảnh cũ");
+                addBreakLineForMessage(message, "ERROR: Lỗi không thể upload hình ảnh");
+            } else if (product.getImages() != null && !product.getImages().isEmpty()){
+                images.addAll(product.getImages());
             }
-        }
-        List<Image> images = g_ImageService.uploadImage(realImages, product);
-        if (images == null) {
-            statusCode = 500;
-            addBreakLineForMessage(message, "Lỗi không thể upload hình ảnh");
-        } else {
             product.setImages(images);
         }
         try {
@@ -103,16 +107,16 @@ public class Seller_ProductCRUDService {
                 statusCode = 201;
                 Seller_ProductDTO data = g_ProductConverter.fromEntityToDTO(savedProduct);
                 result.put("data", data);
-                addBreakLineForMessage(message, "Thêm sản phẩm thành công");
+                addBreakLineForMessage(message, "Cập nhật sản phẩm thành công");
             } else {
                 statusCode = 201;
                 status = false;
-                addBreakLineForMessage(message, "Xảy ra lỗi trong quá trình lưu sản phẩm");
+                addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
             }
         } catch (Exception e) {
             statusCode = 500;
             status = false;
-            addBreakLineForMessage(message, "Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+            addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
         } finally {
             result.put("status", status);
             result.put("message", message.toString());

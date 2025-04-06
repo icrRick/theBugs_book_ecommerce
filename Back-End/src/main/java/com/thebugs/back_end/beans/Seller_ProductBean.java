@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class Seller_ProductBean {
     private Integer id;
 
-    private List<Integer> images_id_remove;
+    private List<Integer> oldImage;
     
     @NotBlank(message = "Tên sản phẩm không được bỏ trống")
     private String name;
