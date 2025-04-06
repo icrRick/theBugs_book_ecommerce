@@ -6,18 +6,28 @@ import Pagination from "../admin/Pagination";
 
 const Products = () => {
       const [searchTerm, setSearchTerm] = useState("");
-      const [currentPage, setCurrentPage] = useState(1);
       const [totalItems, setTotalItems] = useState(0);
       const [products, setProducts] = useState([]);
       const [pageSize, setPageSize] = useState(10);
 
+      const [currentPage, setCurrentPage] = useState(() => {
+            const params = new URLSearchParams(window.location.search);
+            const page = parseInt(params.get("page"));
+            return isNaN(page) ? 1 : page; // fallback nếu không có page hoặc page không hợp lệ
+      });
+
       const handlePageChange = (newPage) => {
-            setCurrentPage(newPage); // Cập nhật trang hiện tại
+            setCurrentPage(newPage);
             const params = new URLSearchParams(window.location.search);
             params.set("page", newPage);
             window.history.pushState(null, "", "?" + params.toString());
       };
-      const fetchData = async (page = 1) => {
+
+      useEffect(() => {
+            fetchData(currentPage); // dùng state đã được khởi tạo đúng
+      }, [currentPage]);
+
+      const fetchData = async (page) => {
             try {
                   console.log("Page " + page);
                   console.log(getToken());
@@ -25,7 +35,7 @@ const Products = () => {
                         "http://localhost:8080/api/seller/productList",
                         {
                               headers: {
-                                    Authorization: `Bearer ${getToken()}`, // Lấy token từ cookie và thêm vào header
+                                    Authorization: `Bearer ${getToken()}`,
                                     "Content-Type": "application/json",
                               },
                               params: {
@@ -36,7 +46,7 @@ const Products = () => {
                   );
                   setProducts(response.data.data.products);
                   setTotalItems(response.data.data.totalItems);
-                  console.log("Response Data: ", response.data); // In dữ liệu trả về từ server
+                  console.log("Response Data: ", response.data);
             } catch (error) {
                   console.error("Error fetching products:", error);
                   if (error.response) {
@@ -45,9 +55,7 @@ const Products = () => {
                   }
             }
       };
-      useEffect(() => {
-            fetchData(1);
-      }, []); // Dependency array chỉ chạy 1 lần khi component mount
+
       useEffect(() => {
             fetchData(currentPage);
       }, [currentPage]);
