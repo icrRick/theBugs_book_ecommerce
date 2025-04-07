@@ -9,9 +9,12 @@ import Loading from "../../utils/Loading";
 const EditProduct = () => {
       const { productId } = useParams();
       const navigate = useNavigate();
+      // ================== useState ==================
 
       const [errors, setErrors] = useState({});
       const [isLoading, setIsLoading] = useState(false);
+
+      // Mock data for options
       const [authorOptions, setAuthorOptions] = useState([]);
       const [categoryOptions, setCategoryOptions] = useState([]);
       const [publisherOptions, setPublisherOptions] = useState([]);
@@ -31,7 +34,7 @@ const EditProduct = () => {
 
       const allImages = [...formData.images, ...(formData.newImages || [])];
 
-      // Fetch dữ liệu options (authors, publishers, categories)
+      // ================== useEffect đầu tiên: Fetch options ==================
       useEffect(() => {
             const fetchOptions = async () => {
                   const headers = {
@@ -40,7 +43,7 @@ const EditProduct = () => {
                   };
 
                   try {
-                        // Fetch options (authors, publishers, categories)
+                        setIsLoading(true);
                         const [authorsRes, publishersRes, genresRes] =
                               await Promise.all([
                                     axios.get(
@@ -57,7 +60,6 @@ const EditProduct = () => {
                                     ),
                               ]);
 
-                        // Map data to options
                         setAuthorOptions(
                               mapToSelectOptions(authorsRes.data.data.arrayList)
                         );
@@ -69,15 +71,17 @@ const EditProduct = () => {
                         setCategoryOptions(
                               mapToSelectOptions(genresRes.data.data.arrayList)
                         );
+                        setIsLoading(false);
                   } catch (error) {
                         console.error("Error fetching options data:", error);
+                        setIsLoading(false);
                   }
             };
 
             fetchOptions();
-      }, []); // Chỉ chạy 1 lần khi component mount
+      }, []);
 
-      // Fetch dữ liệu sản phẩm khi productId thay đổi
+      // ================== useEffect thứ hai: Fetch product theo productId ==================
       useEffect(() => {
             if (!productId) return;
 
@@ -88,6 +92,7 @@ const EditProduct = () => {
                   };
 
                   try {
+                        setIsLoading(true);
                         const { data } = await axios.get(
                               "http://localhost:8080/api/seller/getProductById",
                               {
@@ -97,6 +102,7 @@ const EditProduct = () => {
                         );
 
                         if (data?.data) {
+                              setIsLoading(false);
                               const product = data.data;
                               setFormData({
                                     ...product,
@@ -113,15 +119,16 @@ const EditProduct = () => {
                               console.error("Invalid product data structure");
                         }
                   } catch (error) {
+                        setIsLoading(false);
                         console.error("Error fetching product data:", error);
                   }
             };
 
             fetchProductData();
-      }, [productId]); // Khi productId thay đổi
+      }, [productId]);
 
+      // ================== useEffect thứ ba: đồng bộ publisher ==================
       useEffect(() => {
-            // Kiểm tra nếu publisherOptions có dữ liệu
             if (publisherOptions.length > 0) {
                   const selectedPublisher = publisherOptions.find(
                         (publisher) => publisher.value === formData.publisher_id
@@ -139,10 +146,14 @@ const EditProduct = () => {
                   }
             }
             console.log("Publisher Options: ", publisherOptions);
-      }, [publisherOptions, formData.publisher_id, formData.publisher]); // Effect chỉ chạy lại khi publisherOptions hoặc publisher_id thay đổi
+      }, [publisherOptions, formData.publisher_id, formData.publisher]);
+
+      // ================== useEffect thứ tư: log formData ==================
       useEffect(() => {
             console.log("FormData: ", formData);
       }, [formData]);
+
+      // ================== handleInputChange ==================
       const handleInputChange = (e) => {
             const { name, value } = e.target;
             const numericFields = ["price", "weight", "quantity"];
@@ -152,6 +163,7 @@ const EditProduct = () => {
             }));
       };
 
+      // ================== handleSelectChange ==================
       const handleSelectChange = (selectedOptions, { name }) => {
             setFormData((prev) => ({
                   ...prev,
@@ -159,6 +171,7 @@ const EditProduct = () => {
             }));
       };
 
+      // ================== handleImageChange ==================
       const handleImageChange = (e) => {
             const files = Array.from(e.target.files);
             setFormData((prev) => ({
@@ -167,6 +180,7 @@ const EditProduct = () => {
             }));
       };
 
+      // ================== handleImageRemove ==================
       const handleImageRemove = (e, index, id) => {
             if (id) {
                   setFormData((prev) => ({
@@ -184,6 +198,7 @@ const EditProduct = () => {
             }
       };
 
+      // ================== handleSubmit ==================
       const handleSubmit = (e) => {
             e.preventDefault();
             setIsLoading(true);
@@ -199,6 +214,7 @@ const EditProduct = () => {
                   genres_id: extractIds(formData.categories),
                   publisher_id: formData.publisher.value,
                   oldImage: formData.images.map((img) => img.id),
+                  active: formData.active,
             };
             console.log("Sended data: ", productData);
             const formDataToSend = new FormData();
@@ -213,21 +229,20 @@ const EditProduct = () => {
                   formDataToSend.append("images", image);
             });
 
-            fetch("http://localhost:8080/api/seller/productUpdate", {
-                  method: "POST",
-                  headers: {
-                        Authorization: `Bearer ${getToken()}`,
-                  },
-                  body: formDataToSend,
-            })
-                  .then(async (response) => {
-                        const data = await response.json();
+            axios.post(
+                  "http://localhost:8080/api/seller/productUpdate",
+                  formDataToSend,
+                  {
+                        headers: {
+                              Authorization: `Bearer ${getToken()}`,
+                        },
+                  }
+            )
+                  .then((response) => {
+                        const data = response.data;
                         if (response.status === 400 && data?.data?.errorMap) {
                               setErrors(data.data.errorMap);
                         }
-                        return data;
-                  })
-                  .then((data) => {
                         setIsLoading(false);
                         if (data.status) {
                               data.message.split("\n").forEach((line) => {
@@ -243,21 +258,36 @@ const EditProduct = () => {
                               });
                               navigate("/seller/products");
                         } else {
-                              showErrorToast(data.message);
+                              showErrorToast(
+                                    data.message.replace(/error:/i, "").trim()
+                              );
                         }
                   })
                   .catch((error) => {
                         setIsLoading(false);
-                        showErrorToast(error.message);
+                        console.log("error: ");
+                        console.log(error);
+
+                        setErrors(error.response.data.data.errorMap);
+                        if (error.response) {
+                              showErrorToast(
+                                    error.response.data.message || error.message
+                              );
+                        } else {
+                              showErrorToast(error.message);
+                        }
                   });
       };
 
+      // ================== extractIds ==================
       const extractIds = (items) => items.map((item) => item.value);
 
+      // ================== mapToSelectOptions ==================
       const mapToSelectOptions = (list) => {
             if (!Array.isArray(list)) return [];
             return list.map((item) => ({ value: item.id, label: item.name }));
       };
+
       if (isLoading) {
             return <Loading />;
       }
@@ -888,6 +918,61 @@ const EditProduct = () => {
                                                                   )}
                                                             </div>
                                                       )}
+                                                </div>
+                                          </div>
+                                          <div className="col-span-full">
+                                                <label className="block text-sm font-semibold text-gray-900">
+                                                      Trạng thái
+                                                      <span className="text-red-500">
+                                                            *
+                                                      </span>
+                                                </label>
+                                                <div className="mt-2 flex items-center">
+                                                      <button
+                                                            type="button"
+                                                            id="active"
+                                                            onClick={() =>
+                                                                  handleInputChange(
+                                                                        {
+                                                                              target: {
+                                                                                    name: "active",
+                                                                                    value: !formData.active,
+                                                                              },
+                                                                        }
+                                                                  )
+                                                            }
+                                                            className={`relative inline-flex items-center h-8 rounded-full w-40 transition-colors duration-200 ease-in-out ${
+                                                                  formData.active
+                                                                        ? "bg-blue-600"
+                                                                        : "bg-gray-200"
+                                                            }`}
+                                                      >
+                                                            <span
+                                                                  className={`absolute inset-0 flex items-center justify-center text-sm text-white transition-opacity duration-200 ease-in-out ${
+                                                                        formData.active
+                                                                              ? "opacity-100"
+                                                                              : "opacity-0"
+                                                                  }`}
+                                                            >
+                                                                  Đang bán
+                                                            </span>
+                                                            <span
+                                                                  className={`absolute inset-0 flex items-center justify-center text-sm text-gray-800 transition-opacity duration-200 ease-in-out ${
+                                                                        !formData.active
+                                                                              ? "opacity-100"
+                                                                              : "opacity-0"
+                                                                  }`}
+                                                            >
+                                                                  Ngừng bán
+                                                            </span>
+                                                            <span
+                                                                  className={`inline-block w-6 h-6 rounded-full transform transition-transform duration-200 ease-in-out ${
+                                                                        formData.active
+                                                                              ? "translate-x-32 bg-white"
+                                                                              : "translate-x-2 bg-white"
+                                                                  }`}
+                                                            />
+                                                      </button>
                                                 </div>
                                           </div>
                                     </div>

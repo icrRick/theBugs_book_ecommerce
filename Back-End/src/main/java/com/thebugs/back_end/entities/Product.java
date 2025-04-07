@@ -64,9 +64,11 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<Favorite> favorites;
 
-    @OneToMany(mappedBy = "product")
-    private List<PromotionProduct> promotionalProducts;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<PromotionProduct> promotionProducts;
 
+    @OneToMany(mappedBy = "product")
+    private List<ReportProduct> reportProducts;
     @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;

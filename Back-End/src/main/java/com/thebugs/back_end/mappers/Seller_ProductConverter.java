@@ -15,6 +15,7 @@ import com.thebugs.back_end.entities.Image;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.ProductAuthor;
 import com.thebugs.back_end.entities.ProductGenre;
+import com.thebugs.back_end.entities.PromotionProduct;
 import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.repository.ImageJPA;
@@ -42,26 +43,28 @@ public class Seller_ProductConverter {
             return null;
         }
         Product product = new Product();
-        product.setId(bean.getId());
-        product.setName(bean.getName());
-        product.setPrice(bean.getPrice());
-        product.setQuantity(bean.getQuantity());
-        product.setWeight(bean.getWeight());
-        product.setDescription(bean.getDescription());
-        product.setActive(true);
+
         Shop shop = g_ShopJPA.findById(bean.getShopId()).orElse(null);
         Publisher publisher = g_PublisherJPA.findById(bean.getPublisher_id()).orElse(null);
-        product.setShop(shop);
-        product.setPublisher(publisher);
         List<ProductGenre> productGenres = g_ProductGenreService.getProductGenres(bean.getGenres_id(), product);
-        product.setProductGenres(productGenres);
         List<ProductAuthor> productAuthors = g_ProductAuthorService.getProductAuthors(bean.getAuthors_id(),
                 product);
-        product.setProductAuthors(productAuthors);
         if (bean.getOldImage() != null && !bean.getOldImage().isEmpty()) {
             List<Image> images = g_ImageJPA.findAllById(bean.getOldImage());
             product.setImages(images);
         }
+        product.setId(bean.getId());
+        product.setName(bean.getName());
+        product.setWeight(bean.getWeight());
+        product.setQuantity(bean.getQuantity());
+        product.setPrice(bean.getPrice());
+        product.setActive(bean.isActive());
+        product.setDescription(bean.getDescription());
+        product.setShop(shop);
+        product.setProductGenres(productGenres);
+        product.setProductGenres(productGenres);
+        product.setProductAuthors(productAuthors);
+        product.setPublisher(publisher);
         return product;
     }
 

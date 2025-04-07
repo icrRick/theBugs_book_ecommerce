@@ -7,6 +7,7 @@ import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import Loading from "../../utils/Loading";
 
 const AddProduct = () => {
+      // ================== useState ==================
       const navigate = useNavigate();
       const [isLoading, setIsLoading] = useState(false);
       const [errors, setErrors] = useState({});
@@ -26,9 +27,10 @@ const AddProduct = () => {
             authors: [],
             publisher: {},
             images: [],
+            active: true,
       });
 
-      // Fetching initial data
+      // ================== useEffect (Fetching initial data) ==================
       useEffect(() => {
             const fetchAllData = async () => {
                   const headers = {
@@ -54,24 +56,15 @@ const AddProduct = () => {
                               ]);
 
                         setAuthorOptions(
-                              authorsRes.data.data.arrayList.map((author) => ({
-                                    id: author.id,
-                                    label: author.name,
-                              }))
+                              mapToSelectOptions(authorsRes.data.data.arrayList)
                         );
                         setPublisherOptions(
-                              publishersRes.data.data.arrayList.map(
-                                    (publisher) => ({
-                                          id: publisher.id,
-                                          label: publisher.name,
-                                    })
+                              mapToSelectOptions(
+                                    publishersRes.data.data.arrayList
                               )
                         );
                         setCategoryOptions(
-                              genresRes.data.data.arrayList.map((genre) => ({
-                                    id: genre.id,
-                                    label: genre.name,
-                              }))
+                              mapToSelectOptions(genresRes.data.data.arrayList)
                         );
                   } catch (error) {
                         console.error("Error fetching data: ", error);
@@ -81,7 +74,13 @@ const AddProduct = () => {
             fetchAllData();
       }, []);
 
-      // Handle input changes for text and number fields
+      // ================== mapToSelectOptions ==================
+      const mapToSelectOptions = (list) => {
+            if (!Array.isArray(list)) return [];
+            return list.map((item) => ({ value: item.id, label: item.name }));
+      };
+
+      // ================== handleInputChange ==================
       const handleInputChange = (e) => {
             const { name, value } = e.target;
             setFormData((prev) => ({
@@ -92,7 +91,7 @@ const AddProduct = () => {
             }));
       };
 
-      // Handle changes for select dropdowns (authors, categories, publisher)
+      // ================== handleSelectChange ==================
       const handleSelectChange = (selectedOptions, { name }) => {
             setFormData((prev) => ({
                   ...prev,
@@ -100,7 +99,7 @@ const AddProduct = () => {
             }));
       };
 
-      // Handle image file selection and validation
+      // ================== handleImageChange ==================
       const handleImageChange = (e) => {
             const files = Array.from(e.target.files);
             setFormData((prev) => ({
@@ -110,12 +109,10 @@ const AddProduct = () => {
             setErrors((prev) => ({ ...prev, images: null }));
       };
 
-      // Convert list of objects to list of ids
-      const convertListObjectToListId = (objectList) => {
-            return objectList.map((obj) => obj.id);
-      };
+      // ================== extractIds ==================
+      const extractIds = (items) => items.map((item) => item.value);
 
-      // Submit the form
+      // ================== handleSubmit ==================
       const handleSubmit = (e) => {
             e.preventDefault();
             setIsLoading(true);
@@ -126,9 +123,10 @@ const AddProduct = () => {
                   weight: formData.weight,
                   price: formData.price,
                   quantity: formData.quantity,
-                  authors_id: convertListObjectToListId(formData.authors),
-                  genres_id: convertListObjectToListId(formData.categories),
-                  publisher_id: formData.publisher.id,
+                  authors_id: extractIds(formData.authors),
+                  genres_id: extractIds(formData.categories),
+                  publisher_id: formData.publisher.value,
+                  active: formData.active,
             };
 
             const formDataToSend = new FormData();
@@ -175,7 +173,9 @@ const AddProduct = () => {
                               });
                               navigate("/seller/products");
                         } else {
-                              showErrorToast(data.message);
+                              showErrorToast(
+                                    data.message.replace(/error:/i, "").trim()
+                              );
                         }
                   })
                   .catch((error) => {
@@ -808,6 +808,61 @@ const AddProduct = () => {
                                                                   )}
                                                             </div>
                                                       )}
+                                                </div>
+                                          </div>
+                                          <div className="col-span-full">
+                                                <label className="block text-sm font-semibold text-gray-900">
+                                                      Trạng thái
+                                                      <span className="text-red-500">
+                                                            *
+                                                      </span>
+                                                </label>
+                                                <div className="mt-2 flex items-center">
+                                                      <button
+                                                            type="button"
+                                                            id="active"
+                                                            onClick={() =>
+                                                                  handleInputChange(
+                                                                        {
+                                                                              target: {
+                                                                                    name: "active",
+                                                                                    value: !formData.active,
+                                                                              },
+                                                                        }
+                                                                  )
+                                                            }
+                                                            className={`relative inline-flex items-center h-8 rounded-full w-40 transition-colors duration-200 ease-in-out ${
+                                                                  formData.active
+                                                                        ? "bg-blue-600"
+                                                                        : "bg-gray-200"
+                                                            }`}
+                                                      >
+                                                            <span
+                                                                  className={`absolute inset-0 flex items-center justify-center text-sm text-white transition-opacity duration-200 ease-in-out ${
+                                                                        formData.active
+                                                                              ? "opacity-100"
+                                                                              : "opacity-0"
+                                                                  }`}
+                                                            >
+                                                                  Đang bán
+                                                            </span>
+                                                            <span
+                                                                  className={`absolute inset-0 flex items-center justify-center text-sm text-gray-800 transition-opacity duration-200 ease-in-out ${
+                                                                        !formData.active
+                                                                              ? "opacity-100"
+                                                                              : "opacity-0"
+                                                                  }`}
+                                                            >
+                                                                  Ngừng bán
+                                                            </span>
+                                                            <span
+                                                                  className={`inline-block w-6 h-6 rounded-full transform transition-transform duration-200 ease-in-out ${
+                                                                        formData.active
+                                                                              ? "translate-x-32 bg-white"
+                                                                              : "translate-x-2 bg-white"
+                                                                  }`}
+                                                            />
+                                                      </button>
                                                 </div>
                                           </div>
                                     </div>

@@ -12,11 +12,13 @@ import com.thebugs.back_end.entities.ProductAuthor;
 import com.thebugs.back_end.repository.AuthorJPA;
 
 @Service
-public class Seller_ProductAuthorService {
+public class Seller_ProductAuthorService
+{
     @Autowired
     private AuthorJPA g_AuthorJPA;
 
-    public List<ProductAuthor> getProductAuthors(List<Integer> authors_id, Product product) {
+    public List<ProductAuthor> getProductAuthors(List<Integer> authors_id, Product product)
+    {
         List<ProductAuthor> productGenres = authors_id.stream()
                 .map(author_id -> {
                     ProductAuthor productAuthor = new ProductAuthor();

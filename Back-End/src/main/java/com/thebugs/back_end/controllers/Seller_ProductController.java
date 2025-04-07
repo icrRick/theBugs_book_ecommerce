@@ -9,12 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,6 +37,7 @@ import com.thebugs.back_end.services.GenreService;
 import com.thebugs.back_end.services.PublisherService;
 import com.thebugs.back_end.services.Seller_ProductCRUDService;
 import com.thebugs.back_end.services.UserService;
+import com.thebugs.back_end.utils.ColorUtil;
 
 import jakarta.validation.Valid;
 
@@ -58,7 +61,6 @@ public class Seller_ProductController {
     @GetMapping("/genresList")
     public ResponseEntity<ResponseData> getPage(@RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page) {
-
         ResponseData responseData = new ResponseData();
         try {
             Map<String, Object> response = new HashMap<>();
@@ -143,17 +145,25 @@ public class Seller_ProductController {
     public ResponseEntity<ResponseData> getProductsByShop(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "DESC") String sort) {
 
-        if (authorizationHeader != null) {
-            System.out.println("ABC: " + authorizationHeader);
-        }
+        ColorUtil.print(ColorUtil.RED, "SearchTerm: " + keyword);
+        ColorUtil.print(ColorUtil.RED, "Page: " + page);
+
         int pageNumber = (page == null || page < 1) ? 1 : page;
         int pageSize = (size == null || size < 1) ? 10 : size;
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
+        Sort sortBy;
+        if (sort.equalsIgnoreCase("DESC")) {
+            sortBy = Sort.by(Sort.Order.desc("id"));
+        } else {
+            sortBy = Sort.by(Sort.Order.asc("id"));
+        }
 
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        Page<Seller_ProductDTO> pageResult = g_ProductService.getProductsByShopId(pageable, shopId);
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sortBy);
+        Page<Seller_ProductDTO> pageResult = g_ProductService.getProductsByShopId(shopId, keyword, sort, pageable);
         List<Seller_ProductDTO> products = pageResult.getContent();
         long totalItems = pageResult.getTotalElements();
         Map<String, Object> result = new HashMap<>();
@@ -226,9 +236,8 @@ public class Seller_ProductController {
             BindingResult bindingResult,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        System.out.println("Bean2 Data: ");
-        System.out.println(productBean.toString());
-
+        ColorUtil.print(ColorUtil.GREEN, "Start Update: ");
+        ColorUtil.print(ColorUtil.YELLOW, productBean.toString());
         if (bindingResult.hasErrors() || productBean.getId() == null) {
             Map<String, String> errorMap = new HashMap<>();
             Map<String, Object> errors = new HashMap<>();
@@ -252,49 +261,68 @@ public class Seller_ProductController {
             responseData.setData(errors); // Trả về lỗi theo từng trường
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
         }
-        System.out.println("CONCACNE");
         // Lấy shopId từ token
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
+        ResponseData responseData = new ResponseData();
+
+        if (g_ProductService.findProductByIdAndShopId(shopId, productBean.getId()) == null) {
+            responseData.setStatus(false);
+            responseData.setMessage("Không có quyền truy cập");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseData);
+        }
+
         productBean.setShopId(shopId);
 
         Product product = g_ProductConverter.fromBeanToEntity(productBean);
         // Gọi service để tạo sản phẩm
-                System.out.println("CONCACNE2");
 
         Map<String, Object> result = g_ProductService.updateProduct(product, productBean.getOldImage(),
                 images);
         // Tạo ResponseData
-        ResponseData responseData = new ResponseData();
         responseData.setStatus((boolean) result.get("status"));
         responseData.setMessage((String) result.get("message"));
         Object data = result.get("data");
         if (data != null) {
             responseData.setData((Seller_ProductDTO) data);
         }
+        ColorUtil.print(ColorUtil.YELLOW, (String) result.get("message"));
+        ColorUtil.print(ColorUtil.GREEN, "End Update: ");
+
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
 
     @GetMapping("/getProductById")
     public ResponseEntity<ResponseData> getProductById(@RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer productId) {
-        System.out.println("SHOPIEBUG");
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
         Seller_ProductDTO productDTO = g_ProductService.findProductByIdAndShopId(shopId, productId);
         int statusCode = 200;
         ResponseData responseData = new ResponseData();
         if (productDTO.getId() != null) {
             statusCode = 201;
-            System.out.println("SHOPIEBUG2");
-
             responseData.setStatus(true);
         } else {
             statusCode = 404;
-            System.out.println("SHOPIEBUG3");
-
             responseData.setStatus(false);
             responseData.setMessage("Không thể lấy thông tin sản phẩm");
         }
         responseData.setData(productDTO);
         return ResponseEntity.status(HttpStatus.valueOf(statusCode)).body(responseData);
+    }
+
+    @PostMapping("/deleteProduct")
+    public ResponseEntity<ResponseData> deleteProductByIdAndShopId(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody HashMap<String, Integer> body) {
+        ColorUtil.print(ColorUtil.RED, "Start Delete");
+        Integer productId = body.get("productId");
+        int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
+
+        HashMap<String, Object> result = g_ProductService.deleteProductByIdAndShopId(shopId, productId);
+        ResponseData responseData = new ResponseData();
+        responseData.setStatus((boolean) result.get("status"));
+        responseData.setMessage((String) result.get("message"));
+        responseData.setData(productId);
+        return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
 }

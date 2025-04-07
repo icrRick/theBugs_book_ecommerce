@@ -3,34 +3,36 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getToken } from "../../utils/cookie";
 import Pagination from "../admin/Pagination";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
+import Loading from "../../utils/Loading";
 
 const Products = () => {
-      const [searchTerm, setSearchTerm] = useState("");
+      const [typingTimeout, setTypingTimeout] = useState(null);
       const [totalItems, setTotalItems] = useState(0);
       const [products, setProducts] = useState([]);
-      const [pageSize, setPageSize] = useState(10);
+      const [isLoading, setIsLoading] = useState(false);
+      const [selectedItem, setSelectedItem] = useState();
+      const navigate = useNavigate();
+
+      const [searchTerm, setSearchTerm] = useState(() => {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("searchTerm") || "";
+      });
 
       const [currentPage, setCurrentPage] = useState(() => {
             const params = new URLSearchParams(window.location.search);
             const page = parseInt(params.get("page"));
-            return isNaN(page) ? 1 : page; // fallback nếu không có page hoặc page không hợp lệ
+            return isNaN(page) ? 1 : page;
       });
 
-      const handlePageChange = (newPage) => {
-            setCurrentPage(newPage);
-            const params = new URLSearchParams(window.location.search);
-            params.set("page", newPage);
-            window.history.pushState(null, "", "?" + params.toString());
-      };
-
-      useEffect(() => {
-            fetchData(currentPage); // dùng state đã được khởi tạo đúng
-      }, [currentPage]);
-
-      const fetchData = async (page) => {
+      //
+      // 1. FETCH FUNCTION
+      //
+      const fetchData = async (page, keyword = searchTerm) => {
             try {
-                  console.log("Page " + page);
-                  console.log(getToken());
+                  console.log("Page: ", page);
+                  console.log("Search Term: ", keyword);
+                  setIsLoading(true);
                   const response = await axios.get(
                         "http://localhost:8080/api/seller/productList",
                         {
@@ -40,14 +42,18 @@ const Products = () => {
                               },
                               params: {
                                     page: page,
+                                    keyword: keyword,
                               },
                               withCredentials: true,
                         }
                   );
-                  setProducts(response.data.data.products);
-                  setTotalItems(response.data.data.totalItems);
+
+                  setIsLoading(false);
+                  setProducts(response.data.data?.products ?? []);
+                  setTotalItems(response.data.data?.totalItems ?? 0);
                   console.log("Response Data: ", response.data);
             } catch (error) {
+                  setIsLoading(false);
                   console.error("Error fetching products:", error);
                   if (error.response) {
                         console.error("Status Code:", error.response.status);
@@ -56,13 +62,101 @@ const Products = () => {
             }
       };
 
+      //
+      // 2. USEEFFECT
+      //
       useEffect(() => {
-            fetchData(currentPage);
+            fetchData(currentPage, searchTerm);
       }, [currentPage]);
-      const handleSearch = (e) => {
-            setSearchTerm(e.target.value);
+
+      //
+      // 3. HANDLE FUNCTION
+      //
+      const handlePageChange = (newPage) => {
+            setCurrentPage(newPage);
+            const params = new URLSearchParams(window.location.search);
+            params.set("page", newPage);
+            window.history.pushState(null, "", "?" + params.toString());
+
+            fetchData(newPage, searchTerm);
       };
 
+      const handleSearch = (e) => {
+            const value = e.target.value;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set("searchTerm", value);
+            params.set("page", "1");
+            window.history.pushState(null, "", "?" + params.toString());
+
+            setSearchTerm(value);
+
+            if (typingTimeout) {
+                  clearTimeout(typingTimeout);
+            }
+
+            const newTimeout = setTimeout(() => {
+                  fetchData(1, value);
+                  setCurrentPage(1);
+            }, 500);
+
+            setTypingTimeout(newTimeout);
+      };
+
+      const handleAddProduct = () => {
+            navigate("/seller/addproduct");
+      };
+
+      const handleEditProduct = (productId) => {
+            navigate(`/seller/editproduct/${productId}`);
+      };
+
+      const handleDeleteProduct = (productId) => {
+            if (!productId) return;
+
+            const deleteProduct = async () => {
+                  setIsLoading(true);
+                  const headers = {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${getToken()}`,
+                  };
+
+                  try {
+                        const { data } = await axios.post(
+                              "http://localhost:8080/api/seller/deleteProduct",
+                              { productId: Number(productId) },
+                              { headers: headers }
+                        );
+
+                        console.log("Data BE: ");
+                        console.log(data);
+                        console.log(data.data);
+
+                        if (data?.data) {
+                              setIsLoading(false);
+                              if (data.status) {
+                                    showNotificationFromBE(data);
+                                    navigate("/seller/products");
+                              } else {
+                                    showNotificationFromBE(data);
+                              }
+                        } else {
+                              console.error("Invalid product data structure");
+                        }
+                  } catch (error) {
+                        setIsLoading(false);
+                        showNotificationFromBE(error.response.data);
+                  }
+
+                  await fetchData(currentPage);
+            };
+
+            deleteProduct();
+      };
+
+      //
+      // 4. OTHER FUNCTION
+      //
       const getStatusColor = (status) => {
             switch (status) {
                   case "true":
@@ -74,13 +168,19 @@ const Products = () => {
             }
       };
 
-      const navigate = useNavigate();
-      const handleAddProduct = () => {
-            navigate("/seller/addproduct");
+      const showNotificationFromBE = (data) => {
+            data.message.split("\n").forEach((line) => {
+                  if (line.toLowerCase().includes("error")) {
+                        showErrorToast(line.replace(/error:/i, "").trim());
+                  } else {
+                        showSuccessToast(line);
+                  }
+            });
       };
-      const handleEditProduct = (productId) => {
-            navigate(`/seller/editproduct/${productId}`);
-      };
+
+      if (isLoading) {
+            return <Loading />;
+      }
       return (
             <div className="my-6">
                   <div className="my-6">
@@ -302,11 +402,11 @@ const Products = () => {
                                                       <td className="px-6 py-4 whitespace-nowrap">
                                                             <span
                                                                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                                                        product.status
+                                                                        product.active
                                                                   )}`}
                                                             >
-                                                                  {product.status ===
-                                                                  "active"
+                                                                  {product.active ===
+                                                                  true
                                                                         ? "Đang bán"
                                                                         : "Ngừng bán"}
                                                             </span>
@@ -330,7 +430,14 @@ const Products = () => {
                                                                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                                                         </svg>
                                                                   </button>
-                                                                  <button className="text-red-600 hover:text-red-900 transition-colors p-1 hover:bg-red-50 rounded-full">
+                                                                  <button
+                                                                        onClick={() =>
+                                                                              setSelectedItem(
+                                                                                    product
+                                                                              )
+                                                                        }
+                                                                        className="text-red-600 hover:text-red-900 transition-colors p-1 hover:bg-red-50 rounded-full"
+                                                                  >
                                                                         <svg
                                                                               xmlns="http://www.w3.org/2000/svg"
                                                                               className="h-5 w-5"
@@ -359,6 +466,98 @@ const Products = () => {
                               />
                         )}
                   </div>
+                  {selectedItem && (
+                        <div className="fixed inset-0 overflow-y-auto z-50">
+                              <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                    <div
+                                          className="fixed inset-0 transition-opacity"
+                                          aria-hidden="true"
+                                    >
+                                          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                                    </div>
+                                    <span
+                                          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+                                          aria-hidden="true"
+                                    >
+                                          &#8203;
+                                    </span>
+                                    <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                                <div className="sm:flex sm:items-start">
+                                                      <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                                            <svg
+                                                                  className="h-6 w-6 text-red-600"
+                                                                  xmlns="http://www.w3.org/2000/svg"
+                                                                  fill="none"
+                                                                  viewBox="0 0 24 24"
+                                                                  stroke="currentColor"
+                                                            >
+                                                                  <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth="2"
+                                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                                                  />
+                                                            </svg>
+                                                      </div>
+                                                      <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                                            <h3 className="text-lg leading-6 font-medium text-gray-900">
+                                                                  Xác nhận xóa
+                                                            </h3>
+                                                            <div className="mt-2">
+                                                                  <p className="text-sm text-gray-500">
+                                                                        Bạn có
+                                                                        chắc
+                                                                        chắn
+                                                                        muốn xóa
+                                                                        sản phẩm{" "}
+                                                                        <span className="font-bold text-red-500">
+                                                                              {
+                                                                                    selectedItem?.name
+                                                                              }
+                                                                        </span>{" "}
+                                                                        <br></br>
+                                                                        Hành
+                                                                        động này
+                                                                        không
+                                                                        thể hoàn
+                                                                        tác.
+                                                                  </p>
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                          </div>
+                                          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                                <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                            handleDeleteProduct(
+                                                                  selectedItem.id
+                                                            );
+                                                            setSelectedItem(
+                                                                  null
+                                                            );
+                                                      }}
+                                                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                                >
+                                                      Xóa
+                                                </button>
+                                                <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                            setSelectedItem(
+                                                                  null
+                                                            );
+                                                      }}
+                                                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                                >
+                                                      Hủy
+                                                </button>
+                                          </div>
+                                    </div>
+                              </div>
+                        </div>
+                  )}
             </div>
       );
 };

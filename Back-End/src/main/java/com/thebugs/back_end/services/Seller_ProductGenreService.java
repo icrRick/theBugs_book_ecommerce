@@ -14,13 +14,15 @@ import com.thebugs.back_end.repository.GenreJPA;
 import com.thebugs.back_end.repository.ProductGenreJPA;
 
 @Service
-public class Seller_ProductGenreService {
+public class Seller_ProductGenreService
+{
     @Autowired
     private ProductGenreJPA g_ProductGenreJPA;
     @Autowired
     private GenreJPA g_GenreJPA;
 
-    public List<ProductGenre> createProductGenres(List<Integer> genres_id, Product product) {
+    public List<ProductGenre> createProductGenres(List<Integer> genres_id, Product product)
+    {
         List<ProductGenre> productGenres = new ArrayList();
         for (Integer genre_id : genres_id) {
             ProductGenre productGenre = new ProductGenre();
@@ -31,7 +33,8 @@ public class Seller_ProductGenreService {
         return g_ProductGenreJPA.saveAll(productGenres);
     }
 
-    public List<ProductGenre> getProductGenres(List<Integer> genres_id, Product product) {
+    public List<ProductGenre> getProductGenres(List<Integer> genres_id, Product product)
+    {
         List<ProductGenre> productGenres = genres_id.stream()
                 .map(genre_id -> {
                     ProductGenre productGenre = new ProductGenre();

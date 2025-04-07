@@ -15,11 +15,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Seller_ProductBean {
+public class Seller_ProductBean
+{
     private Integer id;
 
     private List<Integer> oldImage;
-    
+
     @NotBlank(message = "Tên sản phẩm không được bỏ trống")
     private String name;
 
@@ -52,8 +53,11 @@ public class Seller_ProductBean {
     @Size(min = 1, message = "Danh sách tác giả không được bỏ trống")
     private List<Integer> authors_id;
 
+    private boolean active;
+
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Seller_ProductBean{" +
                 "name='" + name + '\'' +
                 ", price=" + price +
