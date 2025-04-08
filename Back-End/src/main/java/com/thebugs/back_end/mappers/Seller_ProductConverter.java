@@ -22,7 +22,6 @@ import com.thebugs.back_end.repository.PublisherJPA;
 import com.thebugs.back_end.repository.Seller_ProductJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 import com.thebugs.back_end.services.Seller_ProductAuthorService;
-import com.thebugs.back_end.services.Seller_ProductCRUDService;
 import com.thebugs.back_end.services.Seller_ProductGenreService;
 
 @Component
@@ -53,7 +52,8 @@ public class Seller_ProductConverter {
         List<ProductAuthor> productAuthors = g_ProductAuthorService.getProductAuthors(bean.getAuthors_id(),
                 product);
         Product oldProduct = g_ProductJPA.findProductByProductCodeAndShopId(bean.getShopId(), bean.getProduct_code());
-
+        
+        //Còn ảnh cũ thì lấy ảnh cũ
         if (bean.getOldImage() != null && !bean.getOldImage().isEmpty()) {
             List<Image> images = g_ImageJPA.findAllById(bean.getOldImage());
             product.setImages(images);
@@ -63,21 +63,27 @@ public class Seller_ProductConverter {
         product.setWeight(bean.getWeight());
         product.setQuantity(bean.getQuantity());
         product.setPrice(bean.getPrice());
-        product.setActive(bean.getActive());
         product.setDescription(bean.getDescription());
         product.setShop(shop);
         product.setProductGenres(productGenres);
         product.setProductGenres(productGenres);
         product.setProductAuthors(productAuthors);
         product.setPublisher(publisher);
-        if (oldProduct.getApprove() != null) {
+        product.setActive(bean.getActive());
+
+        // Cho phép shop chỉnh sửa trạng thái active
+        product.setActive(bean.getActive());
+
+        if (oldProduct != null) {
+            // Không cho phép sửa approve/product_code
             product.setApprove(oldProduct.getApprove());
+            product.setProduct_code(oldProduct.getProduct_code());
         } else {
-            product.setApprove(false);
+            // Trường hợp tạo mới
+            product.setActive(true); // Mặc định active nếu tạo mới
+            product.setApprove(false); // Mặc định chưa duyệt
         }
-        if (bean.getProduct_code() != null) {
-            product.setProduct_code(bean.getProduct_code());
-        }
+
         return product;
     }
 
