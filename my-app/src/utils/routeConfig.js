@@ -99,7 +99,7 @@ export const SELLER_ROUTES = [
   { path: 'orders', element: <OrdersSeller /> },
   { path: 'products', element: <Products /> },
   { path: 'addproduct', element: <AddProduct /> },
-  { path: 'editproduct/:productId', element: <EditProduct /> },
+  { path: 'editproduct/:product_code', element: <EditProduct /> },
   { path: 'store', element: <Store /> },
   { path: 'products', element: <SellerProducts /> },
   { path: 'promotions', element: <Promotions /> },

@@ -39,12 +39,21 @@ public class Product {
 
     @Column(nullable = false)
     private Double price;
-
+    //Còn hoạt động hay không
     @Column(nullable = false)
     private Boolean active;
+    //Đã được duyệt hay chưa
+    @Column(nullable = false)
+    private Boolean approve;
+    //Có bị ban không
+    @Column(nullable = true)
+    private Boolean status;
 
     @Column(nullable = false)
     private String description;
+
+    @Column(nullable = false)
+    private String product_code;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
@@ -69,6 +78,7 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private List<ReportProduct> reportProducts;
+
     @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;

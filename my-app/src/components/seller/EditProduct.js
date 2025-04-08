@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Select from "react-select";
 import { getToken } from "../../utils/cookie";
 import axios from "axios";
@@ -7,12 +7,17 @@ import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import Loading from "../../utils/Loading";
 
 const EditProduct = () => {
-      const { productId } = useParams();
+      const [searchParams] = useSearchParams();
+      const { product_code } = useParams();
       const navigate = useNavigate();
       // ================== useState ==================
 
       const [errors, setErrors] = useState({});
       const [isLoading, setIsLoading] = useState(false);
+
+      const page = searchParams.get("page") || "1";
+      const search = searchParams.get("search") || "";
+      const sort = searchParams.get("sort") || "DESC";
 
       // Mock data for options
       const [authorOptions, setAuthorOptions] = useState([]);
@@ -83,9 +88,12 @@ const EditProduct = () => {
 
       // ================== useEffect thứ hai: Fetch product theo productId ==================
       useEffect(() => {
-            if (!productId) return;
+            if (!product_code) return;
 
             const fetchProductData = async () => {
+                  console.log("ProductCode: ");
+                  console.log("ProductCode: " + product_code);
+
                   const headers = {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${getToken()}`,
@@ -94,10 +102,10 @@ const EditProduct = () => {
                   try {
                         setIsLoading(true);
                         const { data } = await axios.get(
-                              "http://localhost:8080/api/seller/getProductById",
+                              "http://localhost:8080/api/seller/getProductByProductCode",
                               {
                                     headers,
-                                    params: { productId: Number(productId) },
+                                    params: { product_code: product_code },
                               }
                         );
 
@@ -125,7 +133,7 @@ const EditProduct = () => {
             };
 
             fetchProductData();
-      }, [productId]);
+      }, [product_code]);
 
       // ================== useEffect thứ ba: đồng bộ publisher ==================
       useEffect(() => {
@@ -152,6 +160,13 @@ const EditProduct = () => {
       useEffect(() => {
             console.log("FormData: ", formData);
       }, [formData]);
+
+      // ================== handleBackToList ==================
+      const handleBackToList = () => {
+            navigate(
+                  `/seller/products?page=${page}&searchTerm=${search}&sort=${sort}`
+            );
+      };
 
       // ================== handleInputChange ==================
       const handleInputChange = (e) => {
@@ -212,6 +227,7 @@ const EditProduct = () => {
                   quantity: formData.quantity,
                   authors_id: extractIds(formData.authors),
                   genres_id: extractIds(formData.categories),
+                  product_code: formData.product_code,
                   publisher_id: formData.publisher.value,
                   oldImage: formData.images.map((img) => img.id),
                   active: formData.active,
@@ -256,7 +272,7 @@ const EditProduct = () => {
                                           showSuccessToast(line);
                                     }
                               });
-                              navigate("/seller/products");
+                              handleBackToList();
                         } else {
                               showErrorToast(
                                     data.message.replace(/error:/i, "").trim()
@@ -830,7 +846,7 @@ const EditProduct = () => {
                                                             </div>
                                                       </div>
                                                       {allImages.length > 0 && (
-                                                            <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                                                            <div className="mt-6 flex flex-wrap gap-4">
                                                                   {allImages.map(
                                                                         (
                                                                               image,
@@ -840,15 +856,10 @@ const EditProduct = () => {
                                                                                     key={
                                                                                           index
                                                                                     }
-                                                                                    className="group relative"
+                                                                                    className="group relative w-[121px] sm:w-[257px] aspect-square"
                                                                               >
-                                                                                    <div className="aspect-h-7 aspect-w-10 block w-full overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
+                                                                                    <div className="w-full h-full overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
                                                                                           <img
-                                                                                                // src={
-                                                                                                //       URL.createObjectURL(
-                                                                                                //       image.name
-                                                                                                //       )
-                                                                                                // }
                                                                                                 src={
                                                                                                       image.id
                                                                                                             ? image.name
@@ -860,39 +871,19 @@ const EditProduct = () => {
                                                                                                       index +
                                                                                                       1
                                                                                                 }`}
-                                                                                                className="pointer-events-none object-cover group-hover:opacity-75 transition-opacity duration-200"
+                                                                                                className="pointer-events-none w-full h-full object-cover group-hover:opacity-75 transition-opacity duration-200"
                                                                                           />
                                                                                           <button
                                                                                                 type="button"
-                                                                                                onClick={
-                                                                                                      (
-                                                                                                            e
-                                                                                                      ) =>
-                                                                                                            handleImageRemove(
-                                                                                                                  e,
-                                                                                                                  index,
-                                                                                                                  image.id
-                                                                                                            ) // Truyền `e`, `index`, và `id` của ảnh
+                                                                                                onClick={(
+                                                                                                      e
+                                                                                                ) =>
+                                                                                                      handleImageRemove(
+                                                                                                            e,
+                                                                                                            index,
+                                                                                                            image.id
+                                                                                                      )
                                                                                                 }
-                                                                                                // onClick={
-                                                                                                //       () => {
-                                                                                                //             setFormData(
-                                                                                                //                   (
-                                                                                                //                         prev
-                                                                                                //                   ) => ({
-                                                                                                //                         ...prev,
-                                                                                                //                         images: prev.images.filter(
-                                                                                                //                               (
-                                                                                                //                                     _,
-                                                                                                //                                     i
-                                                                                                //                               ) =>
-                                                                                                //                                     i !==
-                                                                                                //                                     index
-                                                                                                //                         ),
-                                                                                                //                   })
-                                                                                                //             );
-                                                                                                //       }
-                                                                                                // }
                                                                                                 className="absolute right-2 top-2 rounded-full bg-gray-900/70 p-1.5 text-white opacity-0 shadow-sm transition-opacity duration-200 hover:bg-gray-900 group-hover:opacity-100"
                                                                                           >
                                                                                                 <svg
@@ -903,7 +894,7 @@ const EditProduct = () => {
                                                                                                             1.5
                                                                                                       }
                                                                                                       stroke="currentColor"
-                                                                                                      className="w-5 h-5"
+                                                                                                      className="w-4 h-4"
                                                                                                 >
                                                                                                       <path
                                                                                                             strokeLinecap="round"
@@ -981,6 +972,7 @@ const EditProduct = () => {
                               {/* Form Actions */}
                               <div className="px-10 py-6 bg-gray-50 flex items-center justify-end gap-x-6">
                                     <button
+                                          onClick={handleBackToList}
                                           type="button"
                                           className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700 transition-colors duration-200"
                                     >

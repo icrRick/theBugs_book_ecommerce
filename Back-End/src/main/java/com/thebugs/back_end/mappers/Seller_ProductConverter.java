@@ -15,7 +15,6 @@ import com.thebugs.back_end.entities.Image;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.ProductAuthor;
 import com.thebugs.back_end.entities.ProductGenre;
-import com.thebugs.back_end.entities.PromotionProduct;
 import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.repository.ImageJPA;
@@ -65,6 +64,9 @@ public class Seller_ProductConverter {
         product.setProductGenres(productGenres);
         product.setProductAuthors(productAuthors);
         product.setPublisher(publisher);
+        if (bean.getProduct_code() != null) {
+            product.setProduct_code(bean.getProduct_code());
+        }
         return product;
     }
 
@@ -75,6 +77,7 @@ public class Seller_ProductConverter {
 
         return new Seller_ProductDTO(
                 product.getId(),
+                product.getProduct_code(),
                 product.getName(),
                 product.getPrice(),
                 product.getQuantity(),

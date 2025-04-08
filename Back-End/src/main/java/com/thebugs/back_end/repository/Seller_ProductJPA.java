@@ -1,6 +1,5 @@
 package com.thebugs.back_end.repository;
 
-import org.antlr.v4.runtime.atn.SemanticContext.OR;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +21,11 @@ public interface Seller_ProductJPA extends JpaRepository<Product, Integer> {
 
     @Query("SELECT g FROM Product g WHERE g.shop.id = ?1 and g.id = ?2")
     Product findProductByIdAndShopId(int shopId, int productId);
+
+    @Query("SELECT g FROM Product g WHERE g.shop.id = ?1 and g.product_code = ?2")
+    Product findProductByProductCodeAndShopId(int shopId, String product_code);
+
+    @Query("SELECT MAX(g.product_code) FROM Product g WHERE g.shop.id = ?1")
+    String findMaxProductCodeByShopId(int shopId);
+
 }

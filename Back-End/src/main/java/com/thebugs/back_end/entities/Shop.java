@@ -29,6 +29,9 @@ public class Shop {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false, length = 60)
+    private String shop_slug;
+
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -49,9 +52,18 @@ public class Shop {
 
     @Column(length = 100)
     private String image;
-
+    
+    // Còn hoạt động hay không
     @Column(nullable = false)
     private Boolean active;
+    
+    // Đã được duyệt hay chưa
+    @Column(nullable = false)
+    private Boolean approve;
+    
+    // Có bị ban không
+    @Column(nullable = true)
+    private Boolean status;
 
     @OneToMany(mappedBy = "shop")
     private List<Product> products;

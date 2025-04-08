@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Select from "react-select";
 import { getToken } from "../../utils/cookie";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
@@ -9,8 +9,13 @@ import Loading from "../../utils/Loading";
 const AddProduct = () => {
       // ================== useState ==================
       const navigate = useNavigate();
+      const [searchParams] = useSearchParams();
       const [isLoading, setIsLoading] = useState(false);
       const [errors, setErrors] = useState({});
+
+      const page = searchParams.get("page") || "1";
+      const search = searchParams.get("search") || "";
+      const sort = searchParams.get("sort") || "DESC";
 
       // Mock data for options
       const [authorOptions, setAuthorOptions] = useState([]);
@@ -89,6 +94,13 @@ const AddProduct = () => {
                         ? Number(value)
                         : value,
             }));
+      };
+
+      // ================== handleBackToList ==================
+      const handleBackToList = () => {
+            navigate(
+                  `/seller/products?page=${page}&searchTerm=${search}&sort=${sort}`
+            );
       };
 
       // ================== handleSelectChange ==================
@@ -171,7 +183,7 @@ const AddProduct = () => {
                                           showSuccessToast(line);
                                     }
                               });
-                              navigate("/seller/products");
+                              handleBackToList();
                         } else {
                               showErrorToast(
                                     data.message.replace(/error:/i, "").trim()
@@ -871,6 +883,7 @@ const AddProduct = () => {
                               {/* Form Actions */}
                               <div className="px-10 py-6 bg-gray-50 flex items-center justify-end gap-x-6">
                                     <button
+                                          onClick={handleBackToList}
                                           type="button"
                                           className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700 transition-colors duration-200"
                                     >

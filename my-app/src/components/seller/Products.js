@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getToken } from "../../utils/cookie";
 import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
@@ -13,6 +13,8 @@ const Products = () => {
       const [isLoading, setIsLoading] = useState(false);
       const [selectedItem, setSelectedItem] = useState();
       const navigate = useNavigate();
+      const [sortOption, setSortOption] = useState("DESC");
+      const [searchParams] = useSearchParams();
 
       const [searchTerm, setSearchTerm] = useState(() => {
             const params = new URLSearchParams(window.location.search);
@@ -28,7 +30,11 @@ const Products = () => {
       //
       // 1. FETCH FUNCTION
       //
-      const fetchData = async (page, keyword = searchTerm) => {
+      const fetchData = async (
+            page,
+            keyword = searchTerm,
+            sort = sortOption
+      ) => {
             try {
                   console.log("Page: ", page);
                   console.log("Search Term: ", keyword);
@@ -43,6 +49,7 @@ const Products = () => {
                               params: {
                                     page: page,
                                     keyword: keyword,
+                                    sort: sort,
                               },
                               withCredentials: true,
                         }
@@ -68,10 +75,22 @@ const Products = () => {
       useEffect(() => {
             fetchData(currentPage, searchTerm);
       }, [currentPage]);
-
+      useEffect(() => {
+            const sortFromUrl = searchParams.get("sort");
+            if (sortFromUrl === "ASC" || sortFromUrl === "DESC") {
+                  setSortOption(sortFromUrl);
+            }
+      }, [searchParams]);
       //
       // 3. HANDLE FUNCTION
       //
+
+      const handleSort = () => {
+            const newSortOption = sortOption === "DESC" ? "ASC" : "DESC";
+            setSortOption(newSortOption);
+            fetchData(currentPage, searchTerm, newSortOption); // Truyền vào sortOption mới
+      };
+
       const handlePageChange = (newPage) => {
             setCurrentPage(newPage);
             const params = new URLSearchParams(window.location.search);
@@ -104,11 +123,15 @@ const Products = () => {
       };
 
       const handleAddProduct = () => {
-            navigate("/seller/addproduct");
+            navigate(
+                  `/seller/addproduct?page=${currentPage}&search=${searchTerm}&sort=${sortOption}`
+            );
       };
 
-      const handleEditProduct = (productId) => {
-            navigate(`/seller/editproduct/${productId}`);
+      const handleEditProduct = (product_code) => {
+            navigate(
+                  `/seller/editproduct/${product_code}?page=${currentPage}&search=${searchTerm}&sort=${sortOption}`
+            );
       };
 
       const handleDeleteProduct = (productId) => {
@@ -232,7 +255,10 @@ const Products = () => {
                                     />
                               </div>
                               <div className="flex space-x-3">
-                                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                    <button
+                                          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                                          onClick={handleSort}
+                                    >
                                           <svg
                                                 className="w-5 h-5 mr-2 text-gray-500"
                                                 fill="none"
@@ -347,7 +373,7 @@ const Products = () => {
                                                             </div>
                                                             <div className="text-xs text-gray-500 mt-1">
                                                                   ID: #
-                                                                  {product.id}
+                                                                  {product.product_code}
                                                             </div>
                                                       </td>
                                                       <td className="px-6 py-4 whitespace-nowrap">
@@ -416,7 +442,7 @@ const Products = () => {
                                                                   <button
                                                                         onClick={() =>
                                                                               handleEditProduct(
-                                                                                    product.id
+                                                                                    product.product_code
                                                                               )
                                                                         }
                                                                         className="text-blue-600 hover:text-blue-900 transition-colors p-1 hover:bg-blue-50 rounded-full"

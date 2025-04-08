@@ -1,7 +1,10 @@
 package com.thebugs.back_end.services;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +31,11 @@ public class Seller_ProductCRUDService {
 
     public Page<Seller_ProductDTO> getProductsByShopId(int shopId, String keyword, String sort, Pageable pageable) {
         ColorUtil.print(ColorUtil.RED, "Start JPA GetProduct");
-        Page<Product> products = g_ProductJPA.findAllByShopIdAndKeyword(shopId, keyword, pageable);
+        String cleaned = keyword.replaceAll("\\s+", "");
+        String keywordPattern = Arrays.stream(cleaned.split(""))
+                .map(ch -> "%" + ch)
+                .collect(Collectors.joining("")) + "%";
+        Page<Product> products = g_ProductJPA.findAllByShopIdAndKeyword(shopId, keywordPattern, pageable);
         ColorUtil.print(ColorUtil.RED, "End JPA GetProduct");
 
         for (Product product : products) {
@@ -43,8 +50,8 @@ public class Seller_ProductCRUDService {
         return products.map(g_ProductConverter::fromEntityToDTO);
     }
 
-    public Seller_ProductDTO findProductByIdAndShopId(Integer shopId, Integer productId) {
-        Product product = g_ProductJPA.findProductByIdAndShopId(shopId, productId);
+    public Seller_ProductDTO findProductByProductCodeAndShopId(Integer shopId, String product_code) {
+        Product product = g_ProductJPA.findProductByProductCodeAndShopId(shopId, product_code);
         if (product == null) {
             return null; // hoặc có thể throw exception tùy vào yêu cầu
         }
@@ -64,7 +71,10 @@ public class Seller_ProductCRUDService {
         } else {
             product.setImages(images);
         }
-
+        String maxProductId = g_ProductJPA.findMaxProductCodeByShopId(product.getShop().getId());
+        String code = generateNextProductCode(product.getShop().getShop_slug(), maxProductId);
+        
+        product.setProduct_code(code);
         try {
             Product savedProduct = g_ProductJPA.save(product);
             if (savedProduct != null && savedProduct.getId() != null) {
@@ -207,4 +217,23 @@ public class Seller_ProductCRUDService {
         }
         messageO.append(messageAdd);
     }
+
+    public String generateNextProductCode(String rawPrefix, String maxProductCode) {
+        // Chuyển prefix thành chữ hoa và thêm _P
+        String prefix = rawPrefix.toUpperCase() + "_P";
+        int nextId = 1;
+
+        if (maxProductCode != null && maxProductCode.startsWith(prefix)) {
+            String numberPart = maxProductCode.substring(prefix.length());
+            try {
+                nextId = Integer.parseInt(numberPart) + 1;
+            } catch (NumberFormatException e) {
+                // Nếu không phải số thì giữ nextId = 1
+            }
+        }
+
+        // Format phần số: ít nhất 3 chữ số (001, 045, 120, 1000...)
+        return prefix + String.format("%03d", nextId);
+    }
+
 }

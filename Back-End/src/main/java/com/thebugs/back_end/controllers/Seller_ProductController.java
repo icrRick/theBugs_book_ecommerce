@@ -117,8 +117,6 @@ public class Seller_ProductController {
             @RequestParam(defaultValue = "1") int page) {
         ResponseData responseData = new ResponseData();
         try {
-            // Pageable pageable = PageRequest.of(page - 1, 10,
-            // Sort.by(Sort.Order.desc("id")));
             Pageable pageable = Pageable.unpaged();
 
             // Lấy danh sách nhà xuất bản
@@ -265,7 +263,7 @@ public class Seller_ProductController {
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
         ResponseData responseData = new ResponseData();
 
-        if (g_ProductService.findProductByIdAndShopId(shopId, productBean.getId()) == null) {
+        if (g_ProductService.findProductByProductCodeAndShopId(shopId, productBean.getProduct_code()) == null) {
             responseData.setStatus(false);
             responseData.setMessage("Không có quyền truy cập");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseData);
@@ -291,11 +289,14 @@ public class Seller_ProductController {
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
 
-    @GetMapping("/getProductById")
-    public ResponseEntity<ResponseData> getProductById(@RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam Integer productId) {
+    @GetMapping("/getProductByProductCode")
+    public ResponseEntity<ResponseData> getProductByProductCode(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam String product_code) {
+        ColorUtil.print(ColorUtil.GREEN, "ProductCode: ");
+        ColorUtil.print(ColorUtil.GREEN, product_code);
         int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
-        Seller_ProductDTO productDTO = g_ProductService.findProductByIdAndShopId(shopId, productId);
+        Seller_ProductDTO productDTO = g_ProductService.findProductByProductCodeAndShopId(shopId, product_code);
         int statusCode = 200;
         ResponseData responseData = new ResponseData();
         if (productDTO.getId() != null) {
