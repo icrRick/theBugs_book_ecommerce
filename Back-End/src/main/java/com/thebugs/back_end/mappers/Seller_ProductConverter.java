@@ -19,8 +19,10 @@ import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.repository.ImageJPA;
 import com.thebugs.back_end.repository.PublisherJPA;
+import com.thebugs.back_end.repository.Seller_ProductJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 import com.thebugs.back_end.services.Seller_ProductAuthorService;
+import com.thebugs.back_end.services.Seller_ProductCRUDService;
 import com.thebugs.back_end.services.Seller_ProductGenreService;
 
 @Component
@@ -36,6 +38,8 @@ public class Seller_ProductConverter {
     private Seller_ProductGenreService g_ProductGenreService;
     @Autowired
     private Seller_ProductAuthorService g_ProductAuthorService;
+    @Autowired
+    private Seller_ProductJPA g_ProductJPA;
 
     public Product fromBeanToEntity(Seller_ProductBean bean) {
         if (bean == null) {
@@ -48,6 +52,8 @@ public class Seller_ProductConverter {
         List<ProductGenre> productGenres = g_ProductGenreService.getProductGenres(bean.getGenres_id(), product);
         List<ProductAuthor> productAuthors = g_ProductAuthorService.getProductAuthors(bean.getAuthors_id(),
                 product);
+        Product oldProduct = g_ProductJPA.findProductByProductCodeAndShopId(bean.getShopId(), bean.getProduct_code());
+
         if (bean.getOldImage() != null && !bean.getOldImage().isEmpty()) {
             List<Image> images = g_ImageJPA.findAllById(bean.getOldImage());
             product.setImages(images);
@@ -57,13 +63,18 @@ public class Seller_ProductConverter {
         product.setWeight(bean.getWeight());
         product.setQuantity(bean.getQuantity());
         product.setPrice(bean.getPrice());
-        product.setActive(bean.isActive());
+        product.setActive(bean.getActive());
         product.setDescription(bean.getDescription());
         product.setShop(shop);
         product.setProductGenres(productGenres);
         product.setProductGenres(productGenres);
         product.setProductAuthors(productAuthors);
         product.setPublisher(publisher);
+        if (oldProduct.getApprove() != null) {
+            product.setApprove(oldProduct.getApprove());
+        } else {
+            product.setApprove(false);
+        }
         if (bean.getProduct_code() != null) {
             product.setProduct_code(bean.getProduct_code());
         }
@@ -84,6 +95,7 @@ public class Seller_ProductConverter {
                 product.getWeight(),
                 product.getDescription(),
                 product.getActive(),
+                product.getApprove(),
                 product.getShop().getId(),
                 product.getPublisher().getId(),
                 product.getImages() != null ? product.getImages().stream()

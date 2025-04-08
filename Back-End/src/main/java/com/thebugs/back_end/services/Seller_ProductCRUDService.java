@@ -73,7 +73,7 @@ public class Seller_ProductCRUDService {
         }
         String maxProductId = g_ProductJPA.findMaxProductCodeByShopId(product.getShop().getId());
         String code = generateNextProductCode(product.getShop().getShop_slug(), maxProductId);
-        
+
         product.setProduct_code(code);
         try {
             Product savedProduct = g_ProductJPA.save(product);

@@ -52,7 +52,7 @@ public class Seller_ProductBean {
     @Size(min = 1, message = "Danh sách tác giả không được bỏ trống")
     private List<Integer> authors_id;
 
-    private boolean active;
+    private Boolean active;
 
     @Override
     public String toString() {

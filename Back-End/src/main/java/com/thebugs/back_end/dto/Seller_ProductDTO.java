@@ -17,6 +17,7 @@ public class Seller_ProductDTO {
         private Double weight;
         private String description;
         private Boolean active;
+        private Boolean approve;
         private Integer shopId;
         private Integer publisher_id;
         private List<ImageDTO> images;
