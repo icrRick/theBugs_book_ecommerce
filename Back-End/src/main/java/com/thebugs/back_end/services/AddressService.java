@@ -19,6 +19,7 @@ public class AddressService {
         private final AddressJPA addressJPA;
         private final AddressMapper addressMapper;
         private final UserService userService;
+
         public AddressService(AddressJPA addressJPA, AddressMapper addressMapper,UserService userService) {
                 this.addressJPA = addressJPA;
                 this.addressMapper = addressMapper;
@@ -53,12 +54,6 @@ public class AddressService {
                                                 "Không tìm thấy địa chỉ có id= " + id));
         }
 
-        public AddressDTO getAddressDefaultByUserId(Integer addressId, Integer userId) {
-                Address address = addressJPA.getAddressDefaultByUserId(addressId, userId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Không tìm thấy địa chỉ:  " + addressId));
-                return addressMapper.toDTO(address);
-        }
 
         public Address findAddressByIdWhereUserId(Integer addressId, Integer userId) {
                 return addressJPA.findAddressByIdWhereUserId(addressId, userId)
@@ -82,8 +77,14 @@ public class AddressService {
                 return addressMapper.toDTO(address);
         }
 
-        public AddressDTO getAddressShopId(Integer shopId){
-                Address address =addressJPA.getAddressShopId(shopId).get();
-                return addressMapper.toDTO(address);
+    
+
+        public Address getAddressShopId(Integer shopId) {
+                Address address = addressJPA.getAddressShopId(shopId)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Không tìm thấy địa chỉ có id = " + shopId));
+                return address;
         }
+
+
 }

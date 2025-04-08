@@ -1,5 +1,6 @@
 package com.thebugs.back_end.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,4 +29,11 @@ public class PromotionProduct {
     @ManyToOne
     @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
+
+    @Column(nullable = false)
+    private int quantity;
+
+    @Column(nullable = false)
+    private int soldQuantity;
+
 }

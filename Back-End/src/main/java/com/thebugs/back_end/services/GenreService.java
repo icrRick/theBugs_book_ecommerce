@@ -1,20 +1,14 @@
 package com.thebugs.back_end.services;
-
 import java.util.ArrayList;
 import java.util.Comparator;
-
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import com.thebugs.back_end.controllers.AddressController;
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.mappers.GenreMapper;
 import com.thebugs.back_end.repository.GenreJPA;
-import com.thebugs.back_end.repository.ProductGenreJPA;
-
 @Service
 public class GenreService {
 
@@ -88,6 +82,7 @@ public class GenreService {
         }
 
         public Genre getGenreById(Integer id) {
+                
                 if (id == null) {
                         throw new IllegalArgumentException("ID thể loại không hợp lệ");
                 }
@@ -95,5 +90,6 @@ public class GenreService {
                                 .orElseThrow(() -> new IllegalArgumentException(
                                                 "Không tìm thấy đối tượng có id= " + id));
         }
+
 
 }

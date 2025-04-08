@@ -9,7 +9,7 @@ import Loading from "../../utils/Loading";
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login } = useAuth();
+  const { login ,userInfo} = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -25,12 +25,17 @@ const Login = () => {
       const response = await axios.post("http://localhost:8080/login", data);
 
       if (response.data.status === true) {
-        if (response.data.data.role === 3) {
+        // if (response.data.data.role === 3) {
+        //   navigate("/admin/dashboard");
+        // } else {
+        //   navigate("/home");
+        // }
+        await login(response.data.data.token);
+        if (userInfo.role === 3) {
           navigate("/admin/dashboard");
-        } else {
+        }else{
           navigate("/home");
         }
-        await login(response.data.data.token);
       } else {
         showErrorToast("Đăng nhập không thành công!");
       }

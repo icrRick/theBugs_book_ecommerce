@@ -85,6 +85,7 @@ public class GenreController {
                 ResponseData responseData = new ResponseData();
                 try {
                         String urlImage = null;
+                        
                         if (genreBean.getImage() != null && !genreBean.getImage().isEmpty()) {
                                 System.out.println("Image: " + genreBean.getImage().getOriginalFilename());
                                 urlImage = CloudinaryUpload.uploadImage(genreBean.getImage());

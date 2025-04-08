@@ -10,11 +10,10 @@ const SelectedAddress = () => {
     }
     const [item, setItems] = useState([]);
     useEffect(() => {
-        const addressId = getAddressId() || '';  // Dùng '' nếu không có addressId
+        const addressId = getAddressId();
         axiosInstance.get(`/user/address/default?addressId=${addressId}`)
             .then((response) => {
                 setItems(response.data.data);
-                localStorage.setItem("userAddress", JSON.stringify(response.data.data));
             })
             .catch((error) => {
                 console.error(error);

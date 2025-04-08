@@ -29,7 +29,7 @@ public class OrderItem {
     private int quantity;
 
     @Column(nullable = false)
-    private Double price;
+    private double price;
 
     @OneToMany(mappedBy = "orderItem")
     private List<Review> reviews;

@@ -1,560 +1,506 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import SelectedAddress from "./SelectedAddress"
-
-import ShippingFree from "../../utils/ShippingFree"
+import { cookie, getAddress } from '../../utils/cookie'
+import { calculateShippingFree } from "../../utils/ShippingFree"
+import CustomerInfo from "./CustomerInfo"
+import axiosInstance from "../../utils/axiosInstance"
 
 const Payment = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [selectedProducts, setSelectedProducts] = useState([])
-  const [totalAmount, setTotalAmount] = useState(0)
-  const [shippingAddress, setShippingAddress] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState("cash")
-  const [selectedVouchers, setSelectedVouchers] = useState([])
-  const [showVoucherModal, setShowVoucherModal] = useState(false)
-  const [selectedShopId, setSelectedShopId] = useState(null)
-  const [shippingFees, setShippingFees] = useState({})
+    const navigate = useNavigate();
+    const { getCartByUser, setCartByUser } = cookie();
+    const [shops, setShops] = useState([]);
+    const [selectedVouchers, setSelectedVouchers] = useState([]);
+    const [paymentMethod, setPaymentMethod] = useState("Thanh toán tiền mặt khi nhận hàng");
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
+    const [selectedShopId, setSelectedShopId] = useState(null);
+    const [shippingFees, setShippingFees] = useState({});
+    const [customerAddress, setCustomerAddress] = useState("");
 
-  // Dữ liệu mẫu cho voucher
-  const vouchers = [
-    { id: 1, code: "VOUCHER1", discount: "10%", minSpend: "100.000đ", maxDiscount: "50.000đ" },
-    { id: 2, code: "VOUCHER2", discount: "20%", minSpend: "200.000đ", maxDiscount: "100.000đ" },
-    { id: 3, code: "VOUCHER3", discount: "30%", minSpend: "300.000đ", maxDiscount: "150.000đ" },
-  ]
+    useEffect(() => {
+        try {
+            const savedCartData = getCartByUser();
+            if (savedCartData) {
+                const cartData = JSON.parse(savedCartData);
+                console.log('Cart Data loaded:', cartData);
 
-  // Thêm hàm lưu trạng thái vào localStorage
-  const saveStateToLocalStorage = () => {
-    try {
-      console.log('Saving to localStorage:', {
-        products: selectedProducts,
-        vouchers: selectedVouchers,
-        amount: totalAmount
-      });
-      localStorage.setItem('paymentSelectedProducts', JSON.stringify(selectedProducts));
-      localStorage.setItem('paymentSelectedVouchers', JSON.stringify(selectedVouchers));
-      localStorage.setItem('paymentTotalAmount', totalAmount.toString());
-    } catch (error) {
-      console.error('Error saving payment state:', error);
-    }
-  }
+                if (cartData.shops && Array.isArray(cartData.shops)) {
+                    setShops(cartData.shops);
 
-  // Thêm hàm khôi phục trạng thái từ localStorage
-  const restoreStateFromLocalStorage = () => {
-    try {
-      const savedProducts = localStorage.getItem('paymentSelectedProducts');
-      const savedVouchers = localStorage.getItem('paymentSelectedVouchers');
-      const savedAmount = localStorage.getItem('paymentTotalAmount');
+                    // Khởi tạo selectedVouchers từ selectedVoucher của mỗi shop
+                    const initialSelectedVouchers = cartData.shops
+                        .filter(shop => shop.selectedVoucher)
+                        .map(shop => ({
+                            shopId: shop.shopId,
+                            voucher: shop.selectedVoucher
+                        }));
 
-      console.log('Restoring from localStorage:', {
-        savedProducts,
-        savedVouchers,
-        savedAmount
-      });
-
-      if (savedProducts) {
-        const parsedProducts = JSON.parse(savedProducts);
-        setSelectedProducts(parsedProducts);
-        calculateTotal(parsedProducts);
-      }
-      if (savedVouchers) {
-        setSelectedVouchers(JSON.parse(savedVouchers));
-      }
-      if (savedAmount) {
-        setTotalAmount(parseFloat(savedAmount));
-      }
-    } catch (error) {
-      console.error('Error restoring payment state:', error);
-    }
-  }
-
-  // Sửa lại useEffect để đảm bảo thứ tự thực thi
-  useEffect(() => {
-    console.log('Location state changed:', location.state);
-    
-    const initializeData = async () => {
-      if (location.state?.selectedProducts) {
-        console.log('Setting data from location state');
-        setSelectedProducts(location.state.selectedProducts);
-        calculateTotal(location.state.selectedProducts);
-        if (location.state?.selectedVouchers) {
-          setSelectedVouchers(location.state.selectedVouchers);
+                    setSelectedVouchers(initialSelectedVouchers);
+                } else {
+                    console.error('Invalid cart data format');
+                    navigate('/cart');
+                }
+            } else {
+                console.error('No cart data found');
+                navigate('/cart');
+            }
+        } catch (error) {
+            console.error('Error loading cart data:', error);
+            navigate('/cart');
         }
-        // Lưu state mới vào localStorage
-        saveStateToLocalStorage();
-      } else {
-        console.log('No location state, restoring from localStorage');
-        restoreStateFromLocalStorage();
-      }
+    }, []);
+
+    useEffect(() => {
+        const loadShippingFees = async () => {
+            const fees = {};
+            for (const shop of shops) {
+                const fee = await calculateShippingFree(shop);
+                fees[shop.shopId] = fee;
+            }
+            setShippingFees(fees);
+        };
+
+        if (shops.length > 0) {
+            loadShippingFees();
+        }
+    }, [shops]);
+
+    const handleSelectVoucher = (shopId, voucher) => {
+        console.log('Selecting voucher for shop:', shopId, voucher);
+
+        // Cập nhật selectedVoucher trong shops
+        const updatedShops = shops.map(shop => {
+            if (shop.shopId === shopId) {
+                return {
+                    ...shop,
+                    selectedVoucher: voucher
+                };
+            }
+            return shop;
+        });
+        setShops(updatedShops);
+
+        // Cập nhật selectedVouchers state
+        const newVouchers = [...selectedVouchers];
+        const existingIndex = newVouchers.findIndex(v => v.shopId === shopId);
+        if (existingIndex !== -1) {
+            newVouchers[existingIndex] = { shopId, voucher };
+        } else {
+            newVouchers.push({ shopId, voucher });
+        }
+        setSelectedVouchers(newVouchers);
+
+        // Cập nhật cookie
+        const savedCartData = getCartByUser();
+        if (savedCartData) {
+            const cartData = JSON.parse(savedCartData);
+            const updatedCartData = {
+                ...cartData,
+                shops: updatedShops
+            };
+            setCartByUser(JSON.stringify(updatedCartData));
+        }
+
+        setShowVoucherModal(false);
     };
 
-    initializeData();
-  }, [location.state]);
+    const handleRemoveVoucher = (shopId) => {
+        console.log('Removing voucher for shop:', shopId);
 
-  // Sửa lại useEffect lưu state để tránh lưu state rỗng
-  useEffect(() => {
-    if (selectedProducts.length > 0) {
-      console.log('State changed, saving to localStorage');
-      saveStateToLocalStorage();
+        // Cập nhật selectedVoucher trong shops
+        const updatedShops = shops.map(shop => {
+            if (shop.shopId === shopId) {
+                return {
+                    ...shop,
+                    selectedVoucher: null
+                };
+            }
+            return shop;
+        });
+        setShops(updatedShops);
+
+        // Cập nhật selectedVouchers state
+        const newVouchers = selectedVouchers.filter(v => v.shopId !== shopId);
+        setSelectedVouchers(newVouchers);
+
+        // Cập nhật cookie
+        const savedCartData = getCartByUser();
+        if (savedCartData) {
+            const cartData = JSON.parse(savedCartData);
+            const updatedCartData = {
+                ...cartData,
+                shops: updatedShops
+            };
+            setCartByUser(JSON.stringify(updatedCartData));
+        }
+    };
+
+    const calculateShopTotal = (shop) => {
+        return shop.products.reduce((total, product) =>
+            total + (product.productPrice * product.productQuantity), 0);
+    };
+
+    const calculateVoucherDiscount = (shopTotal, voucher) => {
+        if (!voucher || !voucher.discountPercentage || shopTotal < (voucher.minTotalOrder || 0)) return 0;
+        const discountAmount = Math.floor((shopTotal * voucher.discountPercentage) / 100);
+        return Math.min(discountAmount, voucher.maxDiscount || 0);
+    };
+
+    const formatCurrency = (amount) => {
+        return amount.toLocaleString('vi-VN');
+    };
+
+    const calculateTotalDiscount = () => {
+        return shops.reduce((total, shop) => {
+            const shopTotal = calculateShopTotal(shop);
+            const voucher = selectedVouchers.find(v => v.shopId === shop.shopId)?.voucher;
+            return total + calculateVoucherDiscount(shopTotal, voucher);
+        }, 0);
     }
-  }, [selectedProducts, selectedVouchers, totalAmount]);
 
-  // Thêm useEffect để log khi component unmount
-  useEffect(() => {
-    return () => {
-      console.log('Payment component unmounting, current state:', {
-        products: selectedProducts,
-        vouchers: selectedVouchers,
-        amount: totalAmount
-      });
+    const calculateTotalShipping = () => {
+        return shops.reduce((total, shop) => total + (shippingFees[shop.shopId] || 0), 0);
     };
-  }, []);
 
-  useEffect(() => {
-    try {
-      const cartState = localStorage.getItem('cartState');
-      if (cartState) {
-        const { products: savedProducts } = JSON.parse(cartState);
-        if (savedProducts) {
-          setSelectedProducts(savedProducts);
-          calculateTotal(savedProducts);
+    const calculateFinalTotal = () => {
+        return shops.reduce((total, shop) =>
+            total + calculateShopTotal(shop) + (shippingFees[shop.shopId] || 0), 0) - calculateTotalDiscount();
+    };
+
+    const handlePayment = async () => {
+      const responseData = shops.map(shop => {
+        return {
+          shopId: shop.shopId,
+          voucherId: shop.selectedVoucher?.id || null,
+          shippingFee: shippingFees[shop.shopId] || 0,
+          paymentMethod: paymentMethod,
+          customerInfo: customerAddress,
+          cartItems: shop.products.map(product => ({
+            productId: product.productId,
+            price: product.productPromotionValue > 0 ? (product.productPrice *(1-product.productPromotionValue/100)): product.productPrice,
+            quantity: product.productQuantity,
+          })),
+        };
+      });
+
+      if(responseData.length > 0){
+        const response = await axiosInstance.post("/user/payment/payment-ordered", responseData);
+        if(response.status === 200){
+         
+          navigate('/home');
+        }else{
+          console.log("lỗi");
         }
       }
 
-      const savedVouchers = localStorage.getItem('paymentSelectedVouchers');
-      if (savedVouchers) {
-        setSelectedVouchers(JSON.parse(savedVouchers));
-      }
-
-      const savedAmount = localStorage.getItem('paymentTotalAmount');
-      if (savedAmount) {
-        setTotalAmount(parseFloat(savedAmount));
-      }
-    } catch (error) {
-      console.error('Error loading payment data:', error);
+      console.log(JSON.stringify(responseData, null, 2));
     }
-  }, []);
 
-  // Xóa các useEffect không cần thiết và giữ lại chức năng cần thiết
-  useEffect(() => {
-    // Cleanup function - xóa dữ liệu khỏi localStorage khi rời khỏi trang Payment
-    return () => {
-      try {
-        localStorage.removeItem('paymentSelectedProducts');
-        localStorage.removeItem('paymentSelectedVouchers');
-        localStorage.removeItem('paymentTotalAmount');
-      } catch (error) {
-        console.error('Error cleaning up payment data:', error);
-      }
+    const handleBack = () => {
+        navigate('/cart');
+    }
+
+    // Sửa lại hàm getSelectedVoucherForShop
+    const getSelectedVoucherForShop = (shopId) => {
+        const shop = shops.find(s => s.shopId === shopId);
+        return shop?.selectedVoucher || null;
     };
-  }, []);
 
-  // Nhóm sản phẩm theo shop
-  const groupedProducts = selectedProducts.reduce((acc, product) => {
-    const shopId = product.shopId
-    if (!acc[shopId]) {
-      acc[shopId] = {
-        shopId: shopId,
-        shopName: product.shopName,
+    return (
+        <div className="container mx-auto">
+            <h2 className="text-2xl font-bold mb-6">Thanh toán</h2>
 
-        products: [],
-        voucher: null,
-        shipFree: false,
-        paymentMethod: paymentMethod,
-      }
-    }
-    acc[shopId].products.push(product)
-    return acc
-  }, {})
+            <div className="grid grid-cols-12 gap-6">
+                <div className="col-span-8 space-y-6">
+                    {shops.map((shop) => (
+                        <div key={shop.shopId} className="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div className="p-4 border-b border-gray-200 bg-gray-50">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold text-gray-700">{shop.shopName}</h3>
+                                    <div className="flex items-center space-x-4 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                        <span className="text-sm text-gray-600">Phí vận chuyển</span>
+                                        <span className="text-sm font-medium text-red-600">
+                                            {shippingFees[shop.shopId]?.toLocaleString() || '0'}đ
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
+                            <div className="divide-y divide-gray-200">
+                                {shop.products.map((product) => (
+                                    <div key={product.productId} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <img
+                                                    src={product.productImage || "/placeholder.svg"}
+                                                    alt={product.productName}
+                                                    className="w-20 h-20 object-cover rounded-lg shadow-sm"
+                                                />
+                                                <div className="space-y-2">
+                                                    <h4 className="font-medium text-gray-900">
+                                                        {product.productName}
+                                                        <p className="text-sm text-gray-600">
+                                                            {product.productQuantity} x {product.productPrice.toLocaleString()}đ
+                                                        </p>
+                                                    </h4>
+                                                   
+                                                    <div className="flex flex-col space-y-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-gray-500">Thể loại:</span>
+                                                            {product?.genres?.length > 0 ? (
+                                                                <span className="text-xs text-gray-600">
+                                                                    {product.genres.map(genre => genre.name).join(', ')}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-gray-400 italic">Chưa có thể loại</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-gray-500">Tác giả:</span>
+                                                            {product?.authors?.length > 0 ? (
+                                                                <span className="text-xs text-gray-600">
+                                                                    {product.authors.map(author => author.name).join(', ')}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-gray-400 italic">Chưa có tác giả</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-gray-500">Nhà xuất bản:</span>
+                                                            <span className="text-xs text-gray-600">
+                                                                {product?.publisher?.name || "Chưa có nhà xuất bản"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="font-semibold text-red-600">
+                                                {(product.productPrice * product.productQuantity).toLocaleString()}đ
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
 
-
-  // Tính tổng tiền bao gồm phí ship
-  const calculateTotal = (products) => {
-    const subtotal = products.reduce((sum, product) => {
-      const price = Number.parseInt(product.discountPrice.replace(/[^\d]/g, ""))
-      return sum + price * product.quantity
-    }, 0);
-
-    // Cộng thêm phí ship của tất cả các shop
-    const totalShipping = Object.keys(groupedProducts).reduce((sum, shopId) => {
-      return sum +0;
-    }, 0);
-
-    setTotalAmount(subtotal + totalShipping);
-  };
-
-  const paymentData = Object.values(groupedProducts).map((shop) => ({
-    shopid: shop.shopId,
-    shopname: shop.shopName,
-    vouchers: shop.voucher ? [shop.voucher] : [],
-    products: shop.products,
-    shipfree: shop.shipFree,
-    paymentmethod: shop.paymentMethod,
-  }))
-
-  const handlePayment = () => {
-    console.log(paymentData);
-    // Chỉ xóa localStorage sau khi thanh toán thành công
-    try {
-      localStorage.removeItem('cartState');
-      localStorage.removeItem('paymentSelectedVouchers');
-      localStorage.removeItem('paymentTotalAmount');
-    } catch (error) {
-      console.error('Error cleaning up payment data:', error);
-    }
-  }
-
-  const handleRemoveVoucher = (shopId) => {
-    setSelectedVouchers((prevVouchers) => prevVouchers.filter((voucher) => voucher.shopId !== shopId))
-  }
-
-  const handleSelectVoucher = (shopId, voucher) => {
-    const shop = Object.values(groupedProducts).find((s) => s.shopId === shopId)
-    setSelectedVouchers((prevVouchers) => {
-      const newVouchers = prevVouchers.filter((v) => v.shopId !== shopId)
-      return [
-        ...newVouchers,
-        {
-          shopId,
-          shopName: shop.shopName,
-          voucher,
-        },
-      ]
-    })
-    setShowVoucherModal(false)
-  }
-
-  // Save checked product IDs when returning to Cart
-  const handleBack = () => {
-    // Không cần làm gì với localStorage vì đã lưu cart state đầy đủ
-    navigate('/cart');
-  }
-
-  // Sửa lại useEffect để lưu trạng thái checked khi có thay đổi
-  useEffect(() => {
-    if (selectedProducts.length > 0) {
-      const productsToSave = selectedProducts.map(product => ({
-        ...product,
-        checked: true
-      }));
-      localStorage.setItem('paymentSelectedProducts', JSON.stringify(productsToSave));
-    }
-  }, [selectedProducts]);
-
-  return (
-    <div className="container mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Thanh toán</h2>
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Cột trái - Danh sách sản phẩm theo shop */}
-        <div className="col-span-8 space-y-6">
-          {Object.values(groupedProducts).map((shop) => (
-            <div key={shop.shopId} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-gray-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                    </svg>
-                    <h3 className="text-lg font-semibold text-gray-700">{shop.shopName}</h3>
-                  </div>
-                  <div className="flex items-center space-x-4 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    <span className="text-sm text-gray-600">Phí vận chuyển {shop.fromWardCode}</span>
-                    <span className="text-sm font-medium text-red-600">
-                    <ShippingFree shop={shop} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="divide-y divide-gray-200">
-                {shop.products.map((product) => (
-                  <div key={product.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          className="w-20 h-20 object-cover rounded-lg shadow-sm"
-                        />
-                        <div>
-                          <h4 className="font-medium text-gray-900">{product.name}</h4>
-                          <div className="flex items-center space-x-4 mt-1">
-                            <p className="text-sm text-gray-600">Số lượng: {product.quantity}</p>
-                            <p className="text-sm text-gray-500 line-through">{product.price}</p>
-                          </div>
-                          <p className="text-red-600 font-semibold mt-1">{product.discountPrice}</p>
+                            <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                                <div className="flex flex-col space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedShopId(shop.shopId);
+                                                setShowVoucherModal(true);
+                                            }}
+                                            className="flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                                                <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                                            </svg>
+                                            <span>{getSelectedVoucherForShop(shop.shopId) ? 'Đổi mã khác' : 'Chọn mã giảm giá'}</span>
+                                        </button>
+                                        {getSelectedVoucherForShop(shop.shopId) && (
+                                            <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
+                                                <span className="text-sm font-medium">
+                                                    Mã: {getSelectedVoucherForShop(shop.shopId).codeVoucher}
+                                                    <span className="text-red-600 font-medium">
+                                                        (-{formatCurrency(calculateVoucherDiscount(
+                                                            calculateShopTotal(shop),
+                                                            getSelectedVoucherForShop(shop.shopId)
+                                                        ))}đ)
+                                                    </span>
+                                                </span>
+                                                <button
+                                                    onClick={() => handleRemoveVoucher(shop.shopId)}
+                                                    className="text-gray-400 hover:text-red-500 transition-colors duration-200"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-red-600">
-                          {(
-                            Number.parseInt(product.discountPrice.replace(/[^\d]/g, "")) * product.quantity
-                          ).toLocaleString()}
-                          đ
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Voucher của shop */}
-              {selectedVouchers.find((v) => v.shopId === shop.shopId) ? (
-                <div className="p-4 border-t border-gray-200 bg-green-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-green-700 font-medium">
-                        {selectedVouchers.find((v) => v.shopId === shop.shopId).voucher.code}
-                      </span>
-                      <span className="text-sm text-green-600">
-                        - Giảm {selectedVouchers.find((v) => v.shopId === shop.shopId).voucher.discount}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedShopId(shop.shopId)
-                          setShowVoucherModal(true)
-                        }}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleRemoveVoucher(shop.shopId)}
-                        className="text-green-700 hover:text-green-900"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                    ))}
                 </div>
-              ) : (
-                <div className="p-4 border-t border-gray-200 bg-gray-50">
-                  <button
-                    onClick={() => {
-                      setSelectedShopId(shop.shopId)
-                      setShowVoucherModal(true)
-                    }}
-                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                      <path
-                        fillRule="evenodd"
-                        d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>Chọn mã giảm giá</span>
-                  </button>
+
+                <div className="col-span-4 space-y-6">
+                    <SelectedAddress />
+                    <CustomerInfo onAddressChange={setCustomerAddress} />
+
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                        <h3 className="text-lg font-semibold mb-4">Phương thức thanh toán</h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id="cash"
+                                    name="paymentMethod"
+                                    value="Thanh toán tiền mặt khi nhận hàng"
+                                    checked={paymentMethod === "Thanh toán tiền mặt khi nhận hàng"}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="h-4 w-4 text-red-600"
+                                />
+                                <label htmlFor="cash" className="ml-2">Thanh toán tiền mặt khi nhận hàng</label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id="bank"
+                                    name="paymentMethod"
+                                    value="Thanh toán chuyển khoản ngân hàng"
+                                    checked={paymentMethod === "Thanh toán chuyển khoản ngân hàng"}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="h-4 w-4 text-red-600"
+                                />
+                                <label htmlFor="bank" className="ml-2">Chuyển khoản ngân hàng</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Tổng tiền hàng:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {shops.reduce((sum, shop) =>
+                                        sum + calculateShopTotal(shop), 0).toLocaleString()}đ
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Giảm giá:</span>
+                                <span className="text-green-600 font-medium">-{calculateTotalDiscount().toLocaleString()}đ</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Phí vận chuyển:</span>
+                                <span className="text-gray-900">{calculateTotalShipping().toLocaleString()}đ</span>
+                            </div>
+                            <div className="border-t border-gray-200 pt-3 mt-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-lg font-medium">Tổng thanh toán:</span>
+                                    <span className="text-2xl font-bold text-red-600">
+                                        {calculateFinalTotal().toLocaleString()}đ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex space-x-4 mt-6">
+                            <button
+                                onClick={handleBack}
+                                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                                Trở về
+                            </button>
+                            <button
+                                onClick={handlePayment}
+                                className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Xác nhận đặt hàng
+                            </button>
+                        </div>
+                    </div>
                 </div>
-              )}
             </div>
-          ))}
+
+            {showVoucherModal && selectedShopId && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex flex-col">
+                                <h3 className="text-lg font-semibold text-gray-800">Chọn mã giảm giá</h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Shop: {shops.find(shop => shop.shopId === selectedShopId)?.shopName}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowVoucherModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="space-y-3 sm:space-y-4">
+                            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Tổng tiền đơn hàng:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formatCurrency(calculateShopTotal(shops.find(shop => shop.shopId === selectedShopId)))}đ
+                                    </span>
+                                </div>
+                            </div>
+                            {(() => {
+                                const selectedShop = shops.find(shop => shop.shopId === selectedShopId);
+                                const shopVouchers = Array.isArray(selectedShop?.vouchers) ? selectedShop.vouchers : [];
+
+                                if (shopVouchers.length === 0) {
+                                    return (
+                                        <div className="text-center py-4 text-gray-500">
+                                            Không có voucher nào khả dụng
+                                        </div>
+                                    );
+                                }
+
+                                return shopVouchers.map((voucher) => {
+                                    const shopTotal = calculateShopTotal(selectedShop);
+                                    const discountAmount = Math.floor((shopTotal * voucher.discountPercentage) / 100);
+                                    const finalDiscount = Math.min(discountAmount, voucher.maxDiscount);
+                                    const isValidTotal = shopTotal >= voucher.minTotalOrder;
+
+                                    return (
+                                        <div
+                                            key={voucher.id || voucher.codeVoucher}
+                                            className={`border rounded-lg p-3 sm:p-4 transition-all duration-200 hover:shadow-md ${isValidTotal
+                                                ? "hover:border-blue-500 cursor-pointer hover:bg-blue-50"
+                                                : "border-gray-200 bg-gray-50 opacity-75"
+                                                }`}
+                                            onClick={() => isValidTotal && handleSelectVoucher(selectedShopId, voucher)}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-semibold text-blue-600 text-base sm:text-lg">{voucher.codeVoucher}</h4>
+                                                    <div className="text-xs sm:text-sm space-y-1 mt-1">
+                                                        <p className="text-gray-600">
+                                                            Giảm {voucher.discountPercentage}% tối đa {formatCurrency(voucher.maxDiscount)}đ
+                                                        </p>
+                                                        {isValidTotal ? (
+                                                            <div className="text-green-600 space-y-1">
+                                                                <p>Giảm {voucher.discountPercentage}% = {formatCurrency(discountAmount)}đ</p>
+                                                                {discountAmount > voucher.maxDiscount && (
+                                                                    <p>→ Áp dụng giảm tối đa: {formatCurrency(finalDiscount)}đ</p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-red-500">
+                                                                Đơn tối thiểu {formatCurrency(voucher.minTotalOrder)}đ
+                                                                <br />
+                                                                Cần mua thêm {formatCurrency(voucher.minTotalOrder - shopTotal)}đ
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right text-xs sm:text-sm text-gray-500">
+                                                    <p>Còn lại: {voucher.quantity}</p>
+                                                    {voucher.expireDate && (
+                                                        <p className="mt-1">HSD: {new Date(voucher.expireDate).toLocaleDateString()}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-
-        {/* Cột phải - Thông tin đặt hàng và thanh toán */}
-        <div className="col-span-4 space-y-6">
-          {/* Thông tin giao hàng */}
-          <SelectedAddress />
-
-          {/* Phương thức thanh toán */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Phương thức thanh toán</h3>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="cash"
-                  name="paymentMethod"
-                  value="cash"
-                  checked={paymentMethod === "cash"}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="h-4 w-4 text-red-600"
-                />
-                <label htmlFor="cash" className="ml-2">
-                  Thanh toán tiền mặt khi nhận hàng
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="bank"
-                  name="paymentMethod"
-                  value="bank"
-                  checked={paymentMethod === "bank"}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="h-4 w-4 text-red-600"
-                />
-                <label htmlFor="bank" className="ml-2">
-                  Chuyển khoản ngân hàng
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Voucher */}
-          {selectedVouchers.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Khuyến mãi</h3>
-              <div className="space-y-4">
-                {selectedVouchers.map((shopVoucher) => (
-                  <div
-                    key={shopVoucher.shopId}
-                    className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-600">{shopVoucher.shopName}</span>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-green-700 font-medium">{shopVoucher.voucher.code}</span>
-                        <span className="text-sm text-green-600">- Giảm {shopVoucher.voucher.discount}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Tối thiểu {shopVoucher.voucher.minSpend}</p>
-                        <p className="text-sm text-gray-500">Tối đa {shopVoucher.voucher.maxDiscount}</p>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveVoucher(shopVoucher.shopId)}
-                        className="text-green-700 hover:text-green-900"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {selectedVouchers.length === 0 && (
-                  <div className="text-center text-gray-500 py-4">Không có mã giảm giá nào được chọn</div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tổng tiền và nút thanh toán */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Tạm tính:</span>
-                <span className="text-gray-900">{(totalAmount + 30000).toLocaleString()}đ</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Giảm giá:</span>
-                <span className="text-green-600">-50.000đ</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Khuyến mãi:</span>
-                <span className="text-green-600">-50.000đ</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Phí vận chuyển:</span>
-                <span className="text-gray-900">30.000đ</span>
-              </div>
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Tổng tiền:</span>
-                  <span className="text-2xl font-bold text-red-600">{totalAmount.toLocaleString()}đ</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-4 mt-6">
-              <button
-                onClick={handleBack}
-                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Trở về
-              </button>
-              <button
-                onClick={handlePayment}
-                className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Xác nhận đặt hàng
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Voucher Modal */}
-      {showVoucherModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-800">Chọn mã giảm giá</h3>
-              <button onClick={() => setShowVoucherModal(false)} className="text-gray-500 hover:text-gray-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              {vouchers.map((voucher) => (
-                <div
-                  key={voucher.id}
-                  className="border rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors duration-200 hover:bg-blue-50"
-                  onClick={() => handleSelectVoucher(selectedShopId, voucher)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-blue-600 text-lg">{voucher.code}</h4>
-                      <p className="text-sm text-gray-600 mt-1">Giảm {voucher.discount}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Tối thiểu {voucher.minSpend}</p>
-                      <p className="text-sm text-gray-500">Tối đa {voucher.maxDiscount}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+    )
 }
 
 export default Payment

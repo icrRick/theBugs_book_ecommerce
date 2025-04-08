@@ -162,22 +162,6 @@ public class AddressController {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
         }
-        @GetMapping("/defaultShopAddress")
-        public ResponseEntity<ResponseData> defaultShopAddress(
-                        @RequestParam Integer shopId) {
-                ResponseData responseData = new ResponseData();
-                try {
-                        AddressDTO addressDTO = addressService.getAddressShopId(shopId);
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lấy địa chỉ shop thành công");
-                        responseData.setData(addressDTO);
-                        return ResponseEntity.ok(responseData);
-                } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-                }
-        }
-
+      
+          
 }

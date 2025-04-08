@@ -31,19 +31,25 @@ public class Product {
     private String name;
 
     @Column
-    private Double weight;
+    private double weight;
 
     @Column(nullable = false)
     private int quantity;
 
     @Column(nullable = false)
-    private Double price;
+    private double price;
 
     @Column(nullable = false)
-    private Boolean active;
+    private boolean active;
+
+    @Column(nullable = false)
+    private boolean approve;
 
     @Column(nullable = false)
     private String description;
+
+    @Column(nullable = false)
+    private String productCode;
 
     @OneToMany(mappedBy = "product")
     private List<Image> images;

@@ -43,7 +43,6 @@ const EditPromotion = lazy(() => import("../components/seller/EditPromotion"))
 const AddProduct = lazy(() => import("../components/seller/AddProduct"));
 const EditProduct = lazy(() => import("../components/seller/EditProduct"));
 const Test = lazy(() => import("../components/auth/Test"));
-const AddGenre = lazy(() => import("../components/admin/AddGenre"));
 const Publishers = lazy(() => import("../components/admin/Publishers"));
 const Authors = lazy(() => import("../components/admin/Authors"));
 const AddAddress = lazy(() => import("../components/user/AddAddress"));
@@ -89,7 +88,6 @@ export const USER_ROUTES = [
 export const ADMIN_ROUTES = [
   { path: 'dashboard', element: <Dashboard /> },
   { path: 'genres', element: <Genres /> },
-  { path: 'addgenre', element: <AddGenre /> },
   { path: 'publishers', element: <Publishers /> },
   { path: 'authors', element: <Authors /> },
 ]

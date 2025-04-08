@@ -2,6 +2,7 @@ package com.thebugs.back_end.services;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,8 @@ public class VoucherService {
         private VoucherMapper voucherMapper;
 
         public Voucher getVoucherById(Integer id) {
-                if (id == null) {
-                        throw new IllegalArgumentException("Id Không được null");
-                }
-                return voucherJPA.findById(id).orElseThrow(() -> new IllegalArgumentException(
-                                "Không tìm thấy đối tượng Voucher có id= " + id));
+                System.out.println("ID vouchher: " + id);
+                return voucherJPA.findById(id).orElse(null);
 
         }
 
@@ -55,7 +53,7 @@ public class VoucherService {
                 return voucherMapper.toDTO(voucher);
         }
 
-        public VoucherDTO saveVoucher(String authorizationHeader,Voucher voucher) {
+        public VoucherDTO saveVoucher(String authorizationHeader, Voucher voucher) {
                 voucher.setShop(userService.getUserToken(authorizationHeader).getShop());
                 Voucher save = voucherJPA.save(voucher);
                 return voucherMapper.toDTO(save);
@@ -76,6 +74,14 @@ public class VoucherService {
         public int total(String authorizationHeader, Date startDate, Date expireDate) {
                 return voucherJPA.countByShopAndDateRange(
                                 userService.getUserToken(authorizationHeader).getShop().getId(), startDate, expireDate);
+        }
+
+        public List<VoucherDTO> findByShopId(Integer shopId) {
+                List<Voucher> vouchers = voucherJPA.findByShopId(shopId);
+                return vouchers.stream()
+                                .map(voucherMapper::toDTO)
+                                .sorted((v1, v2) -> v2.getId().compareTo(v1.getId()))
+                                .collect(Collectors.toList());
         }
 
 }

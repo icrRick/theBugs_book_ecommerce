@@ -28,6 +28,28 @@ export const getAddressId = () => {
 export const removeAddressId = () => {
         return Cookies.remove('ADDRESS_ID');
 };
+
+export const setCartByUser = (cartItems) => {
+        return Cookies.set('CARTITEMS', cartItems);
+};
+export const getCartByUser = () => {
+        return Cookies.get('CARTITEMS');
+};
+export const removeCartByUser = () => {
+        return Cookies.remove('CARTITEMS');
+};
+
+export const getCartByUserChecked = () => {
+        return Cookies.get('CARTITEMSCHECKED');
+};
+export const setCartByUserChecked  = (cartItems) => {
+        return Cookies.set('CARTITEMSCHECKED', cartItems);
+};
+export const removeCartByUserChecked  = () => {
+        return Cookies.remove('CARTITEMSCHECKED');
+};
+
+
 export const cookie= () => {
         return {
                 setToken,
@@ -39,5 +61,8 @@ export const cookie= () => {
                 setAddressId,
                 getAddressId,
                 removeAddressId,
+                setCartByUser,
+                getCartByUser,
+                removeCartByUser,
         };
 }

@@ -1,13 +1,11 @@
 package com.thebugs.back_end.services;
 
-import com.thebugs.back_end.controllers.AddressController;
-import com.thebugs.back_end.dto.CartItemDTO;
-import com.thebugs.back_end.dto.ProductCartItemDTO;
+import com.thebugs.back_end.beans.CartBean;
+import com.thebugs.back_end.beans.CartItemBean;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderItem;
 import com.thebugs.back_end.entities.User;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,50 +15,73 @@ import org.springframework.stereotype.Service;
 @Service
 public class PaymentService {
 
-//         @Autowired
-//         private UserService userService;
+    @Autowired
+    private CartItemService cartItemService;
 
-//         @Autowired
-//         private OrderService orderService;
-//         @Autowired
-//         private SellerService sellerService;
-//         @Autowired
-//         private CartService cartService;
+    @Autowired
+    private UserService userService;
 
-//         @Autowired
-//         private OrderStatusService orderStatusService;
+    @Autowired
+    private ProductService productService;
 
-//         @Autowired
-//         private ProductService productService;
+    @Autowired
+    private ShopService shopService;
 
-//         public boolean placeOrderByUser(User user, String customerInfo, List<Integer> voucherId) {
+    @Autowired
+    private VoucherService voucherService;
 
-//                 List<CartItemDTO> cartItemDTOs = cartService.getCartItemsByUser(user);
-//                 for (CartItemDTO cartItemDTO : cartItemDTOs) {
-//                         Order order = new Order();
-//                         order.setCustomerInfo(customerInfo);
-//                         order.setPaymentMethod(null);
-//                         order.setPaymentStatus(null);
-//                         // order.setNoted();
-//                         order.setShippingFee(0.0);
-//                         order.setCreatedAt(new Date());
-//                         order.setOrderStatus(orderStatusService.getOrderStatusById(1));
+    @Autowired
+    private OrderStatusService orderStatusService;
 
-//                         // order.setOrderItems(null);
-//                         order.setUser(user);
+    @Autowired
+    private OrderService orderService;
 
-//                         order.setVoucher(null);
-//                         order.setShop(sellerService.getShopById(cartItemDTO.getShopId()));
-//                         Order saveOrder = orderService.saveOrder(order);
-//                         for (ProductCartItemDTO productItem : cartItemDTO.getProducts()) {
-//                                 OrderItem orderItem = new OrderItem();
-//                                 orderItem.setOrder(saveOrder);
-//                                 orderItem.setProduct(productService.findProductById(productItem.getProductId()));
-//                                 orderItem.setQuantity(productItem.getCartItemQuantity());
-//                                 orderItem.setPrice(productItem.getProductPrice() * productItem.getPromotionValue());
-//                         }
-//                 }
-//                 return true;
-//         }
-// }
+    @Autowired
+    private OrderItemService orderItemService;
+
+
+
+    public boolean createOrder(String authorizationHeader, List<CartBean> cartBeans) {
+        // if (cartBeans == null || cartBeans.isEmpty()) {
+        //     throw new IllegalArgumentException("Giỏ hàng không được null hoặc rỗng");
+        // }
+        User user = userService.getUserToken(authorizationHeader);
+        for (CartBean cartBean2 : cartBeans) {
+            Order order = new Order();
+            System.out.println("cartBean2.getShopId() = " + cartBean2.getShopId());
+            System.out.println("cartBean2.getPaymentMethod() = " + cartBean2.getPaymentMethod());
+            order.setUser(user);
+            order.setShop(shopService.getShopById(cartBean2.getShopId()));
+            order.setPaymentMethod(cartBean2.getPaymentMethod());
+            order.setCustomerInfo(cartBean2.getCustomerInfo());
+            if (cartBean2.getVoucherId() != null) {
+                order.setVoucher(voucherService.getVoucherById(cartBean2.getVoucherId()));
+            } else {
+                order.setVoucher(null);  // hoặc set một giá trị mặc định nếu cần
+            }
+            order.setShippingFee(cartBean2.getShippingFee());
+            order.setCreatedAt(new Date());
+            order.setNoted(null);
+            order.setOrderStatus(orderStatusService.getOrderStatusById(1));
+            order.setPaymentStatus("Chưa thanh toán");
+
+            Order savedOrder = orderService.saveOrder(order);
+            for (CartItemBean cartItemBean : cartBean2.getCartItems()) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(savedOrder);
+                orderItem.setProduct(productService.getProductById(cartItemBean.getProductId()));
+                orderItem.setQuantity(cartItemBean.getQuantity());
+                orderItem.setPrice(cartItemBean.getPrice());
+
+                orderItemService.saveOrderItem(orderItem);
+          
+                productService.updateProductQuantity(cartItemBean.getProductId(), cartItemBean.getQuantity());
+
+                cartItemService.deleteCartItem(authorizationHeader, cartItemBean.getProductId());
+            }
+        }
+
+        return true;
+
+    }
 }

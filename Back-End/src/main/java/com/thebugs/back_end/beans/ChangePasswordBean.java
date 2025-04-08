@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ChangePasswordBean {
-        private Integer id;
+     
         @NotBlank(message = "Vui lòng nhập mật khẩu cũ")
         private String pwOld;
         @NotBlank(message = "Vui lòng nhập mật khẩu mới")

@@ -49,7 +49,16 @@ public class Shop {
     private String image;
 
     @Column(nullable = false)
-    private Boolean active;
+    private boolean active;
+
+    @Column(nullable = false)
+    private boolean approve;
+
+    @Column(nullable = false)
+    private boolean status;
+
+    @Column(nullable = false)
+    private String shopSlug;
 
     @OneToMany(mappedBy = "shop")
     private List<Product> products;

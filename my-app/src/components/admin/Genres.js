@@ -364,7 +364,7 @@ const Genres = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Hình ảnh <span className="text-red-500">*</span>
+                      Hình ảnh 
                     </label>
                     <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors duration-200">
                       <div className="space-y-2 text-center">

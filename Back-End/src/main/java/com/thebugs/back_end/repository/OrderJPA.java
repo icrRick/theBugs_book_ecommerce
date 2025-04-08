@@ -45,4 +45,6 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         @Query("SELECT o FROM Order o WHERE o.id = ?1 AND o.shop.id = ?2 ")
         Optional<Order> getOrderByShopId(Integer orderId, Integer shopId);
 
+
+        
 }
