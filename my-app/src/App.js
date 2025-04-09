@@ -3,7 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import LayoutUser from './layouts/LayoutUser';
 import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ADMIN_ROUTES, PUBLIC_ROUTES, SELLER_ROUTES, USER_ROUTES } from './utils/routeConfig';
+import { ADMIN_ROUTES, PUBLIC_ROUTES, SELLER_ROUTES } from './utils/routeConfig';
 import LayoutAdmin from './layouts/LayoutAdmin';
 import { ToastContainer } from 'react-toastify';
 import NotFound from './utils/NotFound';
@@ -27,19 +27,7 @@ function App() {
                 </Route>
               ))}
             </Route>
-            <Route path="/*" element={
-              <ProtectedRoute requiredRoles={[1, 2]}>
-                <LayoutUser />
-              </ProtectedRoute>
-            }>
-              {USER_ROUTES.map((route, index) => (
-                <Route key={index} path={route.path} element={route.element} >
-                  {route.children && route.children.map((child, index) => (
-                    <Route key={index} path={child.path} element={child.element} />
-                  ))}
-                </Route>
-              ))}
-            </Route>
+
             <Route path="/admin/*" element={
               <ProtectedRoute requiredRoles={[3]}>
                 <LayoutAdmin />

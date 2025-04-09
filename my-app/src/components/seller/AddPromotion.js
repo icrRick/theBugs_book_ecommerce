@@ -13,66 +13,19 @@ const AddPromotion = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [expireDate, setExpireDate] = useState('');
+
   useEffect(() => {
     // TODO: Fetch products from API
     // This is mock data for demonstration
     setProducts([
-      { 
-        id: 1, 
-        name: 'Sách 1', 
-        price: 100000,
-        currentPromotion: {
-          value: 10,
-          endDate: '2024-04-30'
-        }
-      },
-      { 
-        id: 2, 
-        name: 'Sách 2', 
-        price: 150000,
-        currentPromotion: null
-      },
-      { 
-        id: 3, 
-        name: 'Sách 3', 
-        price: 200000,
-        currentPromotion: {
-          value: 15,
-          endDate: '2024-04-25'
-        }
-      },
-      { 
-        id: 4, 
-        name: 'Sách 4', 
-        price: 250000,
-        currentPromotion: null
-      },
-      { 
-        id: 5, 
-        name: 'Sách 5', 
-        price: 300000,
-        currentPromotion: null
-      },
-      { 
-        id: 6, 
-        name: 'Sách 6', 
-        price: 350000,
-        currentPromotion: null
-      },
-      { 
-        id: 7, 
-        name: 'Sách 7', 
-        price: 400000,
-        currentPromotion: null
-      },
-      { 
-        id: 8, 
-        name: 'Sách 8', 
-        price: 450000,
-        currentPromotion: null
-      },
+      { id: 1, name: 'Sách 1', price: 100000 },
+      { id: 2, name: 'Sách 2', price: 150000 },
+      { id: 3, name: 'Sách 3', price: 200000 },
+      { id: 4, name: 'Sách 4', price: 250000 },
+      { id: 5, name: 'Sách 5', price: 300000 },
+      { id: 6, name: 'Sách 6', price: 350000 },
+      { id: 7, name: 'Sách 7', price: 400000 },
+      { id: 8, name: 'Sách 8', price: 450000 },
     ]);
   }, []);
 
@@ -85,20 +38,6 @@ const AddPromotion = () => {
   };
 
   const handleProductSelect = (productId) => {
-    const product = products.find(p => p.id === productId);
-    
-    // Kiểm tra nếu sản phẩm có khuyến mãi hiện tại
-    if (product.currentPromotion) {
-      const currentEndDate = new Date(product.currentPromotion.endDate);
-      const newEndDate = new Date(formData.endDate);
-      
-      // Nếu ngày kết thúc khuyến mãi mới nhỏ hơn ngày kết thúc khuyến mãi hiện tại
-      if (newEndDate < currentEndDate) {
-        alert(`Sản phẩm "${product.name}" đang có khuyến mãi đến ngày ${product.currentPromotion.endDate}`);
-        return;
-      }
-    }
-
     setSelectedProducts((prev) => {
       if (prev.includes(productId)) {
         return prev.filter((id) => id !== productId);
@@ -120,31 +59,10 @@ const AddPromotion = () => {
   };
 
   // Tính toán giá sau giảm
-  const calculateDiscountedPrice = (product) => {
-    const currentPromotion = product.currentPromotion;
-    const newPromotionValue = parseFloat(formData.promotionValue);
-    
-    // Nếu không có khuyến mãi nào
-    if (!currentPromotion && !newPromotionValue) {
-      return product.price;
-    }
-    
-    // Nếu có khuyến mãi hiện tại và không có khuyến mãi mới
-    if (currentPromotion && !newPromotionValue) {
-      return product.price * (1 - currentPromotion.value / 100);
-    }
-    
-    // Nếu có khuyến mãi mới và không có khuyến mãi hiện tại
-    if (!currentPromotion && newPromotionValue) {
-      return product.price * (1 - newPromotionValue / 100);
-    }
-    
-    // Nếu có cả hai, lấy giá trị khuyến mãi cao hơn
-    const currentDiscount = currentPromotion.value / 100;
-    const newDiscount = newPromotionValue / 100;
-    const maxDiscount = Math.max(currentDiscount, newDiscount);
-    
-    return product.price * (1 - maxDiscount);
+  const calculateDiscountedPrice = (price) => {
+    if (!formData.promotionValue) return price;
+    const discount = parseFloat(formData.promotionValue) / 100;
+    return price * (1 - discount);
   };
 
   // Lọc sản phẩm theo từ khóa tìm kiếm
@@ -243,7 +161,7 @@ const AddPromotion = () => {
                         <span className="text-gray-700">{product.name}</span>
                         <span className="mx-2 text-gray-400">|</span>
                         <span className="text-green-600 font-medium">
-                          {calculateDiscountedPrice(product).toLocaleString('vi-VN')}đ
+                          {calculateDiscountedPrice(product.price).toLocaleString('vi-VN')}đ
                         </span>
                         <button
                           type="button"
@@ -293,9 +211,6 @@ const AddPromotion = () => {
                           Giá Gốc
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Khuyến Mãi Hiện Tại
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Giá Sau Giảm
                         </th>
                       </tr>
@@ -320,18 +235,8 @@ const AddPromotion = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {product.currentPromotion ? (
-                              <div className="text-sm">
-                                <p className="text-blue-600">{product.currentPromotion.value}%</p>
-                                <p className="text-gray-500 text-xs">Hết hạn: {product.currentPromotion.endDate}</p>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500">Không có</div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-green-600 font-medium">
-                              {calculateDiscountedPrice(product).toLocaleString('vi-VN')}đ
+                              {calculateDiscountedPrice(product.price).toLocaleString('vi-VN')}đ
                             </div>
                           </td>
                         </tr>

@@ -1,7 +1,15 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Products from "../components/seller/Products";
-import ProtectedRoute from "./ProtectedRoute";
+import Stores from "../components/admin/Stores";
+import Publishers from "../components/admin/Publishers";
+import ReportStores from "../components/admin/ReportStores";
+import SellerRegistrationRequests from "../components/admin/SellerRegistrationRequests";
+import UserManagement from "../components/admin/UserManagement";
+import Statistics from "../components/admin/Statistics";
+import SystemSettings from "../components/admin/SystemSettings";
+import ReportManagement from "../components/admin/ReportManagement";
+import ReportDetail from "../components/admin/ReportDetail";
 
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
@@ -38,68 +46,64 @@ const StatisticProduct = lazy(() => import("../components/seller/StatisticProduc
 const SellerOrderDetail = lazy(() => import("../components/seller/SellerOrderDetail"));
 const AddVoucher = lazy(() => import("../components/seller/AddVoucher"));
 const EditVoucher = lazy(() => import("../components/seller/EditVoucher"));
-const AddPromotion = lazy(() => import("../components/seller/AddPromotion"));
-const EditPromotion = lazy(() => import("../components/seller/EditPromotion"))
+const AddPromotion =lazy(()=>import("../components/seller/AddPromotion"));
+const EditPromotion =lazy(()=>import("../components/seller/EditPromotion"))
 const AddProduct = lazy(() => import("../components/seller/AddProduct"));
 const EditProduct = lazy(() => import("../components/seller/EditProduct"));
-const Test = lazy(() => import("../components/auth/Test"));
-const AddGenre = lazy(() => import("../components/admin/AddGenre"));
-const Publishers = lazy(() => import("../components/admin/Publishers"));
-const Authors = lazy(() => import("../components/admin/Authors"));
-const AddAddress = lazy(() => import("../components/user/AddAddress"));
-const EditAddress = lazy(() => import("../components/user/EditAddress"));
-const PlaceOrderAddress = lazy(() => import("../components/user/PlaceOrderAddress"));
 export const PUBLIC_ROUTES = [
   { path: '/', element: <Navigate to="/home" /> },
   { path: 'home', element: <Home /> },
+  { path: 'cart', element: <Cart /> },
   { path: 'product-detail/:id', element: <ProductDetail /> },
+  { path: 'payment', element: <Payment /> },
   { path: 'login', element: <Login /> },
   { path: 'register', element: <Register /> },
   { path: 'search', element: <Search /> },
   { path: "shop/:id", element: <ShopDetail /> },
-  { path: "register-seller", element: <SellerRegistration /> },
-  { path: "forgot-password", element: <ForgotPassword /> },
-  { path: "reset-password", element: <ResetPassword /> },
-]
-
-export const USER_ROUTES = [
-  { path: 'payment', element: <Payment /> },
   { path: "report-product/:id", element: <Report /> },
-  { path: 'cart', element: <Cart /> },
-  { path: 'place-order-address', element: <PlaceOrderAddress /> },
+  { path: "register-seller", element: <SellerRegistration /> },
+
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
   {
     path: "account",
-    element: <ProtectedRoute requiredRoles={[1, 2]}><LayoutAccount /></ProtectedRoute>,
+    element: <LayoutAccount />,
     children: [
       { path: "profile", element: <Profile /> },
       { path: "address", element: <Address /> },
-      { path: "address/add", element: <AddAddress /> },
-      { path: "address/edit/:addressId", element: <EditAddress /> },
       { path: "ordered", element: <Ordered /> },
       { path: "order/:id", element: <OrderDetail /> },
       { path: "favorite", element: <Favorite /> },
       { path: "report-products", element: <ReportProducts /> },
       { path: "report-product-detail/:id", element: <ReportProductDetail /> },
       { path: "change-password", element: <ChangePassword /> },
-
     ],
   },
+
+
 ]
 
 export const ADMIN_ROUTES = [
   { path: 'dashboard', element: <Dashboard /> },
   { path: 'genres', element: <Genres /> },
-  { path: 'addgenre', element: <AddGenre /> },
-  { path: 'publishers', element: <Publishers /> },
-  { path: 'authors', element: <Authors /> },
+  {path: 'products',element: <Products />},
+  {path: 'stores',element: <Stores />},
+  {path: 'publishers',element: <Publishers />},
+  {path: 'reports/products',element: <ReportProducts />},
+  {path: 'reports/stores',element: <ReportStores />},
+  {path: 'seller/requests', element: <SellerRegistrationRequests /> },
+  {path: 'users', element: <UserManagement /> },
+  {path: 'statistics', element: <Statistics /> },
+  {path: 'reports', element: <ReportManagement /> },
+  { path: "report/:reportId", element: <ReportDetail /> },
 ]
 
 export const SELLER_ROUTES = [
   { path: 'dashboard', element: <DashboardSeller /> },
   { path: 'orders', element: <OrdersSeller /> },
-  { path: 'products', element: <Products /> },
-  { path: 'addproduct', element: <AddProduct /> },
-  { path: 'editproduct/:productId', element: <EditProduct /> },
+    { path: 'products', element: <Products /> },
+    { path: 'addproduct', element: <AddProduct /> },
+    { path: 'editproduct/:productId', element: <EditProduct /> },
   { path: 'store', element: <Store /> },
   { path: 'products', element: <SellerProducts /> },
   { path: 'promotions', element: <Promotions /> },

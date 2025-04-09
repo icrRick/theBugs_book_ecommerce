@@ -74,7 +74,8 @@ public class SecurityConfig {
                                                                 "/productdetail/**", "/images/**", "/forgotpassword",
                                                                 "/updatepassword/**",
                                                                 "/shopdetail/**",
-                                                                "/payment-online/**")
+                                                                "/payment-online/**",
+                                                                "/reviews/**")
                                                 .permitAll()
                                                 .requestMatchers("/admin/**").hasAuthority("admin")
                                                 .requestMatchers("/user/**").hasAnyAuthority("user", "seller")

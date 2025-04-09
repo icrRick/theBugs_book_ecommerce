@@ -1,11 +1,10 @@
+"use client"
 
 const SellerInfoStep = ({ formData, handleChange, errors }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Thông tin cá nhân</h2>
-      <p className="text-gray-600 mb-6">
-        Vui lòng cung cấp thông tin cá nhân chính xác để chúng tôi có thể xác minh danh tính của bạn.
-      </p>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">Đăng ký tài khoản</h2>
+      <p className="text-gray-600 mb-6">Vui lòng cung cấp thông tin cơ bản để tạo tài khoản người bán.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Họ tên */}
@@ -62,187 +61,68 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
         </div>
 
-        {/* Ngày sinh */}
+        {/* Mật khẩu */}
         <div>
           <label className="block text-gray-700 font-medium mb-2">
-            Ngày sinh <span className="text-red-500">*</span>
+            Mật khẩu <span className="text-red-500">*</span>
           </label>
           <input
-            type="date"
-            name="dob"
-            value={formData.dob}
+            type="password"
+            name="password"
+            value={formData.password}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.dob ? "border-red-500" : "border-gray-300"
+              errors.password ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Nhập mật khẩu"
           />
-          {errors.dob && <p className="text-red-500 text-sm mt-1">{errors.dob}</p>}
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
-        {/* Giới tính */}
-        <div>
+        {/* Xác nhận mật khẩu */}
+        <div className="md:col-span-2">
           <label className="block text-gray-700 font-medium mb-2">
-            Giới tính <span className="text-red-500">*</span>
+            Xác nhận mật khẩu <span className="text-red-500">*</span>
           </label>
-          <select
-            name="gender"
-            value={formData.gender}
+          <input
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.gender ? "border-red-500" : "border-gray-300"
+              errors.confirmPassword ? "border-red-500" : "border-gray-300"
             }`}
-          >
-            <option value="">-- Chọn giới tính --</option>
-            <option value="male">Nam</option>
-            <option value="female">Nữ</option>
-            <option value="other">Khác</option>
-          </select>
-          {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
+            placeholder="Nhập lại mật khẩu"
+          />
+          {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
         </div>
       </div>
 
       <div className="border-t border-gray-200 pt-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin giấy tờ tùy thân</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Loại giấy tờ */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Loại giấy tờ <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="idType"
-              value={formData.idType}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.idType ? "border-red-500" : "border-gray-300"
-              }`}
-            >
-              <option value="cccd">Căn cước công dân</option>
-              <option value="cmnd">Chứng minh nhân dân</option>
-              <option value="passport">Hộ chiếu</option>
-            </select>
-            {errors.idType && <p className="text-red-500 text-sm mt-1">{errors.idType}</p>}
-          </div>
-
-          {/* Số giấy tờ */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Số CCCD/CMND/Hộ chiếu <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="idNumber"
-              value={formData.idNumber}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.idNumber ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Nhập số giấy tờ"
-            />
-            {errors.idNumber && <p className="text-red-500 text-sm mt-1">{errors.idNumber}</p>}
-          </div>
-
-          {/* Ngày cấp */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Ngày cấp <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              name="idIssueDate"
-              value={formData.idIssueDate}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.idIssueDate ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.idIssueDate && <p className="text-red-500 text-sm mt-1">{errors.idIssueDate}</p>}
-          </div>
-
-          {/* Nơi cấp */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Nơi cấp <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="idIssuedBy"
-              value={formData.idIssuedBy}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.idIssuedBy ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Cục Cảnh sát ĐKQL Cư trú và DLQG về dân cư"
-            />
-            {errors.idIssuedBy && <p className="text-red-500 text-sm mt-1">{errors.idIssuedBy}</p>}
-          </div>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="agreeTerms"
+            name="agreeTerms"
+            checked={formData.agreeTerms}
+            onChange={handleChange}
+            className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <label htmlFor="agreeTerms" className="ml-2 text-gray-700">
+            Tôi đồng ý với{" "}
+            <a href="#" className="text-blue-600 hover:underline">
+              Điều khoản dịch vụ
+            </a>{" "}
+            và{" "}
+            <a href="#" className="text-blue-600 hover:underline">
+              Chính sách bảo mật
+            </a>
+          </label>
         </div>
-      </div>
-
-      <div className="border-t border-gray-200 pt-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin tài khoản ngân hàng</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tên ngân hàng */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Tên ngân hàng <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="bankName"
-              value={formData.bankName}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.bankName ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Ví dụ: Vietcombank, Techcombank..."
-            />
-            {errors.bankName && <p className="text-red-500 text-sm mt-1">{errors.bankName}</p>}
-          </div>
-
-          {/* Số tài khoản */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Số tài khoản <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="bankAccount"
-              value={formData.bankAccount}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.bankAccount ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Nhập số tài khoản ngân hàng"
-            />
-            {errors.bankAccount && <p className="text-red-500 text-sm mt-1">{errors.bankAccount}</p>}
-          </div>
-
-          {/* Tên chủ tài khoản */}
-          <div className="md:col-span-2">
-            <label className="block text-gray-700 font-medium mb-2">
-              Tên chủ tài khoản <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="bankAccountName"
-              value={formData.bankAccountName}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.bankAccountName ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Nhập tên chủ tài khoản"
-            />
-            {errors.bankAccountName && <p className="text-red-500 text-sm mt-1">{errors.bankAccountName}</p>}
-            <p className="text-gray-500 text-sm mt-1">Lưu ý: Tên chủ tài khoản phải trùng với tên đăng ký</p>
-          </div>
-        </div>
+        {errors.agreeTerms && <p className="text-red-500 text-sm mt-1">{errors.agreeTerms}</p>}
       </div>
     </div>
   )
 }
 
-export default SellerInfoStep;
-
+export default SellerInfoStep

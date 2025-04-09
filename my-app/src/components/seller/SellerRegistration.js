@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import SellerInfoStep from "./SellerInfoStep"
+import IdRecognitionStep from "./IdRecognitionStep"
 import ShopInfoStep from "./ShopInfoStep"
 import ShopAddressStep from "./ShopAddressStep"
 
@@ -10,16 +11,26 @@ const SellerRegistration = () => {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
-    // Seller Info
+    // Account Info
     fullName: "",
     email: "",
     phone: "",
-    idNumber: "",
+    password: "",
+    confirmPassword: "",
+    agreeTerms: false,
+
+    // ID Recognition
     idType: "cccd",
+    idNumber: "",
     idIssueDate: "",
     idIssuedBy: "",
     dob: "",
     gender: "",
+    idFrontImage: null,
+    idBackImage: null,
+    idRecognitionData: null,
+
+    // Personal Info
     bankName: "",
     bankAccount: "",
     bankAccountName: "",
@@ -47,10 +58,11 @@ const SellerRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
   const [registrationComplete, setRegistrationComplete] = useState(false)
+  const [isProcessingId, setIsProcessingId] = useState(false)
 
   // Xử lý thay đổi dữ liệu form
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target
+    const { name, value, type, files, checked } = e.target
 
     if (type === "file") {
       setFormData({
@@ -60,7 +72,7 @@ const SellerRegistration = () => {
     } else if (type === "checkbox") {
       setFormData({
         ...formData,
-        [name]: e.target.checked,
+        [name]: checked,
       })
     } else {
       setFormData({
@@ -110,6 +122,22 @@ const SellerRegistration = () => {
     }
   }
 
+  // Xử lý dữ liệu nhận diện CCCD/CMND
+  const handleIdRecognitionData = (data) => {
+    // Cập nhật dữ liệu từ API nhận diện
+    setFormData({
+      ...formData,
+      idRecognitionData: data,
+      idNumber: data.id || formData.idNumber,
+      fullName: data.name || formData.fullName,
+      dob: data.dob || formData.dob,
+      gender: data.gender || formData.gender,
+      idIssueDate: data.issueDate || formData.idIssueDate,
+      idIssuedBy: data.issuedBy || formData.idIssuedBy,
+      address: data.address || formData.address,
+    })
+  }
+
   // Validate form theo từng bước
   const validateStep = (step) => {
     const newErrors = {}
@@ -128,11 +156,31 @@ const SellerRegistration = () => {
         newErrors.phone = "Số điện thoại phải có 10 chữ số"
       }
 
-      if (!formData.idNumber.trim()) newErrors.idNumber = "Vui lòng nhập số CCCD/CMND"
-      if (!formData.idIssueDate) newErrors.idIssueDate = "Vui lòng chọn ngày cấp"
-      if (!formData.idIssuedBy.trim()) newErrors.idIssuedBy = "Vui lòng nhập nơi cấp"
-      if (!formData.dob) newErrors.dob = "Vui lòng chọn ngày sinh"
-      if (!formData.gender) newErrors.gender = "Vui lòng chọn giới tính"
+      if (!formData.password) {
+        newErrors.password = "Vui lòng nhập mật khẩu"
+      } else if (formData.password.length < 6) {
+        newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
+      }
+
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu"
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Mật khẩu xác nhận không khớp"
+      }
+
+      if (!formData.agreeTerms) {
+        newErrors.agreeTerms = "Bạn phải đồng ý với điều khoản dịch vụ"
+      }
+    }
+
+    if (step === 2) {
+      if (!formData.idFrontImage) newErrors.idFrontImage = "Vui lòng tải lên ảnh mặt trước CCCD/CMND"
+      if (!formData.idBackImage) newErrors.idBackImage = "Vui lòng tải lên ảnh mặt sau CCCD/CMND"
+
+      // Kiểm tra dữ liệu nhận diện
+      if (!formData.idRecognitionData) {
+        newErrors.idRecognitionData = "Vui lòng thực hiện nhận diện giấy tờ"
+      }
 
       // Thông tin ngân hàng
       if (!formData.bankName.trim()) newErrors.bankName = "Vui lòng nhập tên ngân hàng"
@@ -140,7 +188,7 @@ const SellerRegistration = () => {
       if (!formData.bankAccountName.trim()) newErrors.bankAccountName = "Vui lòng nhập tên chủ tài khoản"
     }
 
-    if (step === 2) {
+    if (step === 3) {
       if (!formData.shopName.trim()) newErrors.shopName = "Vui lòng nhập tên cửa hàng"
       if (!formData.shopDescription.trim()) newErrors.shopDescription = "Vui lòng nhập mô tả cửa hàng"
       if (!formData.businessType) newErrors.businessType = "Vui lòng chọn loại hình kinh doanh"
@@ -150,7 +198,7 @@ const SellerRegistration = () => {
       if (!formData.shopLogo) newErrors.shopLogo = "Vui lòng tải lên logo cửa hàng"
     }
 
-    if (step === 3) {
+    if (step === 4) {
       if (!formData.provinceId) newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố"
       if (!formData.districtId) newErrors.districtId = "Vui lòng chọn quận/huyện"
       if (!formData.wardId) newErrors.wardId = "Vui lòng chọn phường/xã"
@@ -213,6 +261,17 @@ const SellerRegistration = () => {
         return <SellerInfoStep formData={formData} handleChange={handleChange} errors={errors} />
       case 2:
         return (
+          <IdRecognitionStep
+            formData={formData}
+            handleChange={handleChange}
+            handleIdRecognitionData={handleIdRecognitionData}
+            isProcessingId={isProcessingId}
+            setIsProcessingId={setIsProcessingId}
+            errors={errors}
+          />
+        )
+      case 3:
+        return (
           <ShopInfoStep
             formData={formData}
             handleChange={handleChange}
@@ -220,7 +279,7 @@ const SellerRegistration = () => {
             errors={errors}
           />
         )
-      case 3:
+      case 4:
         return (
           <ShopAddressStep
             formData={formData}
@@ -275,7 +334,7 @@ const SellerRegistration = () => {
               >
                 1
               </div>
-              <span className="text-sm mt-2">Thông tin cá nhân</span>
+              <span className="text-sm mt-2">Đăng ký tài khoản</span>
             </div>
 
             <div className={`flex-1 h-1 mx-2 ${currentStep >= 2 ? "bg-blue-500" : "bg-gray-200"}`}></div>
@@ -288,7 +347,7 @@ const SellerRegistration = () => {
               >
                 2
               </div>
-              <span className="text-sm mt-2">Thông tin cửa hàng</span>
+              <span className="text-sm mt-2">Xác minh danh tính</span>
             </div>
 
             <div className={`flex-1 h-1 mx-2 ${currentStep >= 3 ? "bg-blue-500" : "bg-gray-200"}`}></div>
@@ -300,6 +359,19 @@ const SellerRegistration = () => {
                 }`}
               >
                 3
+              </div>
+              <span className="text-sm mt-2">Thông tin cửa hàng</span>
+            </div>
+
+            <div className={`flex-1 h-1 mx-2 ${currentStep >= 4 ? "bg-blue-500" : "bg-gray-200"}`}></div>
+
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  currentStep >= 4 ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                4
               </div>
               <span className="text-sm mt-2">Địa chỉ cửa hàng</span>
             </div>
@@ -320,11 +392,14 @@ const SellerRegistration = () => {
               </button>
             )}
 
-            {currentStep < 3 ? (
+            {currentStep < 4 ? (
               <button
                 type="button"
                 onClick={handleNext}
-                className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isProcessingId}
+                className={`ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
+                  isProcessingId ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
                 Tiếp theo
               </button>
@@ -369,4 +444,3 @@ const SellerRegistration = () => {
 }
 
 export default SellerRegistration
-

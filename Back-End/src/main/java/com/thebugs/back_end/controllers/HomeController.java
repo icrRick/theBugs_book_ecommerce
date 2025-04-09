@@ -3,11 +3,14 @@ package com.thebugs.back_end.controllers;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.dto.HomeProductDTO;
+import com.thebugs.back_end.dto.ReviewDTO;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.GenreService;
 import com.thebugs.back_end.services.ProductHomeService;
+import com.thebugs.back_end.services.ReviewService;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -23,8 +26,12 @@ public class HomeController {
 
         @Autowired
         private ProductHomeService productHomeService;
+
         @Autowired
         private GenreService genreService;
+
+        @Autowired
+        private ReviewService reviewService; // Thêm ReviewService
 
         @GetMapping("/home")
         public ResponseEntity<ResponseData> getPageHome1(@RequestParam(defaultValue = "1") int page) {
@@ -42,7 +49,6 @@ public class HomeController {
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
-
         }
 
         @GetMapping("/genre/list")
@@ -59,6 +65,23 @@ public class HomeController {
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
+        }
 
+        // Endpoint mới để lấy review theo productId
+        @GetMapping("/reviews")
+        public ResponseEntity<ResponseData> getReviewsByProductId(@RequestParam("productId") Integer productId) {
+                ResponseData responseData = new ResponseData();
+                try {
+                        List<ReviewDTO> reviews = reviewService.getReviewDTOsByProductId(productId);
+                        responseData.setStatus(true);
+                        responseData.setMessage("Load reviews thành công");
+                        responseData.setData(reviews);
+                        return ResponseEntity.ok(responseData);
+                } catch (Exception e) {
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi " + e.getMessage());
+                        responseData.setData(null);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                }
         }
 }

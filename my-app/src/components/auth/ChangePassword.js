@@ -3,23 +3,15 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/AuthContext"
-import { useForm } from "react-hook-form"
 
 const ChangePassword = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    reset,
-  } = useForm({
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   })
 
+  const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [changeError, setChangeError] = useState("")
   const [changeSuccess, setChangeSuccess] = useState(false)
@@ -30,7 +22,57 @@ const ChangePassword = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const onSubmit = async (data) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData({
+      ...formData,
+      [name]: value,
+    })
+
+    // Xóa lỗi khi người dùng thay đổi giá trị
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "",
+      })
+    }
+
+    // Xóa thông báo lỗi khi người dùng thay đổi thông tin
+    if (changeError) {
+      setChangeError("")
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.currentPassword) {
+      newErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại"
+    }
+
+    if (!formData.newPassword) {
+      newErrors.newPassword = "Vui lòng nhập mật khẩu mới"
+    } else if (formData.newPassword.length < 6) {
+      newErrors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự"
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu mới"
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
     setIsSubmitting(true)
     setChangeError("")
 
@@ -39,7 +81,7 @@ const ChangePassword = () => {
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // Giả lập kiểm tra mật khẩu hiện tại
-      if (data.currentPassword !== "password") {
+      if (formData.currentPassword !== "password") {
         setChangeError("Mật khẩu hiện tại không chính xác")
         setIsSubmitting(false)
         return
@@ -49,7 +91,11 @@ const ChangePassword = () => {
       setChangeSuccess(true)
 
       // Reset form sau khi thành công
-      reset()
+      setFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
     } catch (error) {
       console.error("Change password error:", error)
       setChangeError("Có lỗi xảy ra khi thay đổi mật khẩu. Vui lòng thử lại sau.")
@@ -128,7 +174,7 @@ const ChangePassword = () => {
         </div>
       )}
 
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
             Mật khẩu hiện tại
@@ -149,11 +195,12 @@ const ChangePassword = () => {
               </svg>
             </div>
             <input
-              {...register("currentPassword", {
-                required: "Vui lòng nhập mật khẩu hiện tại",
-              })}
+              id="currentPassword"
+              name="currentPassword"
               type={showCurrentPassword ? "text" : "password"}
               autoComplete="current-password"
+              value={formData.currentPassword}
+              onChange={handleChange}
               className={`py-2 pl-10 pr-10 block w-full border ${
                 errors.currentPassword
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
@@ -188,7 +235,7 @@ const ChangePassword = () => {
               </button>
             </div>
           </div>
-          {errors.currentPassword && <p className="mt-2 text-sm text-red-600">{errors.currentPassword.message}</p>}
+          {errors.currentPassword && <p className="mt-2 text-sm text-red-600">{errors.currentPassword}</p>}
         </div>
 
         <div>
@@ -211,15 +258,12 @@ const ChangePassword = () => {
               </svg>
             </div>
             <input
-              {...register("newPassword", {
-                required: "Vui lòng nhập mật khẩu mới",
-                minLength: {
-                  value: 6,
-                  message: "Mật khẩu mới phải có ít nhất 6 ký tự",
-                },
-              })}
+              id="newPassword"
+              name="newPassword"
               type={showNewPassword ? "text" : "password"}
               autoComplete="new-password"
+              value={formData.newPassword}
+              onChange={handleChange}
               className={`py-2 pl-10 pr-10 block w-full border ${
                 errors.newPassword
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
@@ -254,7 +298,7 @@ const ChangePassword = () => {
               </button>
             </div>
           </div>
-          {errors.newPassword && <p className="mt-2 text-sm text-red-600">{errors.newPassword.message}</p>}
+          {errors.newPassword && <p className="mt-2 text-sm text-red-600">{errors.newPassword}</p>}
         </div>
 
         <div>
@@ -277,13 +321,12 @@ const ChangePassword = () => {
               </svg>
             </div>
             <input
-              {...register("confirmPassword", {
-                required: "Vui lòng xác nhận mật khẩu mới",
-                validate: (value, formValues) =>
-                  value === formValues.newPassword || "Mật khẩu xác nhận không khớp",
-              })}
+              id="confirmPassword"
+              name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
               className={`py-2 pl-10 pr-10 block w-full border ${
                 errors.confirmPassword
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
@@ -318,7 +361,7 @@ const ChangePassword = () => {
               </button>
             </div>
           </div>
-          {errors.confirmPassword && <p className="mt-2 text-sm text-red-600">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>}
         </div>
 
         <div className="flex items-center justify-between">

@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import SelectedAddress from "./SelectedAddress"
-
-import ShippingFree from "../../utils/ShippingFree"
 
 const Payment = () => {
   const location = useLocation()
@@ -16,7 +13,6 @@ const Payment = () => {
   const [selectedVouchers, setSelectedVouchers] = useState([])
   const [showVoucherModal, setShowVoucherModal] = useState(false)
   const [selectedShopId, setSelectedShopId] = useState(null)
-  const [shippingFees, setShippingFees] = useState({})
 
   // Dữ liệu mẫu cho voucher
   const vouchers = [
@@ -25,131 +21,23 @@ const Payment = () => {
     { id: 3, code: "VOUCHER3", discount: "30%", minSpend: "300.000đ", maxDiscount: "150.000đ" },
   ]
 
-  // Thêm hàm lưu trạng thái vào localStorage
-  const saveStateToLocalStorage = () => {
-    try {
-      console.log('Saving to localStorage:', {
-        products: selectedProducts,
-        vouchers: selectedVouchers,
-        amount: totalAmount
-      });
-      localStorage.setItem('paymentSelectedProducts', JSON.stringify(selectedProducts));
-      localStorage.setItem('paymentSelectedVouchers', JSON.stringify(selectedVouchers));
-      localStorage.setItem('paymentTotalAmount', totalAmount.toString());
-    } catch (error) {
-      console.error('Error saving payment state:', error);
+  useEffect(() => {
+    if (location.state?.selectedProducts) {
+      setSelectedProducts(location.state.selectedProducts)
+      calculateTotal(location.state.selectedProducts)
     }
+    if (location.state?.selectedVouchers) {
+      setSelectedVouchers(location.state.selectedVouchers)
+    }
+  }, [location.state])
+
+  const calculateTotal = (products) => {
+    const total = products.reduce((sum, product) => {
+      const price = Number.parseInt(product.discountPrice.replace(/[^\d]/g, ""))
+      return sum + price * product.quantity
+    }, 0)
+    setTotalAmount(total)
   }
-
-  // Thêm hàm khôi phục trạng thái từ localStorage
-  const restoreStateFromLocalStorage = () => {
-    try {
-      const savedProducts = localStorage.getItem('paymentSelectedProducts');
-      const savedVouchers = localStorage.getItem('paymentSelectedVouchers');
-      const savedAmount = localStorage.getItem('paymentTotalAmount');
-
-      console.log('Restoring from localStorage:', {
-        savedProducts,
-        savedVouchers,
-        savedAmount
-      });
-
-      if (savedProducts) {
-        const parsedProducts = JSON.parse(savedProducts);
-        setSelectedProducts(parsedProducts);
-        calculateTotal(parsedProducts);
-      }
-      if (savedVouchers) {
-        setSelectedVouchers(JSON.parse(savedVouchers));
-      }
-      if (savedAmount) {
-        setTotalAmount(parseFloat(savedAmount));
-      }
-    } catch (error) {
-      console.error('Error restoring payment state:', error);
-    }
-  }
-
-  // Sửa lại useEffect để đảm bảo thứ tự thực thi
-  useEffect(() => {
-    console.log('Location state changed:', location.state);
-    
-    const initializeData = async () => {
-      if (location.state?.selectedProducts) {
-        console.log('Setting data from location state');
-        setSelectedProducts(location.state.selectedProducts);
-        calculateTotal(location.state.selectedProducts);
-        if (location.state?.selectedVouchers) {
-          setSelectedVouchers(location.state.selectedVouchers);
-        }
-        // Lưu state mới vào localStorage
-        saveStateToLocalStorage();
-      } else {
-        console.log('No location state, restoring from localStorage');
-        restoreStateFromLocalStorage();
-      }
-    };
-
-    initializeData();
-  }, [location.state]);
-
-  // Sửa lại useEffect lưu state để tránh lưu state rỗng
-  useEffect(() => {
-    if (selectedProducts.length > 0) {
-      console.log('State changed, saving to localStorage');
-      saveStateToLocalStorage();
-    }
-  }, [selectedProducts, selectedVouchers, totalAmount]);
-
-  // Thêm useEffect để log khi component unmount
-  useEffect(() => {
-    return () => {
-      console.log('Payment component unmounting, current state:', {
-        products: selectedProducts,
-        vouchers: selectedVouchers,
-        amount: totalAmount
-      });
-    };
-  }, []);
-
-  useEffect(() => {
-    try {
-      const cartState = localStorage.getItem('cartState');
-      if (cartState) {
-        const { products: savedProducts } = JSON.parse(cartState);
-        if (savedProducts) {
-          setSelectedProducts(savedProducts);
-          calculateTotal(savedProducts);
-        }
-      }
-
-      const savedVouchers = localStorage.getItem('paymentSelectedVouchers');
-      if (savedVouchers) {
-        setSelectedVouchers(JSON.parse(savedVouchers));
-      }
-
-      const savedAmount = localStorage.getItem('paymentTotalAmount');
-      if (savedAmount) {
-        setTotalAmount(parseFloat(savedAmount));
-      }
-    } catch (error) {
-      console.error('Error loading payment data:', error);
-    }
-  }, []);
-
-  // Xóa các useEffect không cần thiết và giữ lại chức năng cần thiết
-  useEffect(() => {
-    // Cleanup function - xóa dữ liệu khỏi localStorage khi rời khỏi trang Payment
-    return () => {
-      try {
-        localStorage.removeItem('paymentSelectedProducts');
-        localStorage.removeItem('paymentSelectedVouchers');
-        localStorage.removeItem('paymentTotalAmount');
-      } catch (error) {
-        console.error('Error cleaning up payment data:', error);
-      }
-    };
-  }, []);
 
   // Nhóm sản phẩm theo shop
   const groupedProducts = selectedProducts.reduce((acc, product) => {
@@ -158,7 +46,6 @@ const Payment = () => {
       acc[shopId] = {
         shopId: shopId,
         shopName: product.shopName,
-
         products: [],
         voucher: null,
         shipFree: false,
@@ -169,22 +56,12 @@ const Payment = () => {
     return acc
   }, {})
 
-
-
-  // Tính tổng tiền bao gồm phí ship
-  const calculateTotal = (products) => {
-    const subtotal = products.reduce((sum, product) => {
-      const price = Number.parseInt(product.discountPrice.replace(/[^\d]/g, ""))
-      return sum + price * product.quantity
-    }, 0);
-
-    // Cộng thêm phí ship của tất cả các shop
-    const totalShipping = Object.keys(groupedProducts).reduce((sum, shopId) => {
-      return sum +0;
-    }, 0);
-
-    setTotalAmount(subtotal + totalShipping);
-  };
+  // Thêm voucher vào dữ liệu đã nhóm
+  selectedVouchers.forEach((voucher) => {
+    if (groupedProducts[voucher.shopId]) {
+      groupedProducts[voucher.shopId].voucher = voucher.voucher
+    }
+  })
 
   const paymentData = Object.values(groupedProducts).map((shop) => ({
     shopid: shop.shopId,
@@ -196,15 +73,7 @@ const Payment = () => {
   }))
 
   const handlePayment = () => {
-    console.log(paymentData);
-    // Chỉ xóa localStorage sau khi thanh toán thành công
-    try {
-      localStorage.removeItem('cartState');
-      localStorage.removeItem('paymentSelectedVouchers');
-      localStorage.removeItem('paymentTotalAmount');
-    } catch (error) {
-      console.error('Error cleaning up payment data:', error);
-    }
+    console.log(paymentData)
   }
 
   const handleRemoveVoucher = (shopId) => {
@@ -229,20 +98,32 @@ const Payment = () => {
 
   // Save checked product IDs when returning to Cart
   const handleBack = () => {
-    // Không cần làm gì với localStorage vì đã lưu cart state đầy đủ
-    navigate('/cart');
-  }
+    try {
+      // Save checked products
+      const checkedProducts = selectedProducts.map((product) => ({
+        id: product.id,
+        checked: true,
+      }))
 
-  // Sửa lại useEffect để lưu trạng thái checked khi có thay đổi
-  useEffect(() => {
-    if (selectedProducts.length > 0) {
-      const productsToSave = selectedProducts.map(product => ({
-        ...product,
-        checked: true
-      }));
-      localStorage.setItem('paymentSelectedProducts', JSON.stringify(productsToSave));
+      localStorage.setItem("checkedProducts", JSON.stringify(checkedProducts))
+
+      // Save vouchers
+      const vouchersToSave = selectedVouchers.map((voucher) => ({
+        shopId: voucher.shopId,
+        voucher: voucher.voucher,
+      }))
+
+      localStorage.setItem("selectedVouchers", JSON.stringify(vouchersToSave))
+
+      // Set flag to indicate returning from Payment
+      localStorage.setItem("returningFromPayment", "true")
+    } catch (error) {
+      console.error("Error saving state to localStorage:", error)
     }
-  }, [selectedProducts]);
+
+    // Navigate back
+    navigate(-1)
+  }
 
   return (
     <div className="container mx-auto">
@@ -267,10 +148,8 @@ const Payment = () => {
                     <h3 className="text-lg font-semibold text-gray-700">{shop.shopName}</h3>
                   </div>
                   <div className="flex items-center space-x-4 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    <span className="text-sm text-gray-600">Phí vận chuyển {shop.fromWardCode}</span>
-                    <span className="text-sm font-medium text-red-600">
-                    <ShippingFree shop={shop} />
-                    </span>
+                    <span className="text-sm text-gray-600">Giao hàng nhanh</span>
+                    <span className="text-sm font-medium text-red-600">30.000đ</span>
                   </div>
                 </div>
               </div>
@@ -382,7 +261,17 @@ const Payment = () => {
         {/* Cột phải - Thông tin đặt hàng và thanh toán */}
         <div className="col-span-4 space-y-6">
           {/* Thông tin giao hàng */}
-          <SelectedAddress />
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-lg font-semibold">Thông tin giao hàng</div>
+              <button className="text-blue-600 hover:text-blue-800">Thay đổi</button>
+            </div>
+            <div className="space-y-4">
+              <div className="text-sm font-medium text-gray-700 mb-1">Họ và tên</div>
+              <div className="text-sm font-medium text-gray-700 mb-1">Số điện thoại</div>
+              <div className="text-sm font-medium text-gray-700 mb-1">Địa chỉ</div>
+            </div>
+          </div>
 
           {/* Phương thức thanh toán */}
           <div className="bg-white rounded-lg shadow-md p-6">
