@@ -16,7 +16,6 @@ public interface PublisherJPA extends JpaRepository<Publisher, Integer> {
                         "THEN TRUE ELSE FALSE END", nativeQuery = true)
         boolean isPublisherInProduct(@Param("publisherId") Integer publisherId);
 
-
         @Query("SELECT g FROM Publisher g WHERE ?1 IS NULL OR g.name LIKE %?1%")
         Page<Publisher> findByName(String keyword, Pageable pageable);
 

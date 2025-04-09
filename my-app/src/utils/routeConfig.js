@@ -72,7 +72,7 @@ export const PUBLIC_ROUTES = [
       { path: "profile", element: <Profile /> },
       { path: "address", element: <Address /> },
       { path: "ordered", element: <Ordered /> },
-      { path: "order/:id", element: <OrderDetail /> },
+      { path: "order/:orderId", element: <OrderDetail /> },
       { path: "favorite", element: <Favorite /> },
       { path: "report-products", element: <ReportProducts /> },
       { path: "report-product-detail/:id", element: <ReportProductDetail /> },

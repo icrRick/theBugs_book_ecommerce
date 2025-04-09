@@ -14,7 +14,7 @@ public class OrderSimpleDTO {
         private String customerInfo;
         private Date orderDate;
         private String orderStatusName;
-        private String paymetMethob;
+        private String paymentMethod;
         private String paymentStatus;
         private Double totalPrice;
 }

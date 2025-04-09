@@ -62,7 +62,8 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
         @Query("SELECT COUNT(g) FROM Genre g WHERE ?1 IS NULL OR ?1 = '' OR g.name LIKE %?1%")
         int countfindProductByName(String keyword);
 
-        @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id,p.name,p.price,i.imageName, pr.promotionValue, p.weight,COALESCE(ROUND(AVG(r.rate), 1), 0)) " +
+        @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id,p.name,p.price,i.imageName, pr.promotionValue, p.weight,COALESCE(ROUND(AVG(r.rate), 1), 0)) "
+                        +
                         "FROM Product p " +
                         "LEFT JOIN OrderItem o ON o.product.id = p.id " +
                         "LEFT JOIN Review r ON r.orderItem.id = o.id " +
@@ -74,5 +75,10 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "AND pr.expireDate >= CURRENT_DATE " +
                         "AND i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id)")
         Optional<ProItemDTO> getProItemDTO(Integer productId);
+
+        // code cua tam
+        @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.id = :productId")
+        Product findProductByShopId(@Param("shopId") Integer shopId,
+                        @Param("productId") Integer productId);
 
 }

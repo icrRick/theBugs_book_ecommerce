@@ -1,13 +1,19 @@
 package com.thebugs.back_end.controllers.super_admin;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +27,7 @@ import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.AuthorService;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -36,13 +43,13 @@ public class AuthorController {
 
                 ResponseData responseData = new ResponseData();
                 try {
-                        Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
+                        Pageable pageable = PageRequest.of(page - 1, 9, Sort.by(Sort.Order.desc("id")));
                         responseData.setStatus(true);
                         responseData.setMessage("Load danh sách thành công");
 
                         Map<String, Object> response = Map.of(
-                                        "arrayList", authorService.searchKeyWordAndPagination(keyword, pageable),
-                                        "totalItems", authorService.getTotal(keyword));
+                                        "arrayList", authorService.getAllListAndSearchKeyWord(keyword, pageable),
+                                        "totalItems", authorService.totalItems(keyword));
                         responseData.setData(response);
                         return ResponseEntity.ok(responseData);
                 } catch (Exception e) {
@@ -54,78 +61,101 @@ public class AuthorController {
                 }
         }
 
-        @PostMapping(value = "/add", consumes =MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ResponseData> postAddAuthor( @ModelAttribute AuthorBean authorBean) {
+        @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<ResponseData> postAddAuthor(@Valid @ModelAttribute AuthorBean authorBean,
+                        BindingResult result) {
                 ResponseData responseData = new ResponseData();
+                if (result.hasErrors()) {
+                        String errorMessages = result.getAllErrors()
+                                        .stream()
+                                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                                        .collect(Collectors.joining("; "));
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi: " + errorMessages);
+                        return ResponseEntity.badRequest().body(responseData);
+                }
                 try {
                         String urlImage = null;
                         if (authorBean.getImage() != null && !authorBean.getImage().isEmpty()) {
-                                System.out.println("Image: " + authorBean.getImage().getOriginalFilename());
                                 urlImage = CloudinaryUpload.uploadImage(authorBean.getImage());
-                        } else {
-                                System.out.println("No image provided");
                         }
+
                         Author author = new Author();
                         author.setName(authorBean.getName());
                         author.setUrlImage(urlImage);
                         author.setUrlLink(authorBean.getUrlLink());
-                        AuthorDTO authorDTO = authorService.add(author);
+
+                        AuthorDTO updatedAuthor = authorService.addAuthor(author);
 
                         responseData.setStatus(true);
-                        responseData.setMessage("Thêm tác giả thành công");
-                        responseData.setData(authorDTO);
-                        return ResponseEntity
-                                        .ok(responseData);
+                        responseData.setMessage("Cập nhật tác giả thành công");
+                        responseData.setData(updatedAuthor);
+                        return ResponseEntity.ok(responseData);
+
+                } catch (IOException e) {
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi upload ảnh: " + e.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseData);
+
                 } catch (Exception e) {
                         responseData.setStatus(false);
                         responseData.setMessage("Lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                        .body(responseData);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
 
         }
 
-        @PostMapping(value = "/update", consumes =MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ResponseData> postUpdateAuthor(@RequestParam Integer id, @ModelAttribute AuthorBean authorBean) {
+        @PostMapping(value = "/updatex", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<ResponseData> updateAuthor(@RequestParam Integer id,
+                        @Valid @ModelAttribute AuthorBean authorBean, BindingResult result) {
                 ResponseData responseData = new ResponseData();
+                if (result.hasErrors()) {
+                        String errorMessages = result.getAllErrors()
+                                        .stream()
+                                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                                        .collect(Collectors.joining("; "));
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi: " + errorMessages);
+                        return ResponseEntity.badRequest().body(responseData);
+                }
+
                 try {
                         String urlImage = null;
                         if (authorBean.getImage() != null && !authorBean.getImage().isEmpty()) {
-                                System.out.println("Image: " + authorBean.getImage().getOriginalFilename());
                                 urlImage = CloudinaryUpload.uploadImage(authorBean.getImage());
-                        } else {
-                                System.out.println("No image provided");
                         }
+
                         Author author = new Author();
                         author.setId(id);
                         author.setName(authorBean.getName());
                         author.setUrlImage(urlImage);
                         author.setUrlLink(authorBean.getUrlLink());
-                        AuthorDTO authorDTO = authorService.update(author);
+
+                        AuthorDTO updatedAuthor = authorService.updateAuthor(author);
 
                         responseData.setStatus(true);
                         responseData.setMessage("Cập nhật tác giả thành công");
-                        responseData.setData(authorDTO);
-                        return ResponseEntity
-                                        .ok(responseData);
+                        responseData.setData(updatedAuthor);
+                        return ResponseEntity.ok(responseData);
+
+                } catch (IOException e) {
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi upload ảnh: " + e.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseData);
+
                 } catch (Exception e) {
                         responseData.setStatus(false);
                         responseData.setMessage("Lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                        .body(responseData);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
-
         }
-        @PostMapping("/delete")
+
+        @DeleteMapping("/delete/{id}")
         public ResponseEntity<ResponseData> deleteAuthor(@RequestParam Integer id) {
                 ResponseData responseData = new ResponseData();
                 try {
 
-                        boolean deleteAuthor = authorService.deleteAuthor(id);
-
-                        if (deleteAuthor) {
+                        if (authorService.deleteAuthor(id)) {
                                 responseData.setStatus(true);
                                 responseData.setMessage("Xoá tác giả thành công");
                                 responseData.setData(null);

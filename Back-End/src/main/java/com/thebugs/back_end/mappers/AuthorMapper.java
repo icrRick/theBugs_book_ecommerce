@@ -1,9 +1,13 @@
 package com.thebugs.back_end.mappers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.thebugs.back_end.dto.AuthorDTO;
 import com.thebugs.back_end.entities.Author;
+import com.thebugs.back_end.entities.ProductAuthor;
 
 @Component
 public class AuthorMapper {
@@ -20,5 +24,18 @@ public class AuthorMapper {
                 return authorDTO;
         }
 
-        
+        public List<AuthorDTO> toDTOS(List<ProductAuthor> authors) {
+                if (authors == null) {
+                        return null;
+                }
+
+                List<AuthorDTO> authorDTOs = new ArrayList<>();
+                for (ProductAuthor productAuthor : authors) {
+                        Author author = productAuthor.getAuthor();
+                        AuthorDTO authorDTO = toDTO(author);
+                        authorDTOs.add(authorDTO);
+                }
+                return authorDTOs;
+        }
+
 }
