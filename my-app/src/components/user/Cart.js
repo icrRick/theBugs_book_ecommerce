@@ -1,148 +1,66 @@
+
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
 const Cart = () => {
     const navigate = useNavigate()
-
-    const [cartItems, setCartItems] = useState([
+    const [cart, setCart] = useState([
         {
             shopid: 1,
             shopname: "Shop 1",
-            fromDistrictId: 2171,
-            fromWardCode: "80915",
+            checked: false,
+            selectedVoucher: null,
             products: [
                 {
                     id: 1,
                     name: "Sản phẩm 1",
                     image: "https://via.placeholder.com/150",
-                    weight: 10,
                     price: "100.000đ",
                     discountPrice: "80.000đ",
                     quantity: 1,
-                }
-            ]
-        },{
-            shopid: 2,
-            shopname: "Shop 2",
-            fromDistrictId: 2171,
-            fromWardCode: "80915",
-            products: [
+                    checked: false,
+                },
                 {
                     id: 2,
                     name: "Sản phẩm 2",
                     image: "https://via.placeholder.com/150",
-                    weight: 10,
                     price: "100.000đ",
                     discountPrice: "80.000đ",
                     quantity: 1,
-                }
-            ]
-        }
-    ])
-
-    const addCheckedProperty = (items) => {
-        return items.map(shop => ({
-            ...shop,
+                    checked: false,
+                },
+            ],
+        },
+        {
+            shopid: 2,
+            shopname: "Shop 2",
             checked: false,
-            products: shop.products.map(product => ({
-                ...product,
-                checked: false
-            }))
-        }))
-    }
-
-    // Thêm hàm tính phí vận chuyển
-    const calculateShippingFee = (shop) => {
-        const weight = shop.products.reduce((acc, product) => acc + (product.weight || 0), 0) || 1000;
-        // Giả sử phí vận chuyển là 15.000đ/kg
-        const feePerKg = 15000;
-        return Math.ceil(weight / 1000) * feePerKg;
-    }
-
-    // Khởi tạo cart với dữ liệu đã có checked
-    const [cart, setCart] = useState(() => addCheckedProperty(cartItems))
-
-    // Thêm useEffect để lưu cart vào localStorage
-    useEffect(() => {
-        // Lọc ra các shop có sản phẩm được check
-        const checkedItems = cart.map(shop => ({
-            ...shop,
-            products: shop.products.filter(product => product.checked)
-        })).filter(shop => shop.products.length > 0);
-
-        if (checkedItems.length > 0) {
-            localStorage.setItem('cart', JSON.stringify(checkedItems));
-        }
-    }, [cart]);
-
-    // Thêm useEffect để load cart từ localStorage khi component mount
-    useEffect(() => {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-            try {
-                const savedItems = JSON.parse(savedCart);
-                // Merge savedItems với cart hiện tại
-                setCart(prevCart => {
-                    const newCart = [...prevCart];
-                    savedItems.forEach(savedShop => {
-                        const shopIndex = newCart.findIndex(shop => shop.shopid === savedShop.shopid);
-                        if (shopIndex !== -1) {
-                            savedShop.products.forEach(savedProduct => {
-                                const productIndex = newCart[shopIndex].products.findIndex(
-                                    product => product.id === savedProduct.id
-                                );
-                                if (productIndex !== -1) {
-                                    newCart[shopIndex].products[productIndex].checked = true;
-                                }
-                            });
-                            // Cập nhật trạng thái checked của shop
-                            newCart[shopIndex].checked = newCart[shopIndex].products.some(product => product.checked);
-                        }
-                    });
-                    return newCart;
-                });
-            } catch (error) {
-                console.error('Error loading cart from localStorage:', error);
-            }
-        }
-    }, []);
+            selectedVoucher: null,
+            products: [
+                {
+                    id: 3,
+                    name: "Sản phẩm 3",
+                    image: "https://via.placeholder.com/150",
+                    price: "100.000đ",
+                    discountPrice: "80.000đ",
+                    quantity: 1,
+                    checked: false,
+                },
+                {
+                    id: 4,
+                    name: "Sản phẩm 4",
+                    image: "https://via.placeholder.com/150",
+                    price: "100.000đ",
+                    discountPrice: "80.000đ",
+                    quantity: 1,
+                    checked: false,
+                },
+            ],
+        },
+    ])
 
     const [showVoucherModal, setShowVoucherModal] = useState(false)
     const [selectedShopId, setSelectedShopId] = useState(null)
-
-    // Thêm useEffect để khôi phục trạng thái check từ Payment
-    useEffect(() => {
-        // Kiểm tra xem có dữ liệu từ Payment không
-        const paymentProducts = localStorage.getItem('paymentSelectedProducts');
-        if (paymentProducts) {
-            try {
-                const selectedProducts = JSON.parse(paymentProducts);
-                
-                // Cập nhật trạng thái check trong cart
-                setCart(prevCart => {
-                    const newCart = [...prevCart];
-                    newCart.forEach(shop => {
-                        // Reset trạng thái check
-                        shop.checked = false;
-                        shop.products.forEach(product => {
-                            // Tìm sản phẩm trong danh sách đã chọn
-                            const isSelected = selectedProducts.some(
-                                selected => selected.id === product.id
-                            );
-                            product.checked = isSelected;
-                            // Cập nhật trạng thái check của shop
-                            if (isSelected) {
-                                shop.checked = true;
-                            }
-                        });
-                    });
-                    return newCart;
-                });
-            } catch (error) {
-                console.error('Error restoring checked state:', error);
-            }
-        }
-    }, []); // Chỉ chạy một lần khi component mount
 
     // Dữ liệu mẫu cho voucher
     const vouchers = [
@@ -151,6 +69,42 @@ const Cart = () => {
         { id: 3, code: "VOUCHER3", discount: "30%", minSpend: "300.000đ", maxDiscount: "150.000đ" },
     ]
 
+    // Add a function to save checked products and vouchers to localStorage
+    const saveCartStateToLocalStorage = (updatedCart) => {
+        try {
+            // Save checked products
+            const checkedProducts = []
+
+            updatedCart.forEach((shop) => {
+                shop.products.forEach((product) => {
+                    if (product.checked) {
+                        checkedProducts.push({
+                            id: product.id,
+                            checked: true,
+                        })
+                    }
+                })
+            })
+
+            localStorage.setItem("checkedProducts", JSON.stringify(checkedProducts))
+
+            // Save vouchers
+            const selectedVouchers = []
+
+            updatedCart.forEach((shop) => {
+                if (shop.selectedVoucher) {
+                    selectedVouchers.push({
+                        shopId: shop.shopid,
+                        voucher: shop.selectedVoucher,
+                    })
+                }
+            })
+
+            localStorage.setItem("selectedVouchers", JSON.stringify(selectedVouchers))
+        } catch (error) {
+            console.error("Error saving cart state to localStorage:", error)
+        }
+    }
     const handleQuantityChange = (shopId, productId, newQuantity) => {
         if (newQuantity < 1) return
 
@@ -174,6 +128,139 @@ const Cart = () => {
 
         setCart(newCart)
     }
+    // Modify the useEffect that loads from localStorage to also load vouchers
+    useEffect(() => {
+        try {
+            // Load checked products
+            const checkedProductsJSON = localStorage.getItem("checkedProducts")
+            if (checkedProductsJSON) {
+                const checkedProducts = JSON.parse(checkedProductsJSON)
+
+                // Update cart with checked products from localStorage
+                setCart((prevCart) => {
+                    const newCart = [...prevCart]
+
+                    newCart.forEach((shop) => {
+                        let shopHasCheckedProducts = false
+
+                        shop.products.forEach((product) => {
+                            // Find if this product should be checked
+                            const savedProduct = checkedProducts.find((p) => p.id === product.id)
+                            if (savedProduct && savedProduct.checked) {
+                                product.checked = true
+                                shopHasCheckedProducts = true
+                            }
+                        })
+
+                        // Update shop checked status based on products
+                        shop.checked = shopHasCheckedProducts
+                    })
+
+                    return newCart
+                })
+            }
+
+            // Load vouchers
+            const selectedVouchersJSON = localStorage.getItem("selectedVouchers")
+            if (selectedVouchersJSON) {
+                const selectedVouchers = JSON.parse(selectedVouchersJSON)
+
+                // Update cart with vouchers from localStorage
+                setCart((prevCart) => {
+                    const newCart = [...prevCart]
+
+                    newCart.forEach((shop) => {
+                        // Find if this shop has a voucher
+                        const savedVoucher = selectedVouchers.find((v) => v.shopId === shop.shopid)
+                        if (savedVoucher) {
+                            shop.selectedVoucher = savedVoucher.voucher
+                        }
+                    })
+
+                    return newCart
+                })
+            }
+
+            // Check if returning from Payment
+            const isReturningFromPayment = localStorage.getItem("returningFromPayment") === "true"
+            if (isReturningFromPayment) {
+                localStorage.removeItem("returningFromPayment")
+            }
+        } catch (error) {
+            console.error("Error loading cart state from localStorage:", error)
+        }
+    }, [])
+
+    // Modify the useEffect that saves to localStorage to use the new function
+    useEffect(() => {
+        saveCartStateToLocalStorage(cart)
+    }, [cart])
+
+    // Function to save checked products to localStorage
+    // const saveCheckedProductsToLocalStorage = (updatedCart) => {
+    //   // Extract only product IDs and their checked status
+    //   const checkedProducts = []
+
+    //   updatedCart.forEach((shop) => {
+    //     shop.products.forEach((product) => {
+    //       if (product.checked) {
+    //         checkedProducts.push({
+    //           id: product.id,
+    //           checked: true,
+    //         })
+    //       }
+    //     })
+    //   })
+
+    //   localStorage.setItem("checkedProducts", JSON.stringify(checkedProducts))
+    // }
+
+    // Load checked products from localStorage on component mount
+    // useEffect(() => {
+    //   try {
+    //     const checkedProductsJSON = localStorage.getItem("checkedProducts")
+
+    //     if (checkedProductsJSON) {
+    //       const checkedProducts = JSON.parse(checkedProductsJSON)
+
+    //       // Update cart with checked products from localStorage
+    //       setCart((prevCart) => {
+    //         const newCart = [...prevCart]
+
+    //         newCart.forEach((shop) => {
+    //           let shopHasCheckedProducts = false
+
+    //           shop.products.forEach((product) => {
+    //             // Find if this product should be checked
+    //             const savedProduct = checkedProducts.find((p) => p.id === product.id)
+    //             if (savedProduct && savedProduct.checked) {
+    //               product.checked = true
+    //               shopHasCheckedProducts = true
+    //             }
+    //           })
+
+    //           // Update shop checked status based on products
+    //           shop.checked = shopHasCheckedProducts
+    //         })
+
+    //         return newCart
+    //       })
+    //     }
+
+    //     // Check if returning from Payment
+    //     const isReturningFromPayment = localStorage.getItem("returningFromPayment") === "true"
+    //     if (isReturningFromPayment) {
+    //       localStorage.removeItem("returningFromPayment")
+    //     }
+    //   } catch (error) {
+    //     console.error("Error loading checked products from localStorage:", error)
+    //   }
+    // }, [])
+
+    // Save checked products whenever cart changes
+    // useEffect(() => {
+    //   saveCheckedProductsToLocalStorage(cart)
+    // }, [cart])
 
     // Kiểm tra xem có bất kỳ sản phẩm hoặc shop nào được check không
     const hasCheckedItems = () => {
@@ -219,6 +306,7 @@ const Cart = () => {
                     return product
                 })
 
+                // Kiểm tra xem có bất kỳ sản phẩm nào trong shop được check không
                 const hasCheckedProducts = updatedProducts.some((product) => product.checked)
 
                 return {
@@ -232,8 +320,10 @@ const Cart = () => {
         setCart(newCart)
     }
 
+    // Kiểm tra xem có bất kỳ sản phẩm hoặc shop nào được check không để hiển thị trạng thái của title
     const isAllChecked = hasCheckedItems()
 
+    // Thêm hàm kiểm tra shop có sản phẩm được check không
     const hasCheckedProductsInShop = (shopId) => {
         const shop = cart.find((shop) => shop.shopid === shopId)
         return shop && shop.products.some((product) => product.checked)
@@ -245,21 +335,29 @@ const Cart = () => {
             return
         }
 
+        // Filter out checked products
         const newCart = cart.map((shop) => ({
             ...shop,
             checked: false,
             products: shop.products.filter((product) => !product.checked),
         }))
 
-        const finalCart = newCart.map((shop) => ({
-            ...shop,
-            checked: false,
-        }))
+        // Update shop checked status based on remaining products
+        const finalCart = newCart.map((shop) => {
+            const hasProducts = shop.products.length > 0
+            return {
+                ...shop,
+                checked: false,
+            }
+        })
 
         setCart(finalCart)
+        saveCartStateToLocalStorage(finalCart)
     }
 
+    // Modify the handlePayment function to better save state before navigation
     const handlePayment = () => {
+        // Filter selected products and add shop info
         const selectedProducts = cart.flatMap((shop) =>
             shop.products
                 .filter((product) => product.checked)
@@ -276,58 +374,28 @@ const Cart = () => {
             return
         }
 
-        try {
-            // Lưu toàn bộ cart state để có thể khôi phục
-            const cartState = {
-                products: selectedProducts,
-                cart: cart.map(shop => ({
-                    ...shop,
-                    products: shop.products.map(product => ({
-                        ...product
-                    }))
-                }))
-            };
-            
-            localStorage.setItem('cartState', JSON.stringify(cartState));
-            
-            const selectedVouchers = cart
-                .filter((shop) => shop.selectedVoucher)
-                .map((shop) => ({
-                    shopId: shop.shopid,
-                    shopName: shop.shopname,
-                    voucher: shop.selectedVoucher,
-                }));
-            
-            localStorage.setItem('paymentSelectedVouchers', JSON.stringify(selectedVouchers));
-            
-            const totalAmount = selectedProducts.reduce((sum, product) => {
-                const price = Number.parseInt(product.discountPrice.replace(/[^\d]/g, ""))
-                return sum + price * product.quantity
-            }, 0);
-            localStorage.setItem('paymentTotalAmount', totalAmount.toString());
-            
-            navigate('/payment');
-        } catch (error) {
-            console.error('Error saving payment data to localStorage:', error);
-            alert('Có lỗi xảy ra khi lưu dữ liệu thanh toán');
-        }
+        // Save current state to localStorage before navigating
+        saveCartStateToLocalStorage(cart)
+
+        // Set flag to indicate we're going to Payment
+        localStorage.setItem("returningFromPayment", "true")
+
+        // Navigate to Payment with selected data
+        navigate("/payment", {
+            state: {
+                selectedProducts,
+                selectedVouchers: cart
+                    .filter((shop) => shop.selectedVoucher)
+                    .map((shop) => ({
+                        shopId: shop.shopid,
+                        shopName: shop.shopname,
+                        voucher: shop.selectedVoucher,
+                    })),
+            },
+        })
     }
 
-    // Thêm useEffect để khôi phục state khi quay lại từ Payment
-    useEffect(() => {
-        const cartState = localStorage.getItem('cartState');
-        if (cartState) {
-            try {
-                const { cart: savedCart } = JSON.parse(cartState);
-                if (savedCart) {
-                    setCart(savedCart);
-                }
-            } catch (error) {
-                console.error('Error restoring cart state:', error);
-            }
-        }
-    }, []);
-
+    // Modify the handleSelectVoucher function to save state immediately
     const handleSelectVoucher = (shopId, voucher) => {
         const newCart = cart.map((shop) => {
             if (shop.shopid === shopId) {
@@ -340,8 +408,12 @@ const Cart = () => {
         })
         setCart(newCart)
         setShowVoucherModal(false)
+
+        // Save to localStorage immediately
+        saveCartStateToLocalStorage(newCart)
     }
 
+    // Modify the handleRemoveVoucher function to save state immediately
     const handleRemoveVoucher = (shopId) => {
         const newCart = cart.map((shop) => {
             if (shop.shopid === shopId) {
@@ -353,6 +425,9 @@ const Cart = () => {
             return shop
         })
         setCart(newCart)
+
+        // Save to localStorage immediately
+        saveCartStateToLocalStorage(newCart)
     }
 
     return (
@@ -409,14 +484,14 @@ const Cart = () => {
                     className="bg-white rounded-lg shadow-md overflow-hidden mb-4 "
                 >
                     <div className="flex items-center p-4 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                        <div className="w-8 flex justify-center">
-                            <input
-                                type="checkbox"
-                                className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 transition-colors duration-200"
-                                checked={shop.checked}
-                                onChange={(e) => handleCheckShop(shop.shopid, e.target.checked)}
-                            />
-                        </div>
+                       <div className="w-8 flex justify-center">
+                       <input
+                            type="checkbox"
+                            className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 transition-colors duration-200 "
+                            checked={shop.checked}
+                            onChange={(e) => handleCheckShop(shop.shopid, e.target.checked)}
+                        />
+                       </div>
                         <h3 className="text-base sm:text-lg font-semibold text-gray-700 flex items-center">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -432,7 +507,7 @@ const Cart = () => {
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                                 />
                             </svg>
-                            {shop.shopname} - Phí ship: {calculateShippingFee(shop).toLocaleString()}đ
+                            {shop.shopname}
                         </h3>
                     </div>
 

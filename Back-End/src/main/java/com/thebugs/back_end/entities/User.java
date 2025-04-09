@@ -3,6 +3,8 @@ package com.thebugs.back_end.entities;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.angus.mail.handlers.multipart_mixed;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -35,13 +37,15 @@ public class User {
     private String password;
     @Column(nullable = false)
     private String email;
-    @Column(name = "phone" , nullable = true , length = 10)
+    @Column(name = "phone", nullable = true, length = 10)
     private String phone;
+    @Column(nullable = false)
+    private String avatar;
     @Column(nullable = false)
     private String fullName;
     @Column(name = "gender")
     private Boolean gender;
-    @Column(name = "cccd" ,nullable = true)
+    @Column(name = "cccd", nullable = true)
     private String cccd;
     @Column(name = "verify", nullable = true)
     private Boolean verify;
@@ -51,9 +55,9 @@ public class User {
     @Column(name = "active", nullable = false)
     private Boolean active;
 
-    @Column(nullable =  true,name = "address")
+    @Column(nullable = true, name = "address")
     private String address;
-    
+
     @OneToMany(mappedBy = "user")
     private List<Address> addresses;
 

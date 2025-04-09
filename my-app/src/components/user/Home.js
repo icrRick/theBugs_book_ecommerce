@@ -504,7 +504,6 @@ const Home = () => {
                           <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-bold text-sm">
                             -{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%
                           </div>
-                       
                         </Link>
                       </div>
                       <Link to={`/product-detail/${product.id}`}>
@@ -543,7 +542,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
 
       {/* Danh mục */}
       <section className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}>
@@ -733,7 +731,6 @@ const Home = () => {
                           </span>
                         )}
                       </div>
-                     
                     </div>
                   </div>
                 </Link>
@@ -783,53 +780,68 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials - New Design */}
       <section className="mb-12">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Khách hàng nói gì về chúng tôi</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Khám phá trải nghiệm mua sắm tuyệt vời từ những khách hàng đã tin tưởng và sử dụng dịch vụ của E-Com
-              Books.
-            </p>
-          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-3xl overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full opacity-10 -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500 rounded-full opacity-10 -ml-32 -mb-32"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <div
-                key={testimonial.id}
-                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
+            <div className="relative py-16 px-4 md:px-8">
+              <Swiper
+                modules={[Pagination, Autoplay]}
+                spaceBetween={30}
+                slidesPerView={1}
+                pagination={{ clickable: true, el: ".testimonial-pagination" }}
+                autoplay={{ delay: 5000 }}
+                loop={true}
+                className="testimonial-swiper max-w-5xl mx-auto"
               >
-                <div className="flex items-center mb-4">
-                  <img
-                    src={testimonial.avatar || "/placeholder.svg"}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover mr-4"
-                  />
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{testimonial.name}</h3>
-                    <div className="flex text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <svg
-                          key={i}
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-4 w-4 ${i < testimonial.rating ? "fill-current" : "stroke-current fill-none"}`}
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                          />
-                        </svg>
-                      ))}
+                {testimonials.map((testimonial) => (
+                  <SwiperSlide key={testimonial.id}>
+                    <div className="flex flex-col items-center text-center px-4 md:px-12">
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white shadow-lg mb-6 overflow-hidden">
+                        <img
+                          src={testimonial.avatar || "/placeholder.svg"}
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="flex text-amber-400 mb-6">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-6 w-6 ${i < testimonial.rating ? "fill-current" : "stroke-current fill-none"}`}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                            />
+                          </svg>
+                        ))}
+                      </div>
+
+                      <blockquote className="text-xl md:text-2xl font-light text-gray-700 italic mb-6 max-w-3xl">
+                        "{testimonial.text}"
+                      </blockquote>
+
+                      <div className="flex flex-col items-center">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-800">{testimonial.name}</h3>
+                        <div className="w-12 h-1 bg-emerald-500 rounded-full mt-3 mb-2"></div>
+                        <p className="text-gray-600">Khách hàng thân thiết</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 italic">{testimonial.text}</p>
-              </div>
-            ))}
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+
+              <div className="testimonial-pagination flex justify-center mt-8"></div>
+            </div>
           </div>
         </div>
       </section>
