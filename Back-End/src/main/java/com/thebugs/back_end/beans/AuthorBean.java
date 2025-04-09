@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class AuthorBean {
         @NotBlank(message = "Tên tác giả không được bỏ trống")
-        @Pattern(regexp = "^[a-zA-Z\\s]+$", message = "Tên tác giả không được nhập số và ký tự đặc biệt")
+        @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Tên tác giả không được nhập số và ký tự đặc biệt")
         @Size(min = 2, max = 100, message = "Tên tác giả phải có ít nhất 2 ký tự và không quá 100 ký tự")
         private String name;
         private MultipartFile image;

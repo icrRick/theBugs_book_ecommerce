@@ -9,4 +9,6 @@ public interface ProductGenreJPA extends JpaRepository<ProductGenre, Integer> {
 
         @Query("SELECT COUNT(pg) > 0 FROM ProductGenre pg WHERE pg.genre.id = ?1")
         boolean existsByGenreId(int genreId);
+        
+       
 }

@@ -76,7 +76,7 @@ export const USER_ROUTES = [
       { path: "address/add", element: <AddAddress /> },
       { path: "address/edit/:addressId", element: <EditAddress /> },
       { path: "ordered", element: <Ordered /> },
-      { path: "order/:id", element: <OrderDetail /> },
+      { path: "order/:orderId", element: <OrderDetail /> },
       { path: "favorite", element: <Favorite /> },
       { path: "report-products", element: <ReportProducts /> },
       { path: "report-product-detail/:id", element: <ReportProductDetail /> },

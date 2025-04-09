@@ -44,6 +44,9 @@ public class Order {
     @Column(nullable = false)
     private Double shippingFee;
 
+    @Column(length = 50)
+    private String shippingMethod;
+
     @Temporal(TemporalType.DATE)
     @Column(nullable = false)
     private Date createdAt;

@@ -1,58 +1,54 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import axiosInstance from '../../utils/axiosInstance';
+
 
 const SellerOrderDetail = () => {
     const { orderId } = useParams();
+    const [item, setItem] = useState(null); // Khởi tạo là null thay vì mảng rỗng
+    const [loading, setLoading] = useState(true); // Thêm trạng thái loading
+    const [error, setError] = useState(null); // Thêm trạng thái error
 
-    // Dữ liệu mẫu
-    const order = {
-        id: 1,
-        date: '2024-03-20',
-        status: 'Đang giao',
-        customerInfo: {
-            name: 'Nguyễn Văn A',
-            phone: '0909090909',
-            address: '123 Đường ABC, Quận 1, TP.HCM'
-        },
-        shippingInfo: {
-            method: 'Giao hàng nhanh',
-            fee: '30.000đ'
-        },
-        paymentInfo: {
-            method: 'Thanh toán tiền mặt',
-            status: 'Đã thanh toán',
-            total: '1.500.000đ',
-            subtotal: '1.470.000đ',
-            shippingFee: '30.000đ',
-            discount: '50.000đ'
-        },
-        products: [
-            {
-                id: 1,
-                name: 'Sản phẩm 1',
-                image: 'https://via.placeholder.com/150',
-                price: '500.000đ',
-                quantity: 2,
-                total: '1.000.000đ',
-                status: 'Đang giao'
-            },
-            {
-                id: 2,
-                name: 'Sản phẩm 2',
-                image: 'https://via.placeholder.com/150',
-                price: '470.000đ',
-                quantity: 1,
-                total: '470.000đ',
-                status: 'Đang giao'
+    const fetchOrderDetails = async (orderId) => {
+        setLoading(true); // Bắt đầu tải dữ liệu
+        setError(null); // Xóa lỗi cũ
+        try {
+            const response = await axiosInstance.get(`/seller/order/${orderId}`);
+            if (!response.data.status) {
+                throw new Error(response.data.message || 'Không thể tải chi tiết đơn hàng');
             }
-        ]
+            setItem(response.data.data); // Cập nhật dữ liệu
+        } catch (error) {
+            console.error('Có vấn đề khi tải dữ liệu:', error);
+            setError(error.message || 'Đã xảy ra lỗi khi tải chi tiết đơn hàng');
+        } finally {
+            setLoading(false); // Kết thúc tải dữ liệu
+        }
     };
 
+    useEffect(() => {
+        if (orderId) {
+            fetchOrderDetails(orderId); // Truyền orderId vào hàm
+        }
+    }, [orderId]);
+if(item === null) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 animate-spin text-gray-500" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8.009 8.009 0 0 1 12 20Z" />
+                </svg>
+                <p className="mt-4 text-lg text-gray-700">Không tìm thấy order</p>
+            </div>
+        </div>
+    );
+}
     return (
         <div className="max-w-full">
             <div className="flex items-center justify-between mb-8 bg-white rounded-lg border border-gray-100 p-6">
-                <h2 className="text-2xl font-bold text-gray-800">Chi tiết đơn hàng #{order.id}</h2>
-                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(order.status)}`}>
-                    {order.status}
+                <h2 className="text-2xl font-bold text-gray-800">Chi tiết đơn hàng #{item?.orderId }</h2>
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusBadgeColor(item?.orderStatusName)}`}>
+                    {item?.orderStatusName}
                 </span>
             </div>
 
@@ -69,9 +65,9 @@ const SellerOrderDetail = () => {
                                 Thông tin khách hàng
                             </h3>
                             <div className="space-y-3">
-                                <p className="text-sm text-gray-700">{order.customerInfo.name}</p>
-                                <p className="text-sm text-gray-700">{order.customerInfo.phone}</p>
-                                <p className="text-sm text-gray-700">{order.customerInfo.address}</p>
+                                <p className="text-sm text-gray-700">{item?.fullName}</p>
+                                <p className="text-sm text-gray-700">{item?.phone}</p>
+                                <p className="text-sm text-gray-700">{item?.address}</p>
                             </div>
                         </div>
 
@@ -85,8 +81,8 @@ const SellerOrderDetail = () => {
                                 Thông tin giao hàng
                             </h3>
                             <div className="space-y-3">
-                                <p className="text-sm text-gray-700">Phương thức: {order.shippingInfo.method}</p>
-                                <p className="text-sm text-gray-700">Phí vận chuyển: {order.shippingInfo.fee}</p>
+                                <p className="text-sm text-gray-700">Phương thức: Giao hang nhanh</p>
+                                <p className="text-sm text-gray-700">Phí vận chuyển: {item?.shippingFee}</p>
                             </div>
                         </div>
 
@@ -99,15 +95,15 @@ const SellerOrderDetail = () => {
                                 Thông tin thanh toán
                             </h3>
                             <div className="space-y-3">
-                                <p className="text-sm text-gray-700">Phương thức: {order.paymentInfo.method}</p>
-                                <p className="text-sm text-gray-700">Trạng thái: {order.paymentInfo.status}</p>
+                                <p className="text-sm text-gray-700">Phương thức: {item?.paymentMethod}</p>
+                                <p className="text-sm text-gray-700">Trạng thái: {item?.paymentStatus}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Danh sách sản phẩm */}
-                <div className="bg-white rounded-lg border border-gray-100 p-6">
+                <div className="bg-white rounded-lg bitem border-gray-100 p-6">
                     <h3 className="text-lg font-semibold mb-6 flex items-center text-gray-800">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
@@ -133,26 +129,28 @@ const SellerOrderDetail = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {order.products.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50">
+                                {/* Kiểm tra nếu item tồn tại và có orderItems */}
+                                {item?.orderItems && item.orderItems.length > 0 && item.orderItems.map((product) => (
+                                 
+                                    <tr key={product.productId} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-16 w-16">
-                                                    <img className="h-16 w-16 rounded-lg object-cover" src={product.image} alt={product.name} />
+                                                    <img className="h-16 w-16 rounded-lg object-cover" src={product.productImage} alt={product.productName} />
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                                    <div className="text-sm font-medium text-gray-900">{product.productName}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="text-sm text-gray-900">{product.quantity}</div>
+                                            <div className="text-sm text-gray-900">{product.quantityProduct}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm text-gray-900">{product.price}</div>
+                                            <div className="text-sm text-gray-900">{product.priceProduct}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm font-medium text-blue-600">{product.total}</div>
+                                            <div className="text-sm text-gray-900">{product.totalPriceProduct}</div>
                                         </td>
                                     </tr>
                                 ))}
@@ -166,19 +164,19 @@ const SellerOrderDetail = () => {
                     <div className="pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center text-base text-gray-700 mb-2">
                             <span>Tạm tính:</span>
-                            <span>{order.paymentInfo.subtotal}</span>
+                            <span>{item?.totalPrice}</span>
                         </div>
                         <div className="flex justify-between items-center text-base text-green-600 mb-2">
                             <span>Giảm giá:</span>
-                            <span>-{order.paymentInfo.discount}</span>
+                            <span>-{item?.totalDiscount}</span>
                         </div>
                         <div className="flex justify-between items-center text-base text-gray-700 mb-2">
                             <span>Phí vận chuyển:</span>
-                            <span>{order.paymentInfo.shippingFee}</span>
+                            <span>{item?.shippingFee}</span>
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold text-blue-600 mt-4 pt-4 border-t border-gray-200">
                             <span>Tổng cộng:</span>
-                            <span>{order.paymentInfo.total}</span>
+                            <span>{item?.total}</span>
                         </div>
                     </div>
                 </div>

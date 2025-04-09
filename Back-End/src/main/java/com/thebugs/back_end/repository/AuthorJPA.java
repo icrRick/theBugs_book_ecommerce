@@ -1,4 +1,5 @@
 package com.thebugs.back_end.repository;
+
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ public interface AuthorJPA extends JpaRepository<Author, Integer> {
         Page<Author> findByNameAuthor(@Param("keyword") String keyword, Pageable pageable);
 
         @Query("SELECT COUNT(g) FROM Author g WHERE :keyword IS NULL OR :keyword = '' OR g.name LIKE %:keyword%")
-        int countfindByName(@Param("keyword") String keyword);
+        int countFindByName(@Param("keyword") String keyword);
 
         @Query("SELECT g FROM Author g WHERE g.name = ?2 AND (g.id <> ?1 OR ?1 IS NULL)")
         Optional<Author> findByNameExist(Integer id, String name);
