@@ -21,8 +21,8 @@ import com.thebugs.back_end.repository.ImageJPA;
 import com.thebugs.back_end.repository.PublisherJPA;
 import com.thebugs.back_end.repository.Seller_ProductJPA;
 import com.thebugs.back_end.repository.ShopJPA;
-import com.thebugs.back_end.services.Seller_ProductAuthorService;
-import com.thebugs.back_end.services.Seller_ProductGenreService;
+import com.thebugs.back_end.services.seller.Seller_ProductAuthorService;
+import com.thebugs.back_end.services.seller.Seller_ProductGenreService;
 
 @Component
 public class Seller_ProductConverter {
