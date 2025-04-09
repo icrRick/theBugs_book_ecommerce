@@ -19,7 +19,6 @@ import com.thebugs.back_end.dto.OrderSimpleDTO;
 import com.thebugs.back_end.dto.ProductOrderDTO;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderStatus;
-import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;

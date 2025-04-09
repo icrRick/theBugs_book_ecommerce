@@ -27,7 +27,7 @@ public class Seller_ImageService {
     }
 
     protected List<Image> uploadImage(List<MultipartFile> realImages, Product product) {
-        List<Image> images = new ArrayList();
+        List<Image> images = new ArrayList<>();
         for (MultipartFile realImage : realImages) {
             try {
                 Image image = new Image();

@@ -6,16 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.ReviewDTO;
-import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.ReviewJPA;
 
 @Service
 public class ReviewService { // Không cần abstract nếu là service cụ thể
     @Autowired
     private ReviewJPA reviewJPA;
-
-    @Autowired
-    private ProductJPA productJPA;
 
     // Trả về danh sách ReviewDTO theo productId
     public List<ReviewDTO> getReviewDTOsByProductId(Integer productId) {

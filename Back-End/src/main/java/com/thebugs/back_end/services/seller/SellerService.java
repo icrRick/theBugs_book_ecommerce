@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.repository.ShopJPA;
-import com.thebugs.back_end.services.user.UserService;
 
 @Service
 public class SellerService {

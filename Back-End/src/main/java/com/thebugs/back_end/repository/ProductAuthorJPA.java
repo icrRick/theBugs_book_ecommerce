@@ -1,12 +1,6 @@
 package com.thebugs.back_end.repository;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
-import com.thebugs.back_end.dto.AuthorDTO;
-import com.thebugs.back_end.entities.Author;
 import com.thebugs.back_end.entities.ProductAuthor;
 
 public interface ProductAuthorJPA extends JpaRepository<ProductAuthor, Integer> {

@@ -23,7 +23,7 @@ public class Seller_ProductGenreService
 
     public List<ProductGenre> createProductGenres(List<Integer> genres_id, Product product)
     {
-        List<ProductGenre> productGenres = new ArrayList();
+        List<ProductGenre> productGenres = new ArrayList<>();
         for (Integer genre_id : genres_id) {
             ProductGenre productGenre = new ProductGenre();
             productGenre.setId(genre_id);

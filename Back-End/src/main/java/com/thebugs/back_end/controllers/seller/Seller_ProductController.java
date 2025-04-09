@@ -95,8 +95,8 @@ public class Seller_ProductController {
             responseData.setMessage("Load danh sách thành công");
 
             // Lấy danh sách tác giả
-            List<AuthorDTO> authors = g_AuthorService.searchKeyWordAndPagination(keyword, pageable);
-            int totalItems = g_AuthorService.getTotal(keyword);
+            List<AuthorDTO> authors = g_AuthorService.getAllListAndSearchKeyWord(keyword, pageable);
+            int totalItems = g_AuthorService.totalItems(keyword);
 
             Map<String, Object> response = new HashMap<>();
             response.put("arrayList", authors);

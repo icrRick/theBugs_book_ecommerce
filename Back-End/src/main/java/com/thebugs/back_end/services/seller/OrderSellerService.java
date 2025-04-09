@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.OrderDTO;
@@ -251,55 +250,55 @@ public class OrderSellerService {
         public boolean getUserEmail(Integer orderId, String cancelReason) {
                 Order order = getById(orderId);
                 String mail = order.getUser().getEmail();
-                sendMail(mail, cancelReason);
+                // sendMail(mail, cancelReason);
                 return true;
         }
 
-        public void sendMail(String setTo, String cancelReason) {
-                MimeMessage message = mailSender.createMimeMessage();
-                try {
-                        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                        helper.setTo(setTo);
-                        helper.setSubject("Hủy Đơn Hàng");
+        // public void sendMail(String setTo, String cancelReason) {
+        //         MimeMessage message = mailSender.createMimeMessage();
+        //         try {
+        //                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        //                 helper.setTo(setTo);
+        //                 helper.setSubject("Hủy Đơn Hàng");
 
-                        String htmlContent = "<!DOCTYPE html>" +
-                                        "<html>" +
-                                        "<body>" +
-                                        "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">" +
-                                        "  <tr>" +
-                                        "    <td align=\"center\" style=\"background: #f0f0f0;\">" +
-                                        "      <div style=\"max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
-                                        +
-                                        "        <h1 style=\"color: #d9534f; text-align: center;\">Hủy Đơn Hàng</h1>" +
-                                        "        <p style=\"color: #333; text-align: center;\">Kính gửi quý khách,</p>"
-                                        +
-                                        "        <p style=\"color: #333; text-align: center;\">Chúng tôi rất tiếc phải thông báo rằng đơn hàng của quý khách đã bị hủy. Dưới đây là chi tiết:</p>"
-                                        +
-                                        "        <div style=\"background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;\">"
-                                        +
-                                        "          <p style=\"color: #333;\">Lý do hủy: " + cancelReason + "</p>" +
-                                        "        </div>" +
-                                        "        <p style=\"color: #333; text-align: center;\">Nếu quý khách có bất kỳ câu hỏi nào, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>"
-                                        +
-                                        "        <div style=\"text-align: center; margin-top: 20px;\">" +
-                                        "          <a href=\"https://yourwebsite.com/order-details\" style=\"background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Xem Chi Tiết</a>"
-                                        +
-                                        "        </div>" +
-                                        "        <p style=\"color: #666; text-align: center; margin-top: 30px;\">Trân trọng,<br>Đội ngũ My Company</p>"
-                                        +
-                                        "      </div>" +
-                                        "    </td>" +
-                                        "  </tr>" +
-                                        "</table>" +
-                                        "</body>" +
-                                        "</html>";
+        //                 String htmlContent = "<!DOCTYPE html>" +
+        //                                 "<html>" +
+        //                                 "<body>" +
+        //                                 "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">" +
+        //                                 "  <tr>" +
+        //                                 "    <td align=\"center\" style=\"background: #f0f0f0;\">" +
+        //                                 "      <div style=\"max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
+        //                                 +
+        //                                 "        <h1 style=\"color: #d9534f; text-align: center;\">Hủy Đơn Hàng</h1>" +
+        //                                 "        <p style=\"color: #333; text-align: center;\">Kính gửi quý khách,</p>"
+        //                                 +
+        //                                 "        <p style=\"color: #333; text-align: center;\">Chúng tôi rất tiếc phải thông báo rằng đơn hàng của quý khách đã bị hủy. Dưới đây là chi tiết:</p>"
+        //                                 +
+        //                                 "        <div style=\"background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;\">"
+        //                                 +
+        //                                 "          <p style=\"color: #333;\">Lý do hủy: " + cancelReason + "</p>" +
+        //                                 "        </div>" +
+        //                                 "        <p style=\"color: #333; text-align: center;\">Nếu quý khách có bất kỳ câu hỏi nào, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>"
+        //                                 +
+        //                                 "        <div style=\"text-align: center; margin-top: 20px;\">" +
+        //                                 "          <a href=\"https://yourwebsite.com/order-details\" style=\"background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Xem Chi Tiết</a>"
+        //                                 +
+        //                                 "        </div>" +
+        //                                 "        <p style=\"color: #666; text-align: center; margin-top: 30px;\">Trân trọng,<br>Đội ngũ My Company</p>"
+        //                                 +
+        //                                 "      </div>" +
+        //                                 "    </td>" +
+        //                                 "  </tr>" +
+        //                                 "</table>" +
+        //                                 "</body>" +
+        //                                 "</html>";
 
-                        helper.setText(htmlContent, true); // Gắn nội dung HTML vào email
-                        mailSender.send(message);
-                } catch (MessagingException e) {
-                        e.printStackTrace();
-                }
-        }
+        //                 helper.setText(htmlContent, true); // Gắn nội dung HTML vào email
+        //                 mailSender.send(message);
+        //         } catch (MessagingException e) {
+        //                 e.printStackTrace();
+        //         }
+        // }
 
         private void updateProductQuantities(String token, int orderId) {
                 // tim order theo id

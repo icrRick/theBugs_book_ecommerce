@@ -11,6 +11,8 @@ import SystemSettings from "../components/admin/SystemSettings";
 import ReportManagement from "../components/admin/ReportManagement";
 import ReportDetail from "../components/admin/ReportDetail";
 
+
+const Authors = lazy(() => import("../components/admin/Authors"));
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -91,6 +93,7 @@ export const ADMIN_ROUTES = [
   {path: 'publishers',element: <Publishers />},
   {path: 'reports/products',element: <ReportProducts />},
   {path: 'reports/stores',element: <ReportStores />},
+  { path: 'authors', element: <Authors /> },,
   {path: 'seller/requests', element: <SellerRegistrationRequests /> },
   {path: 'users', element: <UserManagement /> },
   {path: 'statistics', element: <Statistics /> },
