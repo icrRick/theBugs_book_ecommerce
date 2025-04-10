@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-const SellerInfoStep = ({ formData, handleChange, errors }) => {
+const SellerInfoStep = ({ accountInfo, handleChange, errors }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Đăng ký tài khoản</h2>
@@ -15,7 +15,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           <input
             type="text"
             name="fullName"
-            value={formData.fullName}
+            value={accountInfo.fullName}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.fullName ? "border-red-500" : "border-gray-300"
@@ -33,7 +33,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           <input
             type="email"
             name="email"
-            value={formData.email}
+            value={accountInfo.email}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.email ? "border-red-500" : "border-gray-300"
@@ -51,7 +51,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           <input
             type="tel"
             name="phone"
-            value={formData.phone}
+            value={accountInfo.phone}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.phone ? "border-red-500" : "border-gray-300"
@@ -69,7 +69,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           <input
             type="password"
             name="password"
-            value={formData.password}
+            value={accountInfo.password}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.password ? "border-red-500" : "border-gray-300"
@@ -87,7 +87,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
           <input
             type="password"
             name="confirmPassword"
-            value={formData.confirmPassword}
+            value={accountInfo.confirmPassword}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.confirmPassword ? "border-red-500" : "border-gray-300"
@@ -104,7 +104,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
             type="checkbox"
             id="agreeTerms"
             name="agreeTerms"
-            checked={formData.agreeTerms}
+            checked={accountInfo.agreeTerms}
             onChange={handleChange}
             className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
           />
@@ -122,7 +122,7 @@ const SellerInfoStep = ({ formData, handleChange, errors }) => {
         {errors.agreeTerms && <p className="text-red-500 text-sm mt-1">{errors.agreeTerms}</p>}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SellerInfoStep
+export default SellerInfoStep;

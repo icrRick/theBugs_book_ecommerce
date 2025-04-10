@@ -1,25 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SellerInfoStep from "./SellerInfoStep";
 import IdRecognitionStep from "./IdRecognitionStep";
 import ShopInfoStep from "./ShopInfoStep";
 import ShopAddressStep from "./ShopAddressStep";
+import axiosInstance from "../../utils/axiosInstance";
 
 const SellerRegistration = () => {
       const navigate = useNavigate();
       const [currentStep, setCurrentStep] = useState(1);
-      const [formData, setFormData] = useState({
-            // Account Info
+
+      const [accountInfo, setAccountInfo] = useState({
             fullName: "",
             email: "",
             phone: "",
             password: "",
             confirmPassword: "",
             agreeTerms: false,
+      });
 
-            // ID Recognition
+      const [idRecognition, setIdRecognition] = useState({
             idType: "cccd",
             idNumber: "",
             idIssueDate: "",
@@ -29,13 +31,15 @@ const SellerRegistration = () => {
             idFrontImage: null,
             idBackImage: null,
             idRecognitionData: null,
+      });
 
-            // Personal Info
+      const [personalInfo, setPersonalInfo] = useState({
             bankName: "",
             bankAccount: "",
             bankAccountName: "",
+      });
 
-            // Shop Info
+      const [shopInfo, setShopInfo] = useState({
             shopName: "",
             shopDescription: "",
             shopLogo: null,
@@ -43,8 +47,9 @@ const SellerRegistration = () => {
             businessType: "",
             mainCategories: [],
             taxCode: "",
+      });
 
-            // Shop Address
+      const [shopAddress, setShopAddress] = useState({
             provinceId: "",
             provinceName: "",
             districtId: "",
@@ -60,25 +65,78 @@ const SellerRegistration = () => {
       const [registrationComplete, setRegistrationComplete] = useState(false);
       const [isProcessingId, setIsProcessingId] = useState(false);
 
+      useEffect(() => {
+            const fetchUserData = async () => {
+                  try {
+                        const { data } = await axiosInstance.get("/users/me");
+                        if (data) {
+                              const userData = data;
+                              console.log("UserData: ");
+                              console.log(data);
+                              setCurrentStep(2);
+                        } else {
+                              setCurrentStep(1);
+                        }
+                  } catch (error) {
+                        console.error("Error fetching data:", error);
+                  }
+            };
+            fetchUserData();
+      });
+      useEffect(() => {
+            console.log("AccountInfor: ");
+            console.log(accountInfo);
+      }, [accountInfo]);
       // Xử lý thay đổi dữ liệu form
       const handleChange = (e) => {
             const { name, value, type, files, checked } = e.target;
 
             if (type === "file") {
-                  setFormData({
-                        ...formData,
-                        [name]: files[0],
-                  });
+                  // Cập nhật hình ảnh cho các phần tương ứng (ví dụ: idFrontImage, shopLogo, ...)
+                  if (name === "idFrontImage" || name === "idBackImage") {
+                        setIdRecognition({
+                              ...idRecognition,
+                              [name]: files[0],
+                        });
+                  } else if (name === "shopLogo" || name === "shopBanner") {
+                        setShopInfo({
+                              ...shopInfo,
+                              [name]: files[0],
+                        });
+                  }
             } else if (type === "checkbox") {
-                  setFormData({
-                        ...formData,
+                  setAccountInfo({
+                        ...accountInfo,
                         [name]: checked,
                   });
             } else {
-                  setFormData({
-                        ...formData,
-                        [name]: value,
-                  });
+                  // Cập nhật các trường dạng text cho các phần tương ứng
+                  if (name in idRecognition) {
+                        setIdRecognition({
+                              ...idRecognition,
+                              [name]: value,
+                        });
+                  } else if (name in accountInfo) {
+                        setAccountInfo({
+                              ...accountInfo,
+                              [name]: value,
+                        });
+                  } else if (name in shopInfo) {
+                        setShopInfo({
+                              ...shopInfo,
+                              [name]: value,
+                        });
+                  } else if (name in shopAddress) {
+                        setShopAddress({
+                              ...shopAddress,
+                              [name]: value,
+                        });
+                  } else if (name in personalInfo) {
+                        setPersonalInfo({
+                              ...personalInfo,
+                              [name]: value,
+                        });
+                  }
             }
 
             // Clear error when field is edited
@@ -92,8 +150,8 @@ const SellerRegistration = () => {
 
       // Xử lý thay đổi địa chỉ
       const handleAddressChange = (field, value, displayValue = "") => {
-            setFormData({
-                  ...formData,
+            setShopAddress({
+                  ...shopAddress,
                   [field]: value,
                   [`${field.replace("Id", "Name")}`]: displayValue,
             });
@@ -109,8 +167,8 @@ const SellerRegistration = () => {
 
       // Xử lý thay đổi danh mục
       const handleCategoryChange = (selectedCategories) => {
-            setFormData({
-                  ...formData,
+            setShopInfo({
+                  ...shopInfo,
                   mainCategories: selectedCategories,
             });
 
@@ -125,112 +183,126 @@ const SellerRegistration = () => {
       // Xử lý dữ liệu nhận diện CCCD/CMND
       const handleIdRecognitionData = (data) => {
             if (data) {
-                  setFormData({
-                        ...formData,
+                  setIdRecognition((prev) => ({
+                        ...prev,
+                        idType: data.type,
                         idRecognitionData: data,
-                        idNumber: data.id || formData.idNumber,
-                        fullName: data.name || formData.fullName,
-                        dob: data.dob || formData.dob,
-                        gender: data.gender || formData.gender,
-                        idIssueDate: data.issueDate || formData.idIssueDate,
-                        idIssuedBy: data.issuedBy || formData.idIssuedBy,
-                        address: data.address || formData.address,
-                  });
+                        idNumber: data.id || prev.idNumber,
+                        idIssueDate:
+                              convertToDate(data.issue_date) ||
+                              prev.idIssueDate, // Chỉnh sửa trường "issue_date"
+                        idIssuedBy: data.issue_loc || prev.idIssuedBy, // Chỉnh sửa trường "issue_loc"
+                        dob: convertToDate(data.dob) || prev.dob,
+                        gender: data.sex || prev.gender, // Chỉnh sửa trường "sex"
+                        features: data.features || prev.features, // Thêm trường "features"
+                        address: data.address || prev.address, // Thêm trường "address"
+                        addressEntities:
+                              data.address_entities || prev.addressEntities, // Thêm trường "address_entities"
+                        doe: convertToDate(data.doe) || prev.doe, // Thêm trường "doe"
+                        nationality: data.nationality || prev.nationality, // Thêm trường "nationality"
+                        name: data.name || prev.name, // Thêm trường "name"
+                  }));
             }
-            // Cập nhật dữ liệu từ API nhận diện
       };
-
+      function convertToDate(dateString) {
+            const [day, month, year] = dateString.split("/"); // Tách chuỗi theo dấu "/"
+            const date = new Date(`${year}-${month}-${day}`); // Tạo đối tượng Date theo định dạng "yyyy-mm-dd"
+            return date.toISOString().split("T")[0]; // Chuyển đổi sang định dạng "yyyy-MM-dd"
+      }
+      useEffect(() => {
+            console.log("IDRecognition: ");
+            console.log(idRecognition);
+      }, [idRecognition]);
       // Validate form theo từng bước
       const validateStep = (step) => {
             const newErrors = {};
 
             if (step === 1) {
-                  if (!formData.fullName.trim())
+                  if (!accountInfo.fullName.trim())
                         newErrors.fullName = "Vui lòng nhập họ tên";
-                  if (!formData.email.trim()) {
+                  if (!accountInfo.email.trim()) {
                         newErrors.email = "Vui lòng nhập email";
-                  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+                  } else if (!/\S+@\S+\.\S+/.test(accountInfo.email)) {
                         newErrors.email = "Email không hợp lệ";
                   }
 
-                  if (!formData.phone.trim()) {
+                  if (!accountInfo.phone.trim()) {
                         newErrors.phone = "Vui lòng nhập số điện thoại";
-                  } else if (!/^[0-9]{10}$/.test(formData.phone)) {
+                  } else if (!/^[0-9]{10}$/.test(accountInfo.phone)) {
                         newErrors.phone = "Số điện thoại phải có 10 chữ số";
                   }
 
-                  if (!formData.password) {
+                  if (!accountInfo.password) {
                         newErrors.password = "Vui lòng nhập mật khẩu";
-                  } else if (formData.password.length < 6) {
+                  } else if (accountInfo.password.length < 6) {
                         newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
                   }
 
-                  if (!formData.confirmPassword) {
+                  if (!accountInfo.confirmPassword) {
                         newErrors.confirmPassword =
                               "Vui lòng xác nhận mật khẩu";
-                  } else if (formData.password !== formData.confirmPassword) {
+                  } else if (
+                        accountInfo.password !== accountInfo.confirmPassword
+                  ) {
                         newErrors.confirmPassword =
                               "Mật khẩu xác nhận không khớp";
                   }
 
-                  if (!formData.agreeTerms) {
+                  if (!accountInfo.agreeTerms) {
                         newErrors.agreeTerms =
                               "Bạn phải đồng ý với điều khoản dịch vụ";
                   }
             }
 
             if (step === 2) {
-                  if (!formData.idFrontImage)
+                  if (!idRecognition.idFrontImage)
                         newErrors.idFrontImage =
                               "Vui lòng tải lên ảnh mặt trước CCCD/CMND";
-                  if (!formData.idBackImage)
+                  if (!idRecognition.idBackImage)
                         newErrors.idBackImage =
                               "Vui lòng tải lên ảnh mặt sau CCCD/CMND";
 
-                  // Kiểm tra dữ liệu nhận diện
-                  if (!formData.idRecognitionData) {
+                  if (!idRecognition.idRecognitionData) {
                         newErrors.idRecognitionData =
                               "Vui lòng thực hiện nhận diện giấy tờ";
                   }
 
-                  // Thông tin ngân hàng
-                  if (!formData.bankName.trim())
+                  if (!personalInfo.bankName.trim())
                         newErrors.bankName = "Vui lòng nhập tên ngân hàng";
-                  if (!formData.bankAccount.trim())
+                  if (!personalInfo.bankAccount.trim())
                         newErrors.bankAccount = "Vui lòng nhập số tài khoản";
-                  if (!formData.bankAccountName.trim())
+                  if (!personalInfo.bankAccountName.trim())
                         newErrors.bankAccountName =
                               "Vui lòng nhập tên chủ tài khoản";
             }
 
             if (step === 3) {
-                  if (!formData.shopName.trim())
+                  if (!shopInfo.shopName.trim())
                         newErrors.shopName = "Vui lòng nhập tên cửa hàng";
-                  if (!formData.shopDescription.trim())
+                  if (!shopInfo.shopDescription.trim())
                         newErrors.shopDescription =
                               "Vui lòng nhập mô tả cửa hàng";
-                  if (!formData.businessType)
+                  if (!shopInfo.businessType)
                         newErrors.businessType =
                               "Vui lòng chọn loại hình kinh doanh";
                   if (
-                        !formData.mainCategories ||
-                        formData.mainCategories.length === 0
-                  ) {
+                        !shopInfo.mainCategories ||
+                        shopInfo.mainCategories.length === 0
+                  )
                         newErrors.mainCategories =
                               "Vui lòng chọn ít nhất một danh mục kinh doanh";
-                  }
-                  if (!formData.shopLogo)
+                  if (!shopInfo.shopLogo)
                         newErrors.shopLogo = "Vui lòng tải lên logo cửa hàng";
             }
 
             if (step === 4) {
-                  if (!formData.provinceId)
+                  if (!shopAddress.provinceId)
                         newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố";
-                  if (!formData.districtId)
+                  if (!shopAddress.districtId)
                         newErrors.districtId = "Vui lòng chọn quận/huyện";
-                  if (!formData.wardId)
+                  if (!shopAddress.wardId)
                         newErrors.wardId = "Vui lòng chọn phường/xã";
-                  if (!formData.address.trim())
+                  if (!shopAddress.address.trim())
                         newErrors.address = "Vui lòng nhập địa chỉ chi tiết";
             }
 
@@ -293,7 +365,7 @@ const SellerRegistration = () => {
                   case 1:
                         return (
                               <SellerInfoStep
-                                    formData={formData}
+                                    accountInfo={accountInfo}
                                     handleChange={handleChange}
                                     errors={errors}
                               />
@@ -301,7 +373,7 @@ const SellerRegistration = () => {
                   case 2:
                         return (
                               <IdRecognitionStep
-                                    formData={formData}
+                                    idRecognition={idRecognition}
                                     handleChange={handleChange}
                                     handleIdRecognitionData={
                                           handleIdRecognitionData
@@ -314,7 +386,7 @@ const SellerRegistration = () => {
                   case 3:
                         return (
                               <ShopInfoStep
-                                    formData={formData}
+                                    shopInfo={shopInfo}
                                     handleChange={handleChange}
                                     handleCategoryChange={handleCategoryChange}
                                     errors={errors}
@@ -323,7 +395,7 @@ const SellerRegistration = () => {
                   case 4:
                         return (
                               <ShopAddressStep
-                                    formData={formData}
+                                    shopAddress={shopAddress}
                                     handleChange={handleChange}
                                     handleAddressChange={handleAddressChange}
                                     errors={errors}
@@ -332,7 +404,7 @@ const SellerRegistration = () => {
                   default:
                         return (
                               <SellerInfoStep
-                                    formData={formData}
+                                    accountInfo={accountInfo}
                                     handleChange={handleChange}
                                     errors={errors}
                               />

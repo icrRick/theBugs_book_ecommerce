@@ -17,6 +17,7 @@ import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.mappers.Seller_ProductConverter;
 import com.thebugs.back_end.repository.Seller_ProductJPA;
 import com.thebugs.back_end.utils.ColorUtil;
+import com.thebugs.back_end.utils.IrRickUtil;
 
 @Service
 public class Seller_ProductCRUDService {
@@ -81,16 +82,16 @@ public class Seller_ProductCRUDService {
                 statusCode = 201;
                 Seller_ProductDTO data = g_ProductConverter.fromEntityToDTO(savedProduct);
                 result.put("data", data);
-                addBreakLineForMessage(message, "Thêm sản phẩm thành công");
+                IrRickUtil.addBreakLineForMessage(message, "Thêm sản phẩm thành công");
             } else {
                 statusCode = 201;
                 status = false;
-                addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
+                IrRickUtil.addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
             }
         } catch (Exception e) {
             statusCode = 500;
             status = false;
-            addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+            IrRickUtil.addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
         } finally {
             result.put("status", status);
             result.put("message", message.toString());
@@ -111,7 +112,7 @@ public class Seller_ProductCRUDService {
             List<Image> images = g_ImageService.uploadImage(realImages, product);
             if (images == null) {
                 statusCode = 500;
-                addBreakLineForMessage(message, "ERROR: Lỗi không thể upload hình ảnh");
+                IrRickUtil.addBreakLineForMessage(message, "ERROR: Lỗi không thể upload hình ảnh");
             } else if (product.getImages() != null && !product.getImages().isEmpty()) {
                 images.addAll(product.getImages());
             }
@@ -123,16 +124,16 @@ public class Seller_ProductCRUDService {
                 statusCode = 201;
                 Seller_ProductDTO data = g_ProductConverter.fromEntityToDTO(savedProduct);
                 result.put("data", data);
-                addBreakLineForMessage(message, "Cập nhật sản phẩm thành công");
+                IrRickUtil.addBreakLineForMessage(message, "Cập nhật sản phẩm thành công");
             } else {
                 statusCode = 201;
                 status = false;
-                addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
+                IrRickUtil.addBreakLineForMessage(message, "ERROR: Xảy ra lỗi trong quá trình lưu sản phẩm");
             }
         } catch (Exception e) {
             statusCode = 500;
             status = false;
-            addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+            IrRickUtil.addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
         } finally {
             result.put("status", status);
             result.put("message", message.toString());
@@ -211,12 +212,7 @@ public class Seller_ProductCRUDService {
 
     // util function
 
-    private void addBreakLineForMessage(StringBuffer messageO, String messageAdd) {
-        if (!messageO.isEmpty()) {
-            messageO.append("\n");
-        }
-        messageO.append(messageAdd);
-    }
+    
 
     public String generateNextProductCode(String rawPrefix, String maxProductCode) {
         // Chuyển prefix thành chữ hoa và thêm _P

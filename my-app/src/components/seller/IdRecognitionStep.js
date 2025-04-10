@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 
 const IdRecognitionStep = ({
-      formData,
+      idRecognition, // Nhận dữ liệu từ trang chính
       handleChange,
       handleIdRecognitionData,
       isProcessingId,
@@ -12,17 +12,17 @@ const IdRecognitionStep = ({
       errors,
 }) => {
       const [frontPreview, setFrontPreview] = useState(
-            formData.idFrontImage
-                  ? URL.createObjectURL(formData.idFrontImage)
+            idRecognition?.idFrontImage
+                  ? URL.createObjectURL(idRecognition.idFrontImage)
                   : null
       );
       const [backPreview, setBackPreview] = useState(
-            formData.idBackImage
-                  ? URL.createObjectURL(formData.idBackImage)
+            idRecognition?.idBackImage
+                  ? URL.createObjectURL(idRecognition.idBackImage)
                   : null
       );
       const [recognitionStatus, setRecognitionStatus] = useState(
-            formData.idRecognitionData ? "success" : null
+            idRecognition?.idRecognitionData ? "success" : null
       );
       const [recognitionMessage, setRecognitionMessage] = useState("");
 
@@ -69,7 +69,7 @@ const IdRecognitionStep = ({
 
       // Xử lý nhận diện CCCD/CMND
       const handleRecognizeId = async () => {
-            if (!formData.idFrontImage || !formData.idBackImage) {
+            if (!idRecognition?.idFrontImage || !idRecognition?.idBackImage) {
                   setRecognitionStatus("error");
                   setRecognitionMessage(
                         "Vui lòng tải lên đầy đủ ảnh mặt trước và mặt sau CCCD/CMND"
@@ -80,15 +80,14 @@ const IdRecognitionStep = ({
             setIsProcessingId(true);
             setRecognitionStatus("processing");
             setRecognitionMessage("Đang xử lý nhận diện giấy tờ...");
-            console.log("FormData: ");
-            console.log(formData.idFrontImage);
-            console.log(formData.idBackImage);
+            console.log("idRecognition: ");
+            console.log(idRecognition.idFrontImage);
+            console.log(idRecognition.idBackImage);
 
-            
             try {
                   const formDataToSend = new FormData();
-                  formDataToSend.append("images", formData.idFrontImage);
-                  formDataToSend.append("images", formData.idBackImage);
+                  formDataToSend.append("images", idRecognition.idFrontImage);
+                  formDataToSend.append("images", idRecognition.idBackImage);
                   const response = await axiosInstance.post(
                         "/users/id-recognition",
                         formDataToSend,
@@ -99,15 +98,9 @@ const IdRecognitionStep = ({
                         }
                   );
                   // Xử lý kết quả từ API
-                  if (response.errorCode === 0 && response.data) {
-                        // Trích xuất thông tin từ kết quả API
-                        const extractedData = extractDataFromResponse(
-                              response.data
-                        );
-
+                  if (response.status === 200) {
                         // Cập nhật dữ liệu form
-                        handleIdRecognitionData(extractedData);
-
+                        handleIdRecognitionData(response.data.data);
                         setRecognitionStatus("success");
                         setRecognitionMessage(
                               "Nhận diện thành công! Thông tin đã được cập nhật tự động."
@@ -132,63 +125,6 @@ const IdRecognitionStep = ({
             } finally {
                   setIsProcessingId(false);
             }
-      };
-
-      // Đọc file dưới dạng base64
-      const readFileAsBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                        // Lấy phần base64 sau dấu phẩy (loại bỏ phần data:image/jpeg;base64,)
-                        const base64String = reader.result.split(",")[1];
-                        resolve(base64String);
-                  };
-                  reader.onerror = reject;
-                  reader.readAsDataURL(file);
-            });
-      };
-
-      // Gọi API FPT.AI ID Recognition
-      const callFptAiIdRecognition = async (frontImage, backImage) => {
-            // Giả lập API call để demo
-            // Trong thực tế, bạn sẽ gọi API của FPT.AI tại đây
-            await new Promise((resolve) => setTimeout(resolve, 2000)); // Giả lập thời gian xử lý
-
-            // Giả lập kết quả trả về từ API
-            return {
-                  errorCode: 0,
-                  errorMessage: "",
-                  data: {
-                        id: "079123456789",
-                        name: formData.fullName || "Nguyễn Văn A",
-                        dob: "1990-01-01",
-                        gender: "male",
-                        nationality: "Việt Nam",
-                        home: "Thôn An Bình, Xã An Hòa, Huyện Trảng Bom, Tỉnh Đồng Nai",
-                        address: "Thôn An Bình, Xã An Hòa, Huyện Trảng Bom, Tỉnh Đồng Nai",
-                        issueDate: "2020-01-15",
-                        issuedBy: "Cục Cảnh sát ĐKQL Cư trú và DLQG về dân cư",
-                        features: {
-                              frontSide: {
-                                    idType: "cccd",
-                                    idNumber: "079123456789",
-                                    name: "NGUYỄN VĂN A",
-                                    dob: "01/01/1990",
-                                    gender: "Nam",
-                                    nationality: "Việt Nam",
-                                    expiry: "01/01/2030",
-                                    portrait: "base64_encoded_portrait_image",
-                              },
-                              backSide: {
-                                    issueDate: "15/01/2020",
-                                    issuedBy: "Cục Cảnh sát ĐKQL Cư trú và DLQG về dân cư",
-                                    fingerprint:
-                                          "base64_encoded_fingerprint_image",
-                                    mrz: "IDVNM079123456789<<<<<<<<<<<<<<<\n9001019M3001019VNM<<<<<<<<<<<6\nNGUYEN<<VAN<A<<<<<<<<<<<<<<<<<",
-                              },
-                        },
-                  },
-            };
       };
 
       // Trích xuất dữ liệu từ kết quả API
@@ -510,13 +446,13 @@ const IdRecognitionStep = ({
                               type="button"
                               onClick={handleRecognizeId}
                               disabled={
-                                    !formData.idFrontImage ||
-                                    !formData.idBackImage ||
+                                    !idRecognition?.idFrontImage ||
+                                    !idRecognition?.idBackImage ||
                                     isProcessingId
                               }
                               className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center ${
-                                    !formData.idFrontImage ||
-                                    !formData.idBackImage ||
+                                    !idRecognition?.idFrontImage ||
+                                    !idRecognition?.idBackImage ||
                                     isProcessingId
                                           ? "opacity-70 cursor-not-allowed"
                                           : ""
@@ -633,9 +569,8 @@ const IdRecognitionStep = ({
                               {errors.idRecognitionData}
                         </p>
                   )}
-
                   {/* Thông tin cá nhân từ CCCD/CMND */}
-                  {formData.idRecognitionData && (
+                  {idRecognition?.idRecognitionData && (
                         <div className="border-t border-gray-200 pt-6 mt-6">
                               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                                     Thông tin từ giấy tờ
@@ -652,12 +587,18 @@ const IdRecognitionStep = ({
                                           </label>
                                           <select
                                                 name="idType"
-                                                value={formData.idType}
+                                                value={
+                                                      idRecognition?.idType ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300"
                                                 disabled
                                           >
-                                                <option value="cccd">
+                                                <option value="chip_back">
+                                                      Căn cước công dân
+                                                </option>
+                                                <option value="chip_front">
                                                       Căn cước công dân
                                                 </option>
                                                 <option value="cmnd">
@@ -680,7 +621,10 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="text"
                                                 name="idNumber"
-                                                value={formData.idNumber}
+                                                value={
+                                                      idRecognition?.idNumber ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 placeholder="Số CCCD/CMND"
@@ -699,7 +643,9 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="text"
                                                 name="fullName"
-                                                value={formData.fullName}
+                                                value={
+                                                      idRecognition?.name || ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 placeholder="Họ và tên"
@@ -718,7 +664,7 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="date"
                                                 name="dob"
-                                                value={formData.dob}
+                                                value={idRecognition?.dob || ""}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 readOnly
@@ -735,7 +681,7 @@ const IdRecognitionStep = ({
                                           </label>
                                           <select
                                                 name="gender"
-                                                value={formData.gender}
+                                                value={idRecognition?.gender || ""}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 disabled
@@ -743,12 +689,8 @@ const IdRecognitionStep = ({
                                                 <option value="">
                                                       -- Chọn giới tính --
                                                 </option>
-                                                <option value="male">
-                                                      Nam
-                                                </option>
-                                                <option value="female">
-                                                      Nữ
-                                                </option>
+                                                <option value="NAM">Nam</option>
+                                                <option value="NỮ">Nữ</option>
                                                 <option value="other">
                                                       Khác
                                                 </option>
@@ -766,7 +708,10 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="date"
                                                 name="idIssueDate"
-                                                value={formData.idIssueDate}
+                                                value={
+                                                      idRecognition?.idIssueDate ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 readOnly
@@ -784,14 +729,32 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="text"
                                                 name="idIssuedBy"
-                                                value={formData.idIssuedBy}
+                                                value={
+                                                      idRecognition?.idIssuedBy ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 placeholder="Nơi cấp"
                                                 readOnly
                                           />
                                     </div>
-
+                                    <div>
+                                          <label className="block text-gray-700 font-medium mb-2">
+                                                Ngày hết hạn{" "}
+                                                <span className="text-red-500">
+                                                      *
+                                                </span>
+                                          </label>
+                                          <input
+                                                type="date"
+                                                name="idIssueDate"
+                                                value={idRecognition?.doe || ""}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                                readOnly
+                                          />
+                                    </div>
                                     {/* Địa chỉ */}
                                     <div className="md:col-span-2">
                                           <label className="block text-gray-700 font-medium mb-2">
@@ -803,7 +766,10 @@ const IdRecognitionStep = ({
                                           <input
                                                 type="text"
                                                 name="address"
-                                                value={formData.address}
+                                                value={
+                                                      idRecognition?.address ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 placeholder="Địa chỉ"
@@ -831,7 +797,7 @@ const IdRecognitionStep = ({
                                     <input
                                           type="text"
                                           name="bankName"
-                                          value={formData.bankName}
+                                          value={idRecognition?.bankName || ""}
                                           onChange={handleChange}
                                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                                 errors.bankName
@@ -858,7 +824,9 @@ const IdRecognitionStep = ({
                                     <input
                                           type="text"
                                           name="bankAccount"
-                                          value={formData.bankAccount}
+                                          value={
+                                                idRecognition?.bankAccount || ""
+                                          }
                                           onChange={handleChange}
                                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                                 errors.bankAccount
@@ -885,7 +853,10 @@ const IdRecognitionStep = ({
                                     <input
                                           type="text"
                                           name="bankAccountName"
-                                          value={formData.bankAccountName}
+                                          value={
+                                                idRecognition?.bankAccountName ||
+                                                ""
+                                          }
                                           onChange={handleChange}
                                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                                 errors.bankAccountName

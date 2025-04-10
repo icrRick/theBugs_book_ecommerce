@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.thebugs.back_end.dto.UserDTO;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.RegisterSellerService;
@@ -29,9 +30,12 @@ public class RegisterSellerController {
     @GetMapping("/me")
     public ResponseEntity<ResponseData> getMethodName(
             @RequestHeader("Authorization") String authorizationHeader) {
-        User user = g_RegisterSellerService.getUserByToken(authorizationHeader);
+        ColorUtil.print(ColorUtil.RED, "Start getUSER");
+        int statusCode = 200;
+        UserDTO user = g_RegisterSellerService.getUserByToken(authorizationHeader);
         ResponseData responseData = new ResponseData();
         if (user == null) {
+            statusCode = 400;
             responseData.setStatus(false);
             responseData.setMessage("Lấy thông tin người dùng thất bại.");
         } else {
@@ -39,7 +43,7 @@ public class RegisterSellerController {
             responseData.setMessage("Lấy thông tin người dùng thành công.");
             responseData.setData(user);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        return ResponseEntity.status(HttpStatus.valueOf(statusCode)).body(responseData);
     }
 
     @PostMapping("/id-recognition")
@@ -50,10 +54,10 @@ public class RegisterSellerController {
         responseData.setMessage((String) result.get("message"));
         Object data = result.get("data");
         if (data != null) {
+            responseData.setStatus(true);
             responseData.setData(data);
         }
         ColorUtil.print(ColorUtil.RED, "Kết thúc nhận diện");
-
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
 
