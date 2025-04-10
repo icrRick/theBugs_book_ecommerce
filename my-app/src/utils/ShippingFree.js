@@ -33,9 +33,7 @@ export async function calculateShippingFree(shop) {
             weight: parseFloat(totalWeight)
         });
 
-        console.log('Response từ API:', response);
-        console.log('Response data:', response.data);
-        console.log('Response data.data:', response.data.data);
+  
 
         // Kiểm tra response và dữ liệu trả về
         if (response && response.data && response.data.data) {
@@ -50,11 +48,7 @@ export async function calculateShippingFree(shop) {
             }
         }
 
-        console.error('Dữ liệu phí vận chuyển không hợp lệ. Chi tiết:', {
-            response: response,
-            data: response?.data,
-            dataData: response?.data?.data
-        });
+     
         return 0;
     } catch (error) {
         console.error('Lỗi khi tính phí vận chuyển:', error);

@@ -63,7 +63,8 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
         int countfindProductByName(String keyword);
 
         @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id, p.name, p.price, " +
-                        "COALESCE(i.imageName, 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'), " +
+                        "COALESCE(i.imageName, 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'), "
+                        +
                         "COALESCE(pr.promotionValue, 0), p.weight, " +
                         "COALESCE(ROUND(AVG(r.rate), 1), 0)) " +
                         "FROM Product p " +
@@ -74,9 +75,9 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "LEFT JOIN Image i ON i.product.id = p.id " +
                         "WHERE p.active = true " +
                         "AND p.id = ?1 " +
-                        "AND (i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id) OR i.imageName IS NULL) " +
+                        "AND (i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id) OR i.imageName IS NULL) "
+                        +
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName")
-Optional<ProItemDTO> getProItemDTO(Integer productId);
-
+        Optional<ProItemDTO> getProItemDTO(Integer productId);
 
 }

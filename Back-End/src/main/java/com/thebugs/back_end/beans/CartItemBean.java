@@ -7,8 +7,4 @@ public class CartItemBean {
     private Integer productId;
     private Double price;
     private Integer quantity;
-   
- 
-
-   
 }

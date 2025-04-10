@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.seller;
 
 import org.springframework.web.bind.annotation.RestController;
 

@@ -27,7 +27,7 @@ public class RegisterService {
         public UserDTO Register(String fullName, String email, String phone, String password, String cfPassword) {
                 User user = new User();
                 user.setFullName(fullName);
-                user.setPhone(phone);
+           
                 user.setEmail(email);
                 user.setActive(true);
                 user.setRole(roleJPA.findById(1).get());

@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.super_admin;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +20,7 @@ import com.thebugs.back_end.dto.PublisherDTO;
 import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.PublisherService;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;

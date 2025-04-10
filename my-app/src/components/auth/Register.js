@@ -142,36 +142,7 @@ const Register = () => {
                   </div>
                   {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
                 </div>
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                      </svg>
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      {...register("phone", {
-                        required: "Số điện thoại là bắt buộc",
-                      })}
-                      className={`py-2 pl-10 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
-
-                      placeholder="0912345678"
-                    />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
-                </div>
+              
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                     Mật khẩu <span className="text-red-800 font-bold">*</span>

@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.user;
 
 import java.util.stream.Collectors;
 
@@ -43,7 +43,7 @@ public class RegisterController {
                         responseData.setStatus(true);
                         responseData.setMessage("Đăng ký thành công");
                         UserDTO userDTO = registerService.Register(registerBean.getFullName(), registerBean.getEmail(),
-                                        registerBean.getPhone(), registerBean.getPassword(),
+                                       registerBean.getPassword(),
                                         registerBean.getConfirmPassword());
                         responseData.setData(userDTO);
                         return ResponseEntity.ok(responseData);

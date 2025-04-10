@@ -9,15 +9,7 @@ export const getToken = () => {
 export const removeToken = () => {
         return Cookies.remove('JWT_TOKEN');
 };
-export const setRole = (role) => {
-        return Cookies.set('ROLE', role);
-};
-export const getRole = () => {
-        return Cookies.get('ROLE');
-};
-export const removeRole = () => {
-        return Cookies.remove('ROLE');
-};
+
 
 export const setAddressId = (addressId) => {
         return Cookies.set('ADDRESS_ID', addressId);
@@ -29,24 +21,23 @@ export const removeAddressId = () => {
         return Cookies.remove('ADDRESS_ID');
 };
 
-export const setCartByUser = (cartItems) => {
-        return Cookies.set('CARTITEMS', cartItems);
+export const setListProductIds = (listProductIds) => {
+        return Cookies.set('LIST_PRODUCT_IDS', listProductIds);
 };
-export const getCartByUser = () => {
-        return Cookies.get('CARTITEMS');
+export const getListProductIds = () => {
+        return Cookies.get('LIST_PRODUCT_IDS');
 };
-export const removeCartByUser = () => {
-        return Cookies.remove('CARTITEMS');
+export const removeListProductIds = () => {
+        return Cookies.remove('LIST_PRODUCT_IDS');
 };
-
-export const getCartByUserChecked = () => {
-        return Cookies.get('CARTITEMSCHECKED');
+export const setListVoucherIds = (listVoucherIds) => {
+        return Cookies.set('LIST_VOUCHER_IDS', listVoucherIds);
 };
-export const setCartByUserChecked  = (cartItems) => {
-        return Cookies.set('CARTITEMSCHECKED', cartItems);
+export const getListVoucherIds = () => {
+        return Cookies.get('LIST_VOUCHER_IDS');
 };
-export const removeCartByUserChecked  = () => {
-        return Cookies.remove('CARTITEMSCHECKED');
+export const removeListVoucherIds = () => {
+        return Cookies.remove('LIST_VOUCHER_IDS');
 };
 
 
@@ -55,14 +46,14 @@ export const cookie= () => {
                 setToken,
                 getToken,
                 removeToken,
-                setRole,
-                getRole,
-                removeRole,
                 setAddressId,
                 getAddressId,
                 removeAddressId,
-                setCartByUser,
-                getCartByUser,
-                removeCartByUser,
+                setListProductIds,
+                getListProductIds,
+                removeListProductIds,
+                setListVoucherIds,
+                getListVoucherIds,
+                removeListVoucherIds,
         };
 }

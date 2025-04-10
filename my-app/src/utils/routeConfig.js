@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Products from "../components/seller/Products";
 import ProtectedRoute from "./ProtectedRoute";
+import PaymentStatus from "../components/user/PaymentStatus";
 
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
@@ -59,6 +60,7 @@ export const PUBLIC_ROUTES = [
   { path: "register-seller", element: <SellerRegistration /> },
   { path: "forgot-password", element: <ForgotPassword /> },
   { path: "reset-password", element: <ResetPassword /> },
+  { path: "user/vnpay-return", element: <PaymentStatus /> },
 ]
 
 export const USER_ROUTES = [

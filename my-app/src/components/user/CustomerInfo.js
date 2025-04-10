@@ -8,8 +8,7 @@ function CustomerInfo({ onAddressChange }) {
     const [provinces, setProvinces] = useState([]);
     const [districts, setDistricts] = useState([]);
     const [wards, setWards] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+
     const token = 'f248ba4d-d70a-11ef-881c-b25c083cd867';
 
     // Fetch address data from our API
@@ -45,8 +44,6 @@ function CustomerInfo({ onAddressChange }) {
         const fetchData = async () => {
             if (!item?.provinceId) return;
             
-            setIsLoading(true);
-            setError(null);
             try {
                 // Fetch districts
                 const districtResponse = await axiosInstance.get(
@@ -65,9 +62,6 @@ function CustomerInfo({ onAddressChange }) {
                 }
             } catch (error) {
                 console.error("Error fetching address data:", error);
-                setError("Không thể tải dữ liệu địa chỉ. Vui lòng thử lại sau.");
-            } finally {
-                setIsLoading(false);
             }
         };
 

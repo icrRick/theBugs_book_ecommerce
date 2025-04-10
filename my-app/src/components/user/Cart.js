@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance";
-import Loading from "../../utils/Loading";
-import { formatCurrency } from "../../utils/Format";
-import { cookie } from '../../utils/cookie'
 
-// Custom hook useDebounce
+import { formatCurrency } from "../../utils/Format";
+import { cookie, getListProductIds, setListProductIds, setListVoucherIds } from '../../utils/cookie'
+import { showErrorToast } from "../../utils/Toast";
+
+
 const useDebounce = (value, delay) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -24,7 +25,6 @@ const useDebounce = (value, delay) => {
 
 const Cart = () => {
     const navigate = useNavigate();
-    const { setCartByUser } = cookie();
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [selectedShopId, setSelectedShopId] = useState(null);
     const [cart, setCart] = useState([]);
@@ -33,6 +33,7 @@ const Cart = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const [selectedVouchers, setSelectedVouchers] = useState({});
+
     const [pendingUpdate, setPendingUpdate] = useState(null);
 
     // Debounce pendingUpdate với delay 400ms
@@ -47,7 +48,6 @@ const Cart = () => {
         }
     }, [debouncedUpdate]);
 
-    // Hàm xử lý thay đổi số lượng
     const handleQuantityChange = (productId, quantity) => {
         if (quantity < 1) {
             cart.forEach(shop => {
@@ -63,7 +63,7 @@ const Cart = () => {
         setPendingUpdate({ productId, quantity });
     };
 
-    // Sửa lại biến kiểm tra trạng thái tất cả được check
+
     const isAllChecked = cart.length > 0 && cart.some(shop =>
         shop.products.some(product => product.checked)
     );
@@ -169,22 +169,23 @@ const Cart = () => {
         }));
     };
 
-
-    // Thêm hàm tính tổng tiền của shop
     const calculateShopTotal = (shop) => {
         return shop.products.reduce((total, product) => {
+            if (product.productPromotionValue > 0) {
+                return total + (product.productPrice * (1 - product.productPromotionValue / 100) * product.productQuantity);
+            }
             return total + (product.productPrice * product.productQuantity);
         }, 0);
     };
 
-    // Thêm hàm tính số tiền giảm giá của voucher
+
     const calculateVoucherDiscount = (shopTotal, voucher) => {
         if (!voucher) return 0;
         const discountAmount = Math.floor((shopTotal * voucher.discountPercentage) / 100);
         return Math.min(discountAmount, voucher.maxDiscount);
     };
 
-    // Cập nhật hàm handleSelectVoucher
+
     const handleSelectVoucher = (shopId, voucher) => {
         setSelectedVouchers(prev => ({
             ...prev,
@@ -205,46 +206,57 @@ const Cart = () => {
     }, []);
 
     const handlePayment = () => {
-        // Lấy những shop và sản phẩm đã được check
-        const checkedShops = cart.filter(shop => shop.checked).map(shop => {
-            // Lấy voucher đã chọn cho shop này
-            const shopVoucher = selectedVouchers[shop.shopId];
-            
-            return {
-                shopId: shop.shopId,
-                shopName: shop.shopName,
-                products: shop.products.filter(product => product.checked).map(product => ({
-                  ...product,
-                })),
-                vouchers: shop.vouchers || [],
-                selectedVoucher: shopVoucher || null
-            };
-        });
+        // Lấy tất cả productId đã được checked từ tất cả các shop
+        const productIds = cart.flatMap(shop =>
+            shop.products
+                .filter(product => product.checked)
+                .map(product => product.productId)
+        );
+        console.log("voucher da chon ", selectedVouchers);
 
-        // Kiểm tra nếu không có sản phẩm nào được chọn
-        if (checkedShops.length === 0) {
-            alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+        const voucherIds = Object.values(selectedVouchers)
+            .filter(voucher => voucher !== null)
+            .map(voucher => voucher.id);
+
+        const productIdsArray = productIds.map(id => parseInt(id));
+        const voucherIdsArray = voucherIds.map(id => parseInt(id));
+
+        setListProductIds(JSON.stringify(productIdsArray));
+        setListVoucherIds(JSON.stringify(voucherIdsArray));
+        if (productIdsArray.length === 0) {
+            showErrorToast("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
             return;
         }
 
-        // Lưu dữ liệu vào cookie
-        const paymentData = {
-            shops: checkedShops,
-            totalAmount: cart.reduce((total, shop) => {
-                const shopTotal = shop.products.reduce((st, product) =>
-                    st + (product.checked ? product.productPrice * product.productQuantity : 0), 0
-                );
-                const discount = calculateVoucherDiscount(shopTotal, selectedVouchers[shop.shopId]);
-                return total + shopTotal - discount;
-            }, 0)
-        };
-
-        setCartByUser(JSON.stringify(paymentData));
-
-        // Chuyển đến trang thanh toán
         navigate('/payment');
     }
 
+    const calculateTotalItems = (cart) => {
+        return cart.reduce((count, shop) =>
+            count + shop.products.filter(p => p.checked).length, 0
+        );
+    };
+
+    const calculateShopTotalWithVoucher = (shop, selectedVouchers) => {
+        const shopTotalAmount = shop.products.reduce((total, product) => {
+            if (product.checked) {
+                const price = product.productPromotionValue > 0
+                    ? product.productPrice * (1 - product.productPromotionValue / 100)
+                    : product.productPrice;
+                return total + (price * product.productQuantity);
+            }
+            return total;
+        }, 0);
+
+        const voucherDiscount = calculateVoucherDiscount(shopTotalAmount, selectedVouchers[shop.shopId]);
+        return shopTotalAmount - voucherDiscount;
+    };
+
+    const calculateTotalAmount = (cart, selectedVouchers) => {
+        return cart.reduce((total, shop) =>
+            total + calculateShopTotalWithVoucher(shop, selectedVouchers), 0
+        );
+    };
 
     return (
         <>
@@ -280,7 +292,13 @@ const Cart = () => {
                                 />
                             </div>
                             <div className="flex-1 pl-2">
-                                <span className="font-medium text-gray-700">Sản phẩm</span>
+                                {
+                                    calculateTotalItems(cart) > 0 ? (
+                                        <span className="font-medium text-gray-700">Đã chọn {calculateTotalItems(cart)} sản phẩm</span>
+                                    ) : (
+                                        <span className="font-medium text-gray-700">Chưa có sản phẩm được chọn</span>
+                                    )
+                                }
                             </div>
                             <div className="w-32 text-center">
                                 <span className="font-medium text-gray-700">Số lượng</span>
@@ -393,12 +411,33 @@ const Cart = () => {
                                         </div>
                                     </div>
                                     <div className="w-32 flex flex-col items-center">
-                                        <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+
+                                        {
+                                            product.productPromotionValue > 0 ? (
+                                                <>
+                                                    <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
+                                                    <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
+
+                                                </>
+                                            ) : (
+                                                <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+                                            )
+                                        }
+
+
                                     </div>
                                     <div className="w-32 text-center">
-                                        <span className="text-red-600 font-medium">
-                                            {formatCurrency(product.productPrice * product.productQuantity)}
-                                        </span>
+                                        {
+                                            product.productPromotionValue > 0 ? (
+                                                <span className="text-red-600 font-medium">
+                                                    {formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100) * product.productQuantity)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-red-600 font-medium">
+                                                    {formatCurrency(product.productPrice * product.productQuantity)}
+                                                </span>
+                                            )
+                                        }
                                     </div>
                                     <div className="w-16 flex justify-center">
                                         <button onClick={() => {
@@ -472,32 +511,15 @@ const Cart = () => {
 
                     {/* Footer của giỏ hàng */}
                     <div className="border-b bg-white my-4 p-4">
-                        <div className="px-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-4">
-                            <div className="flex items-center space-x-4">
-                                <input
-                                    type="checkbox"
-                                    checked={isAllChecked}
-                                    onChange={handleCheckAll}
-                                    className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                                />
-                                <span className="text-sm sm:text-base text-gray-600">Chọn tất cả</span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                                <span className="text-sm sm:text-base text-gray-600">
-                                    Tổng thanh toán ({cart.reduce((count, shop) => count + shop.products.filter(p => p.checked).length, 0)} sản phẩm):
-                                </span>
-                                <span className="text-lg sm:text-xl font-bold text-red-600">
-                                    {formatCurrency(cart.reduce((total, shop) => {
-                                        const shopTotal = shop.products.reduce((st, product) =>
-                                            st + (product.checked ? product.productPrice * product.productQuantity : 0), 0
-                                        );
-                                        const discount = calculateVoucherDiscount(shopTotal, selectedVouchers[shop.shopId]);
-                                        return total + shopTotal - discount;
-                                    }, 0))}
-                                </span>
-                            </div>
+                        <div className="flex flex-col mb-4 px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+                            <span className="text-sm sm:text-base text-gray-600">
+                                Tổng thanh toán ({calculateTotalItems(cart)} sản phẩm):
+                            </span>
+                            <span className="text-lg sm:text-xl font-bold text-red-600">
+                                {formatCurrency(calculateTotalAmount(cart, selectedVouchers))}
+                            </span>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div className="flex flex-col px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
                             <button
                                 onClick={() => navigate('/')}
                                 className="w-full sm:w-auto px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base transition-colors duration-200"
@@ -540,6 +562,8 @@ const Cart = () => {
                 </div>
 
             )}
+
+            {/* Voucher Modal */}
             {showVoucherModal && selectedShopId && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">

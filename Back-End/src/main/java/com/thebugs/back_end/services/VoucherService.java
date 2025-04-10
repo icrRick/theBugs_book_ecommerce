@@ -84,4 +84,8 @@ public class VoucherService {
                                 .collect(Collectors.toList());
         }
 
+        public VoucherDTO getVoucherDTO (Voucher voucher){
+                return voucherMapper.toDTO(voucher);
+        }
+
 }

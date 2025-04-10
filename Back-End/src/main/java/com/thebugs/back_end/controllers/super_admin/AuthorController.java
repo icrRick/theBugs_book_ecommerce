@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.super_admin;
 
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;

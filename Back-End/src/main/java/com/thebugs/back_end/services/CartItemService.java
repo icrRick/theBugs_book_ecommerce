@@ -14,16 +14,12 @@ import com.thebugs.back_end.repository.CartItemJPA;
 
 @Service
 public class CartItemService {
-    
 
     @Autowired
     private CartItemJPA cartItemJPA;
+
     @Autowired
     private UserService userService;
-
-    @Autowired 
-    private VoucherService voucherService;
-
     @Autowired
     private ProductService productService;
 
@@ -36,11 +32,14 @@ public class CartItemService {
     @Autowired
     private PublisherService publisherService;
 
+    @Autowired
+    private VoucherService voucherService;
+
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getCartItems(String authorizationHeader) {
         User user = userService.getUserToken(authorizationHeader);
         Map<Integer, Map<String, Object>> shopMap = new LinkedHashMap<>();
-    
+
         for (CartItem cartItem : user.getCartItems()) {
             Integer shopId = cartItem.getProduct().getShop().getId();
             String shopName = cartItem.getProduct().getShop().getName();
@@ -49,18 +48,16 @@ public class CartItemService {
                 Map<String, Object> productMap = new LinkedHashMap<>();
                 productMap.put("productId", proItemDTO.getProductId());
                 productMap.put("productName", proItemDTO.getProductName());
-                productMap.put("productPrice", proItemDTO.getProductPrice() != null ? proItemDTO.getProductPrice() : 0.0);
-                productMap.put("productImage", proItemDTO.getProductImage() != null ? proItemDTO.getProductImage() : "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80");
-                productMap.put("productWeight", proItemDTO.getWeight() != null ? proItemDTO.getWeight() : 0.0);
-                productMap.put("productRate", proItemDTO.getRate() != null ? proItemDTO.getRate() : 0.0);
-                productMap.put("productPromotionValue", proItemDTO.getPromotionValue() != null ? proItemDTO.getPromotionValue() : 0.0);
-                
+                productMap.put("productPrice", proItemDTO.getProductPrice());
+                productMap.put("productImage", proItemDTO.getProductImage());
+                productMap.put("productWeight", proItemDTO.getWeight());
+                productMap.put("productRate", proItemDTO.getRate());
+                productMap.put("productPromotionValue", proItemDTO.getPromotionValue());
                 productMap.put("productQuantity", cartItem.getQuantity());
-
                 productMap.put("authors", productAuthorService.getAuthorsByProductId(cartItem.getProduct().getId()));
                 productMap.put("genres", productGenreService.getGenresByProductId(cartItem.getProduct().getId()));
                 productMap.put("publisher", publisherService.getPublisherDTO(cartItem.getProduct().getPublisher()));
-                
+
                 shopMap.computeIfAbsent(shopId, id -> {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);
@@ -74,10 +71,9 @@ public class CartItemService {
                 products.add(productMap);
             }
         }
-    
+
         return new ArrayList<>(shopMap.values());
     }
-
 
     public boolean saveCartItem(String authorizationHeader, Integer productId, Integer quantity) {
         User user = userService.getUserToken(authorizationHeader);
@@ -85,7 +81,7 @@ public class CartItemService {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
         for (CartItem cartItem : user.getCartItems()) {
-            if (cartItem.getProduct().getId()==productId) {
+            if (cartItem.getProduct().getId() == productId) {
                 cartItem.setQuantity(quantity);
                 cartItemJPA.save(cartItem);
                 return true;
@@ -99,14 +95,21 @@ public class CartItemService {
         cartItemJPA.save(cartItem);
         return true;
     }
+
     public boolean deleteCartItem(String authorizationHeader, Integer productId) {
         User user = userService.getUserToken(authorizationHeader);
         for (CartItem cartItem : user.getCartItems()) {
-            if (cartItem.getProduct().getId()==productId) {
+            if (cartItem.getProduct().getId() == productId) {
                 cartItemJPA.delete(cartItem);
                 return true;
             }
         }
         return false;
+    }
+
+
+    public CartItem findProductByUser(Integer productId,String authorizationHeader){
+        Integer userId=userService.getUserToken(authorizationHeader).getId();
+        return cartItemJPA.findProductByUserId(productId, userId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy " + productId+" trong giỏ hàng của bạn"));
     }
 }

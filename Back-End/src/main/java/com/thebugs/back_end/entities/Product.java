@@ -30,7 +30,7 @@ public class Product {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private double weight;
 
     @Column(nullable = false)
@@ -44,6 +44,9 @@ public class Product {
 
     @Column(nullable = false)
     private boolean approve;
+
+    @Column(nullable = true)
+    private Boolean status;
 
     @Column(nullable = false)
     private String description;

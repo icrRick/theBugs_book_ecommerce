@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.super_admin;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.beans.GenreBean;

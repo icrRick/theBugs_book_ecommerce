@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.user;
 
 import org.springframework.web.bind.annotation.RestController;
 

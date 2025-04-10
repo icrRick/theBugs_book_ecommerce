@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.user;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +31,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequestMapping("/user/address")
 public class AddressController {
 
-        private final AddressService addressService;
-        private final UserService userService;
+      
+        @Autowired
+        private UserService userService;
 
-        public AddressController(AddressService addressService, UserService userService) {
-                this.addressService = addressService;
-                this.userService = userService;
-        }
+        @Autowired
+        private AddressService addressService;
+
 
         @GetMapping("/list")
         public ResponseEntity<ResponseData> getListAddressByUser(

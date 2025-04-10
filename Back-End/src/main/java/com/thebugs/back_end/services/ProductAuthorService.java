@@ -12,6 +12,7 @@ import com.thebugs.back_end.repository.ProductAuthorJPA;
 
 @Service
 public class ProductAuthorService {
+    
     @Autowired
     private ProductAuthorJPA productAuthorJPA;
     @Autowired

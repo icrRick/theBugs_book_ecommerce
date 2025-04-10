@@ -1,4 +1,4 @@
-package com.thebugs.back_end.controllers;
+package com.thebugs.back_end.controllers.user;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.CartItemService;
+
 import org.springframework.web.bind.annotation.PostMapping;
 
 
