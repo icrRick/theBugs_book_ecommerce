@@ -76,7 +76,7 @@ public class Seller_ProductConverter {
 
         if (oldProduct != null) {
             // Không cho phép sửa approve/product_code
-            product.setApprove(oldProduct.getApprove());
+            product.setApprove(oldProduct.isApprove());
             product.setProduct_code(oldProduct.getProduct_code());
         } else {
             // Trường hợp tạo mới
@@ -100,8 +100,8 @@ public class Seller_ProductConverter {
                 product.getQuantity(),
                 product.getWeight(),
                 product.getDescription(),
-                product.getActive(),
-                product.getApprove(),
+                product.isActive(),
+                product.isApprove(),
                 product.getShop().getId(),
                 product.getPublisher().getId(),
                 product.getImages() != null ? product.getImages().stream()

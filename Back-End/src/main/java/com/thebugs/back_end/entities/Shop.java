@@ -63,9 +63,6 @@ public class Shop {
     @Column(nullable = false)
     private boolean status;
 
-    @Column(nullable = false)
-    private String shopSlug;
-
     @OneToMany(mappedBy = "shop")
     private List<Product> products;
     @OneToMany(mappedBy = "shop")

@@ -17,17 +17,7 @@ const Login = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   }
-
-  useEffect(() => {
-    if (userInfo) {
-      if (userInfo.role === 3) {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/home");
-      }
-    }
-  }, [userInfo, navigate]);
-
+  
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);

@@ -150,12 +150,14 @@ public class AuthorController {
                 }
         }
 
-        @DeleteMapping("/delete/{id}")
+        @PostMapping("/delete")
         public ResponseEntity<ResponseData> deleteAuthor(@RequestParam Integer id) {
                 ResponseData responseData = new ResponseData();
                 try {
 
-                        if (authorService.deleteAuthor(id)) {
+                        boolean deleteAuthor = authorService.deleteAuthor(id);
+
+                        if (deleteAuthor) {
                                 responseData.setStatus(true);
                                 responseData.setMessage("Xoá tác giả thành công");
                                 responseData.setData(null);
@@ -177,7 +179,5 @@ public class AuthorController {
                 }
 
         }
-
-        
 
 }

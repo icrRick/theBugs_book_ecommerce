@@ -1,113 +1,63 @@
-"use client"
-
-import { useState } from "react"
+import React from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import { showSuccessToast, showErrorToast } from "../../utils/Toast";
+import Loading from "../../utils/Loading";
 
 const Register = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const { register, handleSubmit, formState: { errors } ,watch} = useForm();
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  // Định nghĩa formData và errors
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    agreeTerms: false,
-  })
-
-  const [errors, setErrors] = useState({})
-  const [registerError, setRegisterError] = useState("")
-  const [registerSuccess, setRegisterSuccess] = useState(false)
-
-  const navigate = useNavigate()
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    })
-
-    // Bỏ qua việc xóa lỗi
-    // if (errors[name]) {
-    //   setErrors({
-    //     ...errors,
-    //     [name]: "",
-    //   })
-    // }
-
-    // Bỏ qua thông báo lỗi đăng ký
-    // if (registerError) {
-    //   setRegisterError("")
-    // }
-  }
-
-  const validateForm = () => {
-    // Bỏ qua hàm xác thực
-    return true; // Luôn trả về true để không có lỗi
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    // Bỏ qua xác thực
-    // if (!validateForm()) {
-    //   return
-    // }
-
-    setIsSubmitting(true)
-    // Bỏ qua lỗi đăng ký
-    // setRegisterError("")
-
-    try {
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Bỏ qua kiểm tra email đã tồn tại
-      // if (formData.email === "admin@example.com") {
-      //   setRegisterError("Email đã được sử dụng. Vui lòng chọn email khác.")
-      //   setIsSubmitting(false)
-      //   return
-      // }
-
-      // Đăng ký thành công
-      setRegisterSuccess(true)
-
-      // Chuyển hướng đến trang đăng nhập sau 2 giây
-      setTimeout(() => {
-        navigate("/login")
-      }, 2000)
-    } catch (error) {
-      console.error("Register error:", error)
-      // Bỏ qua thông báo lỗi
-      // setRegisterError("Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const password = watch('password');
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
+    setShowPassword(!showPassword);
   }
-
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword)
   }
 
+  const onSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post("http://localhost:8080/register", data);
+
+      if (response.data.status === true) {
+        showSuccessToast(response.data.message);
+        navigate("/login");
+      } else {
+        showErrorToast("Đăng ký không thành công!");
+      }
+    } catch (error) {
+      console.error("Lỗi đăng ký:", error);
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi trong quá trình đăng ký. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <Loading />
+  }
+
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl space-y-8">
+    <div className="flex items-center justify-center p-4">
+      <div className="max-w-3xl w-full space-y-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="flex">
-            {/* Left side - Book illustration */}
             <div
-              className="hidden md:block w-1/2 bg-cover bg-center"
+              className="hidden md:block w-1/2  bg-cover bg-center"
               style={{
                 backgroundImage:
                   "url('https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80')",
+                backgroundSize: "contain", // Ensures the image fits without zooming
+                backgroundRepeat: "no-repeat", // Prevents the image from repeating
+                backgroundPosition: "center", // Centers the image
               }}
             >
               <div className="h-full w-full bg-gradient-to-r from-emerald-800/90 to-emerald-900/90 flex items-center justify-center p-8">
@@ -117,17 +67,13 @@ const Register = () => {
                 </div>
               </div>
             </div>
-
-            {/* Right side - Register form */}
             <div className="w-full md:w-1/2 px-8 py-12">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">Đăng ký tài khoản</h2>
                 <p className="text-gray-600 text-sm">Tạo tài khoản để trải nghiệm mua sắm tốt nhất</p>
               </div>
 
-            
-
-              <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="w-full space-y-4">
                 <div>
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
                     Họ và tên
@@ -152,22 +98,18 @@ const Register = () => {
                       name="fullName"
                       type="text"
                       autoComplete="name"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      className={`py-2 pl-10 block w-full border ${
-                        errors.fullName
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
+                      {...register("fullName", {
+                        required: "Họ và tên là bắt buộc",
+                      })}
+                      className={`py-2 pl-10 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
                       placeholder="Nguyễn Văn A"
                     />
                   </div>
-                  {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
+                  {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
                 </div>
-
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
+                    Email <span className="text-red-800 font-bold">*</span>
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,25 +125,27 @@ const Register = () => {
                     </div>
                     <input
                       id="email"
-                      name="email"
                       type="email"
                       autoComplete="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`py-2 pl-10 block w-full border ${
-                        errors.email
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
+                      {...register("email", {
+                        required: "Email là bắt buộc",
+                        pattern: {
+                          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: "Email không hợp lệ",
+                        },
+                      }
+
+                      )}
+                      className={`py-2 pl-10 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
                       placeholder="your-email@example.com"
                     />
                   </div>
-                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
                 </div>
               
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mật khẩu
+                    Mật khẩu <span className="text-red-800 font-bold">*</span>
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -223,15 +167,21 @@ const Register = () => {
                       name="password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`py-2 pl-10 pr-10 block w-full border ${
-                        errors.password
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
+                      {...register("password", {
+                        required: "Mật khẩu là bắt buộc",
+                        minLength: {
+                          value: 6,
+                          message: "Mật khẩu phải có ít nhất 6 ký tự",
+                        },
+                        // pattern: {
+                        //   value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/,
+                        //   message: "Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường và một số",
+                        // },
+                      })}
+                      className={`py-2 pl-10 pr-10 block w-full border $border-red-300 focus:ring-green-600 focus:border-green-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
                       placeholder="••••••••"
                     />
+
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                       <button
                         type="button"
@@ -269,10 +219,10 @@ const Register = () => {
                         )}
                       </button>
                     </div>
-                  </div>
-                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-                </div>
 
+                  </div>
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+                </div>
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Xác nhận mật khẩu
@@ -297,13 +247,15 @@ const Register = () => {
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className={`py-2 pl-10 pr-10 block w-full border ${
-                        errors.confirmPassword
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
-                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
+                      {...register("confirmPassword", {
+                        required: "Xác nhận mật khẩu là bắt buộc",
+                        minLength: {
+                          value: 6,
+                          message: "Mật khẩu phải có ít nhất 6 ký tự",
+                        },
+                        validate: value => value === password || "Mật khẩu không khớp"
+                      })}
+                      className={`py-2 pl-10 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
                       placeholder="••••••••"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -344,83 +296,21 @@ const Register = () => {
                       </button>
                     </div>
                   </div>
-                  {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    id="agree-terms"
-                    name="agreeTerms"
-                    type="checkbox"
-                    checked={formData.agreeTerms}
-                    onChange={handleChange}
-                    className={`h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded ${
-                      errors.agreeTerms ? "border-red-300" : ""
-                    }`}
-                  />
-                  <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-700">
-                    Tôi đồng ý với{" "}
-                    <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500">
-                      Điều khoản dịch vụ
-                    </a>{" "}
-                    và{" "}
-                    <a href="#" className="font-medium text-emerald-600 hover:text-emerald-500">
-                      Chính sách bảo mật
-                    </a>
-                  </label>
-                </div>
-                {errors.agreeTerms && <p className="mt-1 text-sm text-red-600">{errors.agreeTerms}</p>}
 
                 <div>
                   <button
+                    onClick={handleSubmit(onSubmit)}
                     type="submit"
-                    disabled={isSubmitting}
-                    className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${
-                      isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
+                    disabled={isLoading}
+                    className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {isSubmitting ? (
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                    ) : (
-                      <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <svg
-                          className="h-5 w-5 text-emerald-500 group-hover:text-emerald-400"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    )}
-                    {isSubmitting ? "Đang xử lý..." : "Đăng ký"}
+                    Đăng ký
                   </button>
                 </div>
-              </form>
+              </div>
 
               <div className="mt-6">
                 <div className="relative">
@@ -470,16 +360,10 @@ const Register = () => {
             </div>
           </div>
         </div>
-
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} E-Com Books. Tất cả quyền được bảo lưu.
-          </p>
-        </div>
       </div>
     </div>
   )
 }
 
-export default Register
+export default Register;
 

@@ -35,8 +35,6 @@ import com.thebugs.back_end.repository.PromotionProductJPA;
 import com.thebugs.back_end.services.user.UserService;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class OrderSellerService {
@@ -159,7 +157,7 @@ public class OrderSellerService {
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
                 double discount = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
                 double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
-                double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
+                double shippingFee = order.getShippingFee();
                 double totalDiscount = order.getOrderItems().stream()
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discount / 100;
 

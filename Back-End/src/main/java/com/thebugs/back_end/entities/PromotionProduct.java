@@ -35,10 +35,4 @@ public class PromotionProduct {
     @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
 
-    @Column(nullable = false)
-    private int quantity;
-
-    @Column(nullable = false)
-    private int soldQuantity;
-
 }
