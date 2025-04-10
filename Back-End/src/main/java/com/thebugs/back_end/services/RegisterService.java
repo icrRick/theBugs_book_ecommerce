@@ -24,7 +24,7 @@ public class RegisterService {
                 this.passwordEncoder = new BCryptPasswordEncoder();
         }
 
-        public UserDTO Register(String fullName, String email, String phone, String password, String cfPassword) {
+        public UserDTO Register(String fullName, String email, String password, String cfPassword) {
                 User user = new User();
                 user.setFullName(fullName);
            
