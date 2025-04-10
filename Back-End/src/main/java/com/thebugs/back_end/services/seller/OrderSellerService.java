@@ -14,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.OrderDTO;
@@ -48,8 +47,9 @@ public class OrderSellerService {
 
         @Autowired
         private OrderStatusJPA orderStatusJPA;
-        @Autowired
-        private JavaMailSender mailSender;
+
+
+
         @Autowired
         private OrderItemJPA orderItemJPA;
         @Autowired
@@ -246,8 +246,8 @@ public class OrderSellerService {
         }
 
         public boolean getUserEmail(Integer orderId, String cancelReason) {
-                Order order = getById(orderId);
-                String mail = order.getUser().getEmail();
+                // Order order = getById(orderId);
+                // String mail = order.getUser().getEmail();
                 // sendMail(mail, cancelReason);
                 return true;
         }

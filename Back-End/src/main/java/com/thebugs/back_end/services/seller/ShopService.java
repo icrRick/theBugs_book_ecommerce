@@ -1,5 +1,7 @@
 package com.thebugs.back_end.services.seller;
 
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,5 +21,7 @@ public class ShopService {
         }
         return shopJPA.findById(shopId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy shopId: " + shopId));
     }
+
+
 
 }

@@ -1,13 +1,14 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import { getListOrderId, removeListOrderId } from "../../utils/cookie";
 
 const PaymentStatus = () => {
     const [countDown, setCountDown] = useState(5);
-    const [message, setMessage] = useState([]);
-    const [responseCode, setResponseCode] = useState();
-    const [orderId, setOrderId] = useState();
     const navigate = useNavigate();
+    const [hasProcessedPayment, setHasProcessedPayment] = useState(false);
+    const isProcessing = useRef(false);
 
     useEffect(() => {
         if (countDown === 0) {
@@ -26,53 +27,93 @@ const PaymentStatus = () => {
             return () => clearInterval(intervalId);
         }
     }, [countDown, navigate]);
-    function getParamsFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        setResponseCode(urlParams.get("vnp_ResponseCode"));
-        setOrderId(urlParams.get("vnp_TxnRef"));
-        console.log("ResponseCode: " + responseCode);
-    }
 
-    const sendData = async (data) => {
-        const paymentRes = await axios.get(
-            "http://localhost:8080/payment-online/return-payment",
-            {
-                params: { vnp_ResponseCode: responseCode, vnp_TxnRef: orderId },
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const vnp_ResponseCode = urlParams.get("vnp_ResponseCode");
+
+
+        const thanhtoan = async () => {
+            if (isProcessing.current) return;
+            isProcessing.current = true;
+
+
+            try {
+                const orderIdList = Array.isArray(getListOrderId()) ? getListOrderId() : [getListOrderId()]; 
+                const requestBody = {
+                    orderIdIntegers: orderIdList,
+                    vnp_ResponseCode: vnp_ResponseCode
+                }
+                console.log("requestBody", requestBody);
+                const response = await axiosInstance.post(
+                    "/user/payment-online/return-payment",
+                    requestBody
+                );
+
+                if (response.status === 200) {
+                    console.log("✅ Thanh toán thành công:", response.data);
+                    removeListOrderId();
+                    setHasProcessedPayment(true);
+                } else {
+                    console.warn("❌ Thanh toán lỗi:", response.data);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi thanh toán:", error.response?.data || error.message);
+            } finally {
+                isProcessing.current = false;
             }
-        );
-        setMessage(paymentRes.data.data);
-    };
-    useEffect(() => {
-        getParamsFromUrl();
-    }, []);
-    useEffect(() => {
-        if (responseCode) {
-            sendData();
+        };
+
+        // Chỉ gọi API khi có dữ liệu orderData và chưa xử lý thanh toán
+        if (getListOrderId() && !hasProcessedPayment && !isProcessing.current) {
+            thanhtoan();
         }
-    }, [responseCode]);
+    }, [hasProcessedPayment]);
+
     return (
-        <>
-            {/* Error section */}
-            <section className="error_area">
-                <div className="container">
-                    <div className="error_inner">
-                        <div className="error_inner_text">
-                            <h5>{message}</h5>
-                            <h6>
-                                Bạn sẽ được chuyển về trang chủ sau {countDown}
-                                giây
-                            </h6>
-                            <Link
-                                to={"/home"}
-                                className="pink_btn text-decoration-none"
-                            >
-                                Về trang chủ
-                            </Link>
+        <div
+            className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
+            style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80')`
+            }}
+        >
+            <div className="max-w-3xl w-full mx-4">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
+                    <div className="px-6 py-8">
+                        <div className="text-center">
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Đặt hàng thành công!</h2>
+                            <p className="text-gray-600 mb-6">Cảm ơn bạn đã mua hàng tại cửa hàng của chúng tôi</p>
+                        </div>
+
+
+                        <div className="mt-8 text-center">
+                            <p className="text-gray-600 mb-4">
+                                Bạn sẽ được chuyển về trang chủ sau {countDown} giây
+                            </p>
+                            <div className="flex justify-center space-x-4">
+                                <Link
+                                    to="/home"
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Về trang chủ
+                                </Link>
+                                <Link
+                                    to="/orders"
+                                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Xem đơn hàng
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </>
+            </div>
+        </div>
     );
 };
 

@@ -33,7 +33,7 @@ const PlaceOrderAddress = () => {
         fetchData();
     }, []);
     const handleSetAddress = (item) => {
-        console.log("item",item);
+       
         setAddressId(item.id);
         navigate("/payment");
     }

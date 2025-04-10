@@ -112,6 +112,6 @@ public class CartItemService {
 
     public CartItem findProductByUser(Integer productId,String authorizationHeader){
         Integer userId=userService.getUserToken(authorizationHeader).getId();
-        return cartItemJPA.findProductByUserId(productId, userId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy " + productId+" trong giỏ hàng của bạn"));
+        return cartItemJPA.findProductByUserId(productId, userId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có id " + productId+" trong giỏ hàng của bạn"));
     }
 }

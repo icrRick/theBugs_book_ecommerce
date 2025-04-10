@@ -12,19 +12,30 @@ import java.util.Map;
 import java.util.TimeZone;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.thebugs.back_end.beans.PaymentOnlineBean;
 import com.thebugs.back_end.config.PaymentConfig;
 import com.thebugs.back_end.resp.ResponseData;
+import com.thebugs.back_end.services.user.OrderService;
+
+
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 @RestController
-@RequestMapping("/payment-online")
+@RequestMapping("/user/payment-online")
 public class OnlinePaymentController {
 
+    @Autowired
+    private OrderService orderService;
+    
     @GetMapping("/create-payment")
     public ResponseEntity<ResponseData> getOnlinePayment(HttpServletRequest req) {
         ResponseData responseData=new ResponseData();
@@ -85,23 +96,32 @@ public class OnlinePaymentController {
         }
     }
 
-    @GetMapping("/return-payment")
-    public ResponseEntity<?> handlePaymentReturn(HttpServletRequest req) {
-        String responseCode = req.getParameter("vnp_ResponseCode");
-        String message;
+    @PostMapping("/return-payment")
+    public ResponseEntity<ResponseData> handlePaymentReturn(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @RequestBody PaymentOnlineBean paymentOnlineBean) {
+    
+        try {
+             String paymentStatus = "";
+          
+           
+            if ("00".equals(paymentOnlineBean.getVnp_ResponseCode())) {
+                paymentStatus = "Đã thanh toán";
+            }
 
-        if ("00".equals(responseCode)) {
-            message = "Thanh toán thành công!";
-            // orderService.updatePaymentById(orderId, true);
-        } else {
-            message = "Thanh toán thất bại. Mã lỗi: " + responseCode;
-            // orderService.updatePaymentById(orderId, false);
+            boolean check =orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
+    
+            if (check) {
+                return ResponseEntityUtil.OK("Thanh toán thành công", null);
+            } else {
+                return ResponseEntityUtil.badRequest("Thanh toán thất bại");
+            }
+         
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Thanh toán thất bại: " + e.getMessage());
         }
-
-        System.out.println(message);
-        return ResponseEntity.ok(new ResponseData(true, "Payment return", message));
     }
-
+    
     private void addOptionalBillingInfo(Map<String, String> params, HttpServletRequest req) {
         params.put("vnp_Bill_Mobile", req.getParameter("txt_billing_mobile"));
         params.put("vnp_Bill_Email", req.getParameter("txt_billing_email"));

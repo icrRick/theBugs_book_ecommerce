@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { cookie, getAddress, getAddressId, getListVoucherIds, removeListProductIds } from '../../utils/cookie'
+import { cookie, getAddressId, getListVoucherIds, removeListProductIds, removeListVoucherIds, setListOrderId } from '../../utils/cookie'
 import { calculateShippingFree } from "../../utils/ShippingFree"
 import axiosInstance from "../../utils/axiosInstance"
 import axios from "axios"
 import { showErrorToast } from "../../utils/Toast"
+import { formatCurrency } from "../../utils/Format"
 
 const Payment = () => {
     const navigate = useNavigate();
     const { getListProductIds, getListVoucherIds } = cookie();
     const [shops, setShops] = useState([]);
-    const [selectedVouchers, setSelectedVouchers] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState("Thanh toán tiền mặt khi nhận hàng");
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [selectedShopId, setSelectedShopId] = useState(null);
@@ -118,9 +118,22 @@ const Payment = () => {
 
     const fetchCartData = async () => {
         setIsLoading(true);
- 
-        const productIds = JSON.parse(getListProductIds());
-        const voucherIds = JSON.parse(getListVoucherIds());
+
+        const productIdsStr = getListProductIds();
+        const voucherIdsStr = getListVoucherIds();
+        
+        if (!productIdsStr || !voucherIdsStr) {
+            navigate('/cart');
+            return;
+        }
+
+        const productIds = JSON.parse(productIdsStr);
+        const voucherIds = JSON.parse(voucherIdsStr);
+
+        if(productIds.length === 0 && voucherIds.length === 0){
+            navigate('/cart');
+            return;
+        }
         const requestBody = {
             productIntegers: productIds,
             voucherIntegers: voucherIds
@@ -128,7 +141,7 @@ const Payment = () => {
 
         try {
             const response = await axiosInstance.post("/user/payment/list", requestBody);
-            
+
             if (response.status === 200 && response.data.status === true) {
                 setShops(response.data.data);
             } else {
@@ -166,7 +179,7 @@ const Payment = () => {
         if (!shop || !shop.voucherSelected || shop.voucherSelected.length === 0) {
             return null;
         }
-        
+
         const selectedVoucherId = shop.voucherSelected[0].id;
         const voucher = shop.vouchers.find(v => v.id === selectedVoucherId);
         return voucher || null;
@@ -218,14 +231,10 @@ const Payment = () => {
         return Math.min(discountAmount, voucher.maxDiscount || 0);
     };
 
-    const formatCurrency = (amount) => {
-        return amount.toLocaleString('vi-VN');
-    };
-
     const calculateTotalDiscount = () => {
         return shops.reduce((total, shop) => {
             const shopTotal = calculateShopTotal(shop);
-            const voucher = selectedVouchers.find(v => v.shopId === shop.shopId)?.voucher;
+            const voucher = getSelectedVoucherForShop(shop.shopId);
             return total + calculateVoucherDiscount(shopTotal, voucher);
         }, 0);
     }
@@ -235,117 +244,165 @@ const Payment = () => {
     };
 
     const calculateFinalTotal = () => {
-        return shops.reduce((total, shop) =>
-            total + calculateShopTotal(shop) + (shippingFees[shop.shopId] || 0), 0) - calculateTotalDiscount();
+        return shops.reduce((total, shop) => {
+            const shopTotal = calculateShopTotal(shop);
+            const voucher = getSelectedVoucherForShop(shop.shopId);
+            const voucherDiscount = calculateVoucherDiscount(shopTotal, voucher);
+            return total + shopTotal + (shippingFees[shop.shopId] || 0) - voucherDiscount;
+        }, 0);
     };
 
+    const handleVnpayError = (error) => {
+        let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
+        
+        if (error?.code === 76) {
+            errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+        } else if (error?.code === 3) {
+            errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+        } else if (error?.message) {
+            errorMessage = error.message;
+        }
+        
+        showErrorToast(errorMessage);
+        return errorMessage;
+    };
+
+    const validatePaymentData = () => {
+
+        if (!customerInfo?.fullName || !customerInfo?.phone || !customerInfo?.address) {
+            showErrorToast("Vui lòng kiểm tra lại thông tin giao hàng.");
+            return false;
+        }
+
+        const total = calculateFinalTotal();
+        if (!total || isNaN(total) || total <= 0) {
+            showErrorToast("Số tiền thanh toán không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
+            return false;
+        }
+
+        return true;
+    };
 
     const handlePayment = async () => {
-        setIsLoading(true);
-
-        if (paymentMethod === "Thanh toán chuyển khoản ngân hàng") {
-            try {
-                const orderId = Math.floor(new Date().getTime() / 1000) + 10;
-                const total = calculateFinalTotal();
-
-                if (!total || isNaN(total) || total <= 0) {
-                    showErrorToast("Số tiền thanh toán không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (!customerInfo?.fullName || !customerInfo?.phone || !customerInfo?.address) {
-                    showErrorToast("Vui lòng kiểm tra lại thông tin giao hàng.");
-                    setIsLoading(false);
-                    return;
-                }
-
-                const paymentData = {
-                    orderId: Number(orderId),
-                    orderInfor: "Thanh toan don hang " + orderId,
-                    total: Number(total),
+        try {
+            const responseData = shops.map(shop => {
+                return {
+                    shopId: shop.shopId,
+                    voucherId: shop.voucherSelected && shop.voucherSelected.length > 0 ? shop.voucherSelected[0].id : null,
+                    shippingFee: shippingFees[shop.shopId] || 0,
+                    paymentMethod: paymentMethod,
+                    customerInfo: customerInfo.fullName + " - " + customerInfo.phone + " - " + customerInfo.address,
+                    cartItems: shop.products.map(product => ({
+                        productId: product.productId,
+                        price: product.productPromotionValue > 0 ? (product.productPrice * (1 - product.productPromotionValue / 100)) : product.productPrice,
+                        quantity: product.productQuantity,
+                    })),
                 };
+            });
 
-                console.log("Gửi yêu cầu thanh toán với dữ liệu:", paymentData);
+            if (responseData.length < 0) {
+                navigate('/cart');
+                return;
+            }
 
-                const response = await axios.get("http://localhost:8080/payment-online/create-payment", {
-                    params: paymentData
-                });
-
-                console.log("Kết quả từ API VNPAY:", response.data);
-
-                if (response.data?.status === true) {
-                    window.location.href = response.data.data;
+            console.log("Gửi yêu cầu thanh toán với dữ liệu:", responseData);
+            const responseCreateOrder = await axiosInstance.post("/user/payment/payment-ordered", responseData);
+            if (responseCreateOrder.status === 200) {
+                console.log("responseCreateOrder.data.data",responseCreateOrder.data.data);
+             
+                if (Array.isArray(responseCreateOrder.data.data)) {
+                    setListOrderId(responseCreateOrder.data.data); // Nếu là mảng, trực tiếp gán
                 } else {
-                    let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
+                    setListOrderId([responseCreateOrder.data.data]); // Nếu không phải mảng, bao bọc nó trong một mảng
+                }
+                
 
-                    if (response.data?.code === 76) {
-                        errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+                if (paymentMethod === "Thanh toán chuyển khoản ngân hàng") {
+                    try {
+                        const orderId = Math.floor(new Date().getTime() / 1000) + 10;
+                        const total = calculateFinalTotal();
+        
+                        if (!total || isNaN(total) || total <= 0) {
+                            showErrorToast("Số tiền thanh toán không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
+                            setIsLoading(false);
+                            return;
+                        }
+        
+                        if (!customerInfo?.fullName || !customerInfo?.phone || !customerInfo?.address) {
+                            showErrorToast("Vui lòng kiểm tra lại thông tin giao hàng.");
+                            setIsLoading(false);
+                            return;
+                        }
+        
+                        const paymentData = {
+                            orderId: Number(orderId),
+                            orderInfor: "Thanh toan don hang " + orderId,
+                            total: Number(total),
+                        };
+        
+                        console.log("Gửi yêu cầu thanh toán với dữ liệu:", paymentData);
+        
+                        const responseVnpay = await axiosInstance.get("/user/payment-online/create-payment", {
+                            params: paymentData
+                        });
+        
+                        console.log("Kết quả từ API VNPAY:", responseVnpay.data);
+        
+                        if (responseVnpay.data?.status === true) {
+                            window.location.href = responseVnpay.data.data;
+                        } else {
+                            let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
+        
+                            if (responseVnpay.data?.code === 76) {
+                                errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+                                showErrorToast(errorMessage);
+                                return;
+                            } else if (responseVnpay.data?.code === 3) {
+                                errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+                            } else if (responseVnpay.data?.message) {
+                                errorMessage = responseVnpay.data.message;
+                            }
+        
+                            showErrorToast(errorMessage);
+                            setPaymentMethod("Thanh toán tiền mặt khi nhận hàng");
+                        }
+                    } catch (error) {
+                        console.error("Lỗi khi gọi API VNPay:", error);
+                        let errorMessage = "Đã có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
+        
+                        if (error.responseVnpay?.data?.code === 3) {
+                            errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+                        } else if (error.responseVnpay?.data?.message) {
+                            errorMessage = error.responseVnpay.data.message;
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+        
                         showErrorToast(errorMessage);
-                        return;
-                    } else if (response.data?.code === 3) {
-                        errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
-                    } else if (response.data?.message) {
-                        errorMessage = response.data.message;
+                    } finally {
+                        setIsLoading(false);
                     }
-
-                    showErrorToast(errorMessage);
-                    setPaymentMethod("Thanh toán tiền mặt khi nhận hàng");
+                    removeListProductIds();
+                    removeListVoucherIds();
+                } else {
+                    navigate("/user/payment-status");
                 }
-            } catch (error) {
-                console.error("Lỗi khi gọi API VNPay:", error);
-                let errorMessage = "Đã có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
-
-                if (error.response?.data?.code === 3) {
-                    errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
-                } else if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                showErrorToast(errorMessage);
-            } finally {
-                setIsLoading(false);
+                removeListProductIds();
+                removeListVoucherIds();
             }
-        } else {
-            try {
-                const responseData = shops.map(shop => {
-                    return {
-                        shopId: shop.shopId,
-                        voucherId: shop.voucherSelected && shop.voucherSelected.length > 0 ? shop.voucherSelected[0].id : null,
-                        shippingFee: shippingFees[shop.shopId] || 0,
-                        paymentMethod: paymentMethod,
-                        customerInfo: customerInfo.fullName + " - " + customerInfo.phone + " - " + customerInfo.address,
-                        cartItems: shop.products.map(product => ({
-                            productId: product.productId,
-                            price: product.productPromotionValue > 0 ? (product.productPrice * (1 - product.productPromotionValue / 100)) : product.productPrice,
-                            quantity: product.productQuantity,
-                        })),
-                    };
-                });
-
-                console.log("Gửi yêu cầu thanh toán với dữ liệu:", responseData);
-
-                if (responseData.length > 0) {
-                    const response = await axiosInstance.post("/user/payment/payment-ordered", responseData);
-                    if (response.status === 200) {
-                        navigate('/home');
-                    } else {
-                        showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.");
-                    }
-                }
-            } catch (error) {
-                console.error("Lỗi khi đặt hàng:", error);
-                showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.");
-            } finally {
-                setIsLoading(false);
-            }
+        } catch (error) {
+            console.error("Lỗi khi đặt hàng:", error);
+            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.");
+        } finally {
+            setIsLoading(false);
         }
-    }
+    };
+    
+    
 
     const handleBack = () => {
         removeListProductIds();
+        removeListVoucherIds();
         navigate('/cart');
     }
 
@@ -383,7 +440,17 @@ const Payment = () => {
                                                     <h4 className="font-medium text-gray-900">
                                                         {product.productName}
                                                         <p className="text-xs sm:text-sm text-gray-600">
-                                                            {product.productQuantity} x {product.productPrice.toLocaleString()}đ
+                                                            {product.productQuantity} x    {
+                                                                    product.productPromotionValue > 0 ? (
+                                                                        <>
+                                                                          <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
+                                                                            <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
+  
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+                                                                    )
+                                                                }
                                                         </p>
                                                     </h4>
 

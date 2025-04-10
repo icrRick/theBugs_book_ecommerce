@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.beans.LoginBean;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.LoginService;
-import com.thebugs.back_end.utils.ResponseDataUtil;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import jakarta.validation.Valid;
 import java.util.HashMap;
@@ -34,15 +34,15 @@ public class LoginController {
                                 String errorMessages = result.getAllErrors().stream()
                                                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
                                                 .collect(Collectors.joining(", "));
-                                return ResponseDataUtil.badRequest(errorMessages);
+                                return ResponseEntityUtil.badRequest(errorMessages);
                         }
                         String jwt = loginService.login(loginBean.getEmail(), loginBean.getPassword());
                         Map<String, Object> response = new HashMap<>();
                         response.put("token", jwt);
-                        return ResponseDataUtil.OK("Đăng nhập thành công", response);
+                        return ResponseEntityUtil.OK("Đăng nhập thành công", response);
                   
                 } catch (Exception e) {
-                        return ResponseDataUtil.badRequest(e.getMessage());
+                        return ResponseEntityUtil.badRequest(e.getMessage());
                 }
         }
 

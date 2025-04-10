@@ -112,16 +112,17 @@ public class GenreController {
         public ResponseEntity<ResponseData> postUpdateGenre( @RequestParam Integer id,
                         @ModelAttribute GenreBean genreBean) {
                 ResponseData responseData = new ResponseData();
+
                 try {
+                        Genre genre = genreService.getGenreById(id);
                         String urlImage = null;
                         if (genreBean.getImage() != null && !genreBean.getImage().isEmpty()) {
                                 System.out.println("Image: " + genreBean.getImage().getOriginalFilename());
                                 urlImage = CloudinaryUpload.uploadImage(genreBean.getImage());
                         } else {
-                                System.out.println("No image provided");
+                              urlImage=genre.getUrlImage();
                         }
-                        Genre genre = new Genre();
-                        genre.setId(id);
+                  
                         genre.setName(genreBean.getName().trim());
                         genre.setUrlImage(urlImage);
                         GenreDTO genreDTO = genreService.update(genre);

@@ -13,6 +13,7 @@ import com.thebugs.back_end.services.seller.ShopService;
 import com.thebugs.back_end.services.seller.VoucherService;
 import com.thebugs.back_end.services.super_admin.PublisherService;
 
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -57,7 +58,8 @@ public class PaymentService {
     @Autowired
     private CartItemService cartItemService;
 
-    public boolean createOrder(String authorizationHeader, List<CartBean> cartBeans) {
+    public List<Integer> createOrder(String authorizationHeader, List<CartBean> cartBeans) {
+        List<Integer> orderIdIntegers = new ArrayList<>();  
         if (cartBeans == null || cartBeans.isEmpty()) {
             throw new IllegalArgumentException("Giỏ hàng không được null hoặc rỗng");
         }
@@ -66,7 +68,9 @@ public class PaymentService {
             Order order = new Order();
             order.setUser(user);
             order.setShop(shopService.getShopById(cartBean2.getShopId()));
+
             order.setPaymentMethod(cartBean2.getPaymentMethod());
+
             order.setCustomerInfo(cartBean2.getCustomerInfo());
             if (cartBean2.getVoucherId() != null) {
                 order.setVoucher(voucherService.getVoucherById(cartBean2.getVoucherId()));
@@ -77,9 +81,17 @@ public class PaymentService {
             order.setCreatedAt(new Date());
             order.setNoted(null);
             order.setOrderStatus(orderStatusService.getOrderStatusById(1));
-            order.setPaymentStatus("Chưa thanh toán");
+            
+            if (cartBean2.getPaymentMethod().equals("Thanh toán tiền mặt khi nhận hàng")) {
+                order.setPaymentStatus("Chưa thanh toán");
+            }else{
+                order.setPaymentStatus(null);
+            }
+        
+          
 
             Order savedOrder = orderService.saveOrder(order);
+            orderIdIntegers.add(savedOrder.getId());
             for (CartItemBean cartItemBean : cartBean2.getCartItems()) {
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(savedOrder);
@@ -91,7 +103,7 @@ public class PaymentService {
                 cartItemService.deleteCartItem(authorizationHeader, cartItemBean.getProductId());
             }
         }
-        return true;
+        return orderIdIntegers;
     }
 
     public List<Map<String, Object>> list(String authorizationHeader, PaymentBean paymentBeans) {
@@ -128,7 +140,7 @@ public class PaymentService {
                     List<Map<String, Object>> selectedVouchersForShop = new ArrayList<>();
                     for (Integer voucherId : paymentBeans.getVoucherIntegers()) {
                         Voucher voucher = voucherService.getVoucherById(voucherId);
-                        if (voucher != null && voucher.getShop().getId()==shopId) {
+                        if (voucher != null && voucher.getShop().getId() == shopId) {
                             Map<String, Object> voucherMap = new LinkedHashMap<>();
                             voucherMap.put("id", voucher.getId());
                             voucherMap.put("codeVoucher", voucher.getId());
@@ -144,7 +156,7 @@ public class PaymentService {
                             selectedVouchersForShop.add(voucherMap);
                             break;
                         }
-                     
+
                     }
                     shopInfo.put("voucherSelected", selectedVouchersForShop);
                     shopInfo.put("products", new ArrayList<Map<String, Object>>());

@@ -84,7 +84,7 @@ export const PUBLIC_ROUTES = [
       { path: "register-seller", element: <SellerRegistration /> },
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
-      { path: "user/vnpay-return", element: <PaymentStatus /> },
+    
 ];
 export const USER_ROUTES = [
   { path: 'payment', element: <Payment /> },
@@ -92,6 +92,7 @@ export const USER_ROUTES = [
   { path: "register-seller", element: <SellerRegistration /> },
   { path: 'cart', element: <Cart /> },
   { path: 'place-order-address', element: <PlaceOrderAddress /> },
+  { path: "user/payment-status", element: <PaymentStatus /> },
   {
     path: "account",
     element: <ProtectedRoute requiredRoles={[1, 2]}><LayoutAccount /></ProtectedRoute>,

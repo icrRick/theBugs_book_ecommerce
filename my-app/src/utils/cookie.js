@@ -39,7 +39,15 @@ export const getListVoucherIds = () => {
 export const removeListVoucherIds = () => {
         return Cookies.remove('LIST_VOUCHER_IDS');
 };
-
+export const setListOrderId = (listOrderId) => {
+        return Cookies.set('LIST_ORDER_ID', listOrderId);
+};
+export const getListOrderId = () => {
+        return Cookies.get('LIST_ORDER_ID');
+};
+export const removeListOrderId = () => {
+        return Cookies.remove('LIST_ORDER_ID');
+};
 
 export const cookie= () => {
         return {
@@ -55,5 +63,8 @@ export const cookie= () => {
                 setListVoucherIds,
                 getListVoucherIds,
                 removeListVoucherIds,
+                setListOrderId,
+                getListOrderId,
+                removeListOrderId,
         };
 }

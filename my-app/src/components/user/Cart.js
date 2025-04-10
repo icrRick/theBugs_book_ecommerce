@@ -513,12 +513,30 @@ const Cart = () => {
                     {/* Footer của giỏ hàng */}
                     <div className="border-b bg-white my-4 p-4">
                         <div className="flex flex-col mb-4 px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
-                            <span className="text-sm sm:text-base text-gray-600">
-                                Tổng thanh toán ({calculateTotalItems(cart)} sản phẩm):
-                            </span>
-                            <span className="text-lg sm:text-xl font-bold text-red-600">
-                                {formatCurrency(calculateTotalAmount(cart, selectedVouchers))}
-                            </span>
+                            <div className="flex flex-col items-end">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm sm:text-base text-gray-600">
+                                        Tổng thanh toán ({calculateTotalItems(cart)} sản phẩm):
+                                    </span>
+                                    <span className="text-lg sm:text-xl font-bold text-red-600">
+                                        {formatCurrency(calculateTotalAmount(cart, selectedVouchers))}
+                                    </span>
+                                </div>
+                                <div className="flex items-center space-x-2 mt-1">
+                                    <span className="text-sm text-gray-600">
+                                        Giảm giá trực tiếp:
+                                    </span>
+                                    <span className="text-sm font-medium text-green-600">
+                                        -{formatCurrency(cart.reduce((total, shop) => 
+                                            total + shop.products.reduce((shopTotal, product) => 
+                                                product.checked && product.productPromotionValue > 0 
+                                                    ? shopTotal + (product.productPrice * product.productPromotionValue / 100 * product.productQuantity)
+                                                    : shopTotal
+                                            , 0)
+                                        , 0))}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         <div className="flex flex-col px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
                             <button

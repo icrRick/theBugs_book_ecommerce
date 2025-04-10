@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.thebugs.back_end.resp.ResponseData;
 
-public class ResponseDataUtil {
+public class ResponseEntityUtil {
     public static ResponseEntity<ResponseData> OK(String message,Object data){
         return ResponseEntity.ok(new ResponseData(true, message,data));
     } 

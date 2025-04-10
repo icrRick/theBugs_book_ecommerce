@@ -6,10 +6,9 @@ import com.thebugs.back_end.dto.HomeProductDTO;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.GenreService;
 import com.thebugs.back_end.services.user.ProductHomeService;
-import com.thebugs.back_end.services.user.ReviewService;
 
 import java.util.ArrayList;
-import java.util.List;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -29,8 +28,8 @@ public class HomeController {
         @Autowired
         private GenreService genreService;
 
-        @Autowired
-        private ReviewService reviewService; // Thêm ReviewService
+        // @Autowired
+        // private ReviewService reviewService; // Thêm ReviewService
 
         @GetMapping("/home")
         public ResponseEntity<ResponseData> getPageHome1(@RequestParam(defaultValue = "1") int page) {
