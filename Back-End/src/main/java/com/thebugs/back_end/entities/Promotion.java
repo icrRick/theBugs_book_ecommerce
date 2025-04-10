@@ -48,8 +48,9 @@ public class Promotion {
     private Date createAt;
 
     @Column(nullable = false)
-    private Boolean active;
-
+    private boolean active;
+    @Column(nullable = false)
+    private boolean flashSale;
     @OneToMany(mappedBy = "promotion")
     private List<PromotionProduct> promotionProducts;
 }

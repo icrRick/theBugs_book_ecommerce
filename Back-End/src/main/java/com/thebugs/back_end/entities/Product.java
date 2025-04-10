@@ -31,21 +31,21 @@ public class Product {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @Column
-    private Double weight;
+    @Column(nullable = false)
+    private double weight;
 
     @Column(nullable = false)
     private int quantity;
 
     @Column(nullable = false)
-    private Double price;
-    //Còn hoạt động hay không
+    private double price;
+
     @Column(nullable = false)
-    private Boolean active;
-    //Đã được duyệt hay chưa
+    private boolean active;
+
     @Column(nullable = false)
-    private Boolean approve;
-    //Có bị ban không
+    private boolean approve;
+
     @Column(nullable = true)
     private Boolean status;
 

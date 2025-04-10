@@ -3,16 +3,16 @@ import { Link, useNavigate } from "react-router-dom"
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import axiosInstance from "../../utils/axiosInstance";
 import StreetApiAddress from "./StreetApiAddress";
-import { cookie } from "../../utils/cookie";
+import {  setAddressId } from "../../utils/cookie";
 
 const PlaceOrderAddress = () => {
     const [addresses, setAddresses] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [loading, setLoading] = useState(true);
-   
 
-    const { setAddressId } = cookie();
+
+
 
     const fetchData = async () => {
         setLoading(true);
@@ -33,6 +33,7 @@ const PlaceOrderAddress = () => {
         fetchData();
     }, []);
     const handleSetAddress = (item) => {
+        console.log("item",item);
         setAddressId(item.id);
         navigate("/payment");
     }

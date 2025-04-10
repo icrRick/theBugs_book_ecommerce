@@ -1,5 +1,6 @@
 package com.thebugs.back_end.services.user;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpEntity;
@@ -11,21 +12,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.thebugs.back_end.entities.Address;
 import com.thebugs.back_end.resp.ResponseData;
 
 @Service
 public class ShippingService {
 
         private final RestTemplate restTemplate;
+        private final AddressService addressService;
 
-        public ShippingService(RestTemplate restTemplate) {
+        public ShippingService(RestTemplate restTemplate, AddressService addressService) {
                 this.restTemplate = restTemplate;
+                this.addressService = addressService;
         }
 
-        @SuppressWarnings("unchecked")
-        public Integer calculateFee(Integer fromDistrictId, String fromWardCode,
-                        Integer toDistrictId, String toWardCode, Integer weight) {
+        public  Object calculateFee(Integer shopId, Integer addressUserId, Float weight) {
                 try {
+                        Address addressShop = addressService.getAddressShopId(shopId);
+                        Address addressUser = addressService.getAddressById(addressUserId);
+
                         HttpHeaders headers = new HttpHeaders();
                         String url = "https://online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee";
 
@@ -33,38 +38,39 @@ public class ShippingService {
                         headers.set("Token", "f248ba4d-d70a-11ef-881c-b25c083cd867");
                         headers.set("ShopId", "5602733");
 
-                        Map<String, Object> request = Map.of(
-                                        "service_type_id", 2,
-                                        "from_district_id", fromDistrictId != null ? fromDistrictId : 1573,
-                                        "from_ward_code", fromWardCode != null ? fromWardCode : "550207",
-                                        "to_district_id", toDistrictId,
-                                        "to_ward_code", toWardCode,
-                                        "weight", weight);
+                        // Default values for district and ward, in case addresses are null
+                        Integer fromDistrictId = addressShop != null ? addressShop.getDistrictId() : 1573;
+                        String fromWardCode = addressShop != null ? String.valueOf(addressShop.getWardId()) : "550207";
 
+                        Integer toDistrictId = addressUser != null ? addressUser.getDistrictId() : 1573;
+                        String toWardCode = addressUser != null ? String.valueOf(addressUser.getWardId()) : "550207";
+
+                        // Request body
+                        Map<String, Object> request = new HashMap<>();
+                        request.put("service_type_id", 2);
+                        request.put("from_district_id", fromDistrictId);
+                        request.put("from_ward_code", fromWardCode);
+                        request.put("to_district_id", toDistrictId);
+                        request.put("to_ward_code", toWardCode);
+                        System.out.println("weight: " + weight);
+                        System.out.println("weight: " + Math.round(weight));
+
+                        request.put("weight", Math.round(weight));
                         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
-
                         ResponseEntity<ResponseData> responseEntity = restTemplate.exchange(
-                                        url,
-                                        HttpMethod.POST,
-                                        entity,
-                                        ResponseData.class);
-                        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                                        url, HttpMethod.POST, entity, ResponseData.class);
 
-                                ResponseData responseData = responseEntity.getBody();
+                        if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody() != null && responseEntity.getBody().getData() != null) {
+                              
+                                System.out.println("responseEntity: " + responseEntity.getBody().getData());
 
-                                if (responseData != null && responseData.getData() != null) {
-
-                                        Map<String, Object> dataMap = (Map<String, Object>) responseData.getData();
-                                        Integer total = (Integer) dataMap.get("total");
-                                        if (total != null) {
-                                                return total;
-                                        }
-                                }
+                              return  responseEntity.getBody().getData();
                         }
-
-                        return 0;
+                        return null;
                 } catch (Exception e) {
-                        return 0;
+                        e.printStackTrace();
+                        return null;
                 }
         }
+
 }

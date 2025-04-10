@@ -34,7 +34,7 @@ public class Review {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     @Column(nullable = false)
-    private int rate;
+    private double rate;
     @Column(nullable = false)
     private String content;
     @Temporal(TemporalType.DATE)

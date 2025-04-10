@@ -134,49 +134,49 @@ public class UserOrderService {
     }
 
     public Object getOrderDetail(int orderId, String token) {
-                int userId = userService.getUserToken(token).getId();
-                Order order = getByUserId(orderId, userId);
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("orderId", order.getId());
-                map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
-                map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
-                map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-                map.put("paymentMethod", order.getPaymentMethod());
-                map.put("paymentStatus", order.getPaymentStatus());
-                map.put("shippingFee", order.getShippingFee());
-                map.put("createdAt", order.getCreatedAt());
-                map.put("orderStatusName", order.getOrderStatus().getName());
-                map.put("orderItems", order.getOrderItems().stream()
-                                .map(item -> {
-                                        ProductOrderDTO productOrderDTO = new ProductOrderDTO();
-                                        productOrderDTO.setProductId(item.getProduct().getId());
-                                        productOrderDTO.setProductName(item.getProduct().getName());
-                                        productOrderDTO.setProductImage(
-                                                        item.getProduct().getImages().get(0).getImageName());// lấy ảnh
-                                                                                                             // đầu
-                                                                                                             // tiên
-                                        productOrderDTO.setPriceProduct(item.getPrice());
-                                        productOrderDTO.setQuantityProduct(item.getQuantity());
-                                        productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
-                                        return productOrderDTO;
-                                })
-                                .collect(Collectors.toList()));
+        int userId = userService.getUserToken(token).getId();
+        Order order = getByUserId(orderId, userId);
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("orderId", order.getId());
+        map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
+        map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
+        map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
+        map.put("paymentMethod", order.getPaymentMethod());
+        map.put("paymentStatus", order.getPaymentStatus());
+        map.put("shippingFee", order.getShippingFee());
+        map.put("createdAt", order.getCreatedAt());
+        map.put("orderStatusName", order.getOrderStatus().getName());
+        map.put("orderItems", order.getOrderItems().stream()
+                .map(item -> {
+                    ProductOrderDTO productOrderDTO = new ProductOrderDTO();
+                    productOrderDTO.setProductId(item.getProduct().getId());
+                    productOrderDTO.setProductName(item.getProduct().getName());
+                    productOrderDTO.setProductImage(
+                            item.getProduct().getImages().get(0).getImageName());// lấy ảnh
+                                                                                 // đầu
+                                                                                 // tiên
+                    productOrderDTO.setPriceProduct(item.getPrice());
+                    productOrderDTO.setQuantityProduct(item.getQuantity());
+                    productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
+                    return productOrderDTO;
+                })
+                .collect(Collectors.toList()));
 
-                double total = order.getOrderItems().stream()
-                                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
-                double discount = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
-                double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
-                double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
-                double totalDiscount = order.getOrderItems().stream()
-                                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discount / 100;
+        double total = order.getOrderItems().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
+        double discount = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
+        double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
+        double shippingFee = order.getShippingFee();
+        double totalDiscount = order.getOrderItems().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discount / 100;
 
-                double min = Math.min(totalDiscount, maxDiscount);
-                double totalPrice = total - min + shippingFee;
-                map.put("totalPrice", total);
-                map.put("totalDiscount", min);
-                map.put("shippingMethod", shippingFee);
-                map.put("total", totalPrice);
-                return map;
+        double min = Math.min(totalDiscount, maxDiscount);
+        double totalPrice = total - min + shippingFee;
+        map.put("totalPrice", total);
+        map.put("totalDiscount", min);
+        map.put("shippingMethod", shippingFee);
+        map.put("total", totalPrice);
+        return map;
 
-}
+    }
 }

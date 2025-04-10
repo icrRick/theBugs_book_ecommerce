@@ -3,23 +3,37 @@ import { getAddressId } from "../../utils/cookie";
 import axiosInstance from "../../utils/axiosInstance";
 import { useState, useEffect } from "react";
 import StreetApiAddress from "./StreetApiAddress";
-const SelectedAddress = () => {
+
+const SelectedAddress = ({ onAddressChange }) => {
     const navigate = useNavigate();
+    const [item, setItems] = useState([]);
+
     const handleChangeAddress = () => {
         navigate("/place-order-address")
     }
-    const [item, setItems] = useState([]);
+
     useEffect(() => {
-        const addressId = getAddressId() || '';  // Dùng '' nếu không có addressId
+        const addressId = getAddressId();
         axiosInstance.get(`/user/address/default?addressId=${addressId}`)
             .then((response) => {
-                setItems(response.data.data);
-                localStorage.setItem("userAddress", JSON.stringify(response.data.data));
+                const data = response.data.data;
+                setItems(data);
+                
+                // Truyền thông tin địa chỉ lên component cha
+                if (data && onAddressChange) {
+                    const addressInfo = {
+                        fullName: data.fullName,
+                        phone: data.phone,
+                        email: data.email,
+                        address: `${data.street}, ${data.wardName}, ${data.districtName}, ${data.provinceName}`
+                    };
+                    onAddressChange(addressInfo);
+                }
             })
             .catch((error) => {
                 console.error(error);
             });
-    }, []);  
+    }, [onAddressChange]);  
 
     return (
         <div>
@@ -31,7 +45,7 @@ const SelectedAddress = () => {
                 <div className="space-y-4">
                     <div className="text-sm font-medium text-gray-700 mb-1">Họ và tên: {item?.fullName}</div>
                     <div className="text-sm font-medium text-gray-700 mb-1">Số điện thoại: {item?.phone}</div>
-                    <div className="text-sm font-medium text-gray-700 mb-1">Địa chỉ: <StreetApiAddress provinceId={item.provinceId} districtId={item.districtId} wardId={item.wardId} street={item.street} /></div>
+                    <div className="text-sm font-medium text-gray-700 mb-1">Địa chỉ: <StreetApiAddress provinceId={item?.provinceId} districtId={item?.districtId} wardId={item?.wardId} street={item?.street} /></div>
                 </div>
             </div>
         </div>

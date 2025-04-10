@@ -181,8 +181,8 @@ public class Seller_ProductCRUDService {
         // trường hợp true duy nhất là xóa sản phẩm thành công khi k có liên kết
         if (!status) {
             statusCode = 409;
-            if (product.getActive()) {
-                if (product.getActive() && updateProductStatusToStopSelling(product)) {
+            if (product.isActive()) {
+                if (product.isActive() && updateProductStatusToStopSelling(product)) {
                     message.append("\n Đã chuyển trạng thái sản phẩm thành ngừng bán.");
                 } else {
                     message.append("\n ERROR: Đã xảy ra lỗi khi chuyển trạng thái sản phẩm thành ngừng bán.");

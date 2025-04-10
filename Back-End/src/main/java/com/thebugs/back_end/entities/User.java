@@ -47,12 +47,12 @@ public class User {
     @Column(name = "cccd", nullable = true)
     private String cccd;
     @Column(name = "verify", nullable = true)
-    private Boolean verify;
+    private boolean verify;
     @Column(name = "dob", nullable = true)
     @Temporal(TemporalType.DATE)
     private Date dob;
     @Column(name = "active", nullable = false)
-    private Boolean active;
+    private boolean active;
 
     @Column(nullable = true, name = "address")
     private String address;

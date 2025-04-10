@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +31,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequestMapping("/user/address")
 public class AddressController {
 
-        private final AddressService addressService;
-        private final UserService userService;
+      
+        @Autowired
+        private UserService userService;
 
-        public AddressController(AddressService addressService, UserService userService) {
-                this.addressService = addressService;
-                this.userService = userService;
-        }
+        @Autowired
+        private AddressService addressService;
+
 
         @GetMapping("/list")
         public ResponseEntity<ResponseData> getListAddressByUser(
@@ -161,22 +162,6 @@ public class AddressController {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
         }
-        @GetMapping("/defaultShopAddress")
-        public ResponseEntity<ResponseData> defaultShopAddress(
-                        @RequestParam Integer shopId) {
-                ResponseData responseData = new ResponseData();
-                try {
-                        AddressDTO addressDTO = addressService.getAddressShopId(shopId);
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lấy địa chỉ shop thành công");
-                        responseData.setData(addressDTO);
-                        return ResponseEntity.ok(responseData);
-                } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-                }
-        }
-
+      
+          
 }

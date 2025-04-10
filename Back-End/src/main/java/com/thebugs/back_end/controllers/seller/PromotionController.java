@@ -1,15 +1,17 @@
-package com.thebugs.back_end.controllers.user;
+package com.thebugs.back_end.controllers.seller;
 
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.dto.PromotionDTO;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.seller.PromotionService;
+
 
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+
+import com.thebugs.back_end.services.seller.PromotionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class PromotionController {
 
         @Autowired
-        private PromotionService promotionService;
-
+        private  PromotionService promotionService;
         @GetMapping("/list")
         public ResponseEntity<ResponseData> getList(
                         @RequestHeader("Authorization") String authorizationHeader,
@@ -63,7 +64,7 @@ public class PromotionController {
                 }
 
         }
-        
+
         @GetMapping("/get/{id}")
         public ResponseEntity<PromotionDTO> getPromotionById(@PathVariable Integer id) {
                 try {
@@ -73,7 +74,9 @@ public class PromotionController {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
                 }
         }
-        
+
+
+
         @PostMapping("/delete")
         public ResponseEntity<ResponseData> deletePromotion(@RequestParam Integer id) {
                 ResponseData responseData = new ResponseData();

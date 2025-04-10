@@ -17,7 +17,7 @@ public class SellerMapper {
 
                 sellerDTO.setDescription(seller.getDescription());
                 sellerDTO.setImage(seller.getImage());
-                sellerDTO.setActive(seller.getActive());
+                sellerDTO.setActive(seller.isActive());
                 return sellerDTO;
         }
 }

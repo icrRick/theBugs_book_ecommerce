@@ -62,8 +62,11 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
         @Query("SELECT COUNT(g) FROM Genre g WHERE ?1 IS NULL OR ?1 = '' OR g.name LIKE %?1%")
         int countfindProductByName(String keyword);
 
-        @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id,p.name,p.price,i.imageName, pr.promotionValue, p.weight,COALESCE(ROUND(AVG(r.rate), 1), 0)) "
+        @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id, p.name, p.price, " +
+                        "COALESCE(i.imageName, 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'), "
                         +
+                        "COALESCE(pr.promotionValue, 0), p.weight, " +
+                        "COALESCE(ROUND(AVG(r.rate), 1), 0)) " +
                         "FROM Product p " +
                         "LEFT JOIN OrderItem o ON o.product.id = p.id " +
                         "LEFT JOIN Review r ON r.orderItem.id = o.id " +
@@ -71,9 +74,10 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "LEFT JOIN Promotion pr ON pr.id = pp.promotion.id " +
                         "LEFT JOIN Image i ON i.product.id = p.id " +
                         "WHERE p.active = true " +
-                        "AND pr.startDate <= CURRENT_DATE " +
-                        "AND pr.expireDate >= CURRENT_DATE " +
-                        "AND i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id)")
+                        "AND p.id = ?1 " +
+                        "AND (i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id) OR i.imageName IS NULL) "
+                        +
+                        "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName")
         Optional<ProItemDTO> getProItemDTO(Integer productId);
 
         // code cua tam

@@ -1,6 +1,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect } from 'react';
+import Loading from './Loading';
 
 const ProtectedRoute = ({ requiredRoles = [], children }) => {
     const { isAuthenticated, isInitialized, userInfo ,hasRole} = useAuth();
@@ -24,7 +25,7 @@ const ProtectedRoute = ({ requiredRoles = [], children }) => {
     }, [isAuthenticated, isInitialized, userInfo, requiredRoles, navigate, location]);
 
     if (!isInitialized) {
-        return <div>Loading...</div>;
+        return <Loading />;
     }
 
     if (!isAuthenticated) {
