@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.beans.LoginBean;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.LoginService;
+import com.thebugs.back_end.services.user.LoginService;
 import com.thebugs.back_end.utils.ResponseDataUtil;
 
 import jakarta.validation.Valid;

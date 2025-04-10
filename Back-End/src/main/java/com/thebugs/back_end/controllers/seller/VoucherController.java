@@ -6,7 +6,7 @@ import com.thebugs.back_end.beans.VoucherBean;
 import com.thebugs.back_end.dto.VoucherDTO;
 import com.thebugs.back_end.entities.Voucher;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.VoucherService;
+import com.thebugs.back_end.services.seller.VoucherService;
 
 import java.text.ParseException;
 import java.util.ArrayList;

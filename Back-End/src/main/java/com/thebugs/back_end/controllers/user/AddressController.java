@@ -9,8 +9,8 @@ import com.thebugs.back_end.dto.AddressDTO;
 import com.thebugs.back_end.entities.Address;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.AddressService;
-import com.thebugs.back_end.services.UserService;
+import com.thebugs.back_end.services.user.AddressService;
+import com.thebugs.back_end.services.user.UserService;
 
 import jakarta.validation.Valid;
 

@@ -5,7 +5,7 @@ import com.thebugs.back_end.beans.GenreBean;
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.GenreService;
+import com.thebugs.back_end.services.super_admin.GenreService;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 import java.util.ArrayList;
 import java.util.HashMap;

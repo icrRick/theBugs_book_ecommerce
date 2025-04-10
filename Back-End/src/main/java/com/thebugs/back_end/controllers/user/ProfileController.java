@@ -12,7 +12,7 @@ import com.thebugs.back_end.beans.ProfileBean;
 import com.thebugs.back_end.dto.UserDTO;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.UserService;
+import com.thebugs.back_end.services.user.UserService;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

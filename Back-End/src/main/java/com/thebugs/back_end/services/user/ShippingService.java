@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.user;
 
 import java.util.HashMap;
 import java.util.Map;

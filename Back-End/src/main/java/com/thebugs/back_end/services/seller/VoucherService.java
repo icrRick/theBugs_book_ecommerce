@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.seller;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,6 +14,7 @@ import com.thebugs.back_end.dto.VoucherDTO;
 import com.thebugs.back_end.entities.Voucher;
 import com.thebugs.back_end.mappers.VoucherMapper;
 import com.thebugs.back_end.repository.VoucherJPA;
+import com.thebugs.back_end.services.user.UserService;
 
 @Service
 public class VoucherService {

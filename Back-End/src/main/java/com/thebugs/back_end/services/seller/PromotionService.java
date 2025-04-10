@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.seller;
 
 import java.util.Date;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import com.thebugs.back_end.dto.PromotionDTO;
 import com.thebugs.back_end.entities.Promotion;
 import com.thebugs.back_end.mappers.PromotionMapper;
 import com.thebugs.back_end.repository.PromotionJPA;
+import com.thebugs.back_end.services.user.UserService;
 
 @Service
 public class PromotionService {

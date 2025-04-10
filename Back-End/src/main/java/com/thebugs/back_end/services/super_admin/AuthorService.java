@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.super_admin;
 
 import java.util.List;
 import java.util.stream.Collectors;

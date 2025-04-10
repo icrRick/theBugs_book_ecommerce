@@ -19,7 +19,7 @@ import com.thebugs.back_end.beans.PublisherBean;
 import com.thebugs.back_end.dto.PublisherDTO;
 import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.PublisherService;
+import com.thebugs.back_end.services.super_admin.PublisherService;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

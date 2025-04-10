@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.Favorite;
-import com.thebugs.back_end.services.ProductService;
+import com.thebugs.back_end.services.user.ProductService;
 
 @Component
 public class FavoriteMapper {

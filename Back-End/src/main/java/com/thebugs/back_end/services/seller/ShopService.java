@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.seller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

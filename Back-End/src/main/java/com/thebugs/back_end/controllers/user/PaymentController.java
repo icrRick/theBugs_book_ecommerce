@@ -8,8 +8,8 @@ import com.thebugs.back_end.beans.PaymentBean;
 import com.thebugs.back_end.beans.ShippingFreeBean;
 
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.PaymentService;
-import com.thebugs.back_end.services.ShippingService;
+import com.thebugs.back_end.services.user.PaymentService;
+import com.thebugs.back_end.services.user.ShippingService;
 
 import java.util.List;
 

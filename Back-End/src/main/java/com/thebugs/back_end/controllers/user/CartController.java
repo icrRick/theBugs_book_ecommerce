@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.CartItemService;
+import com.thebugs.back_end.services.user.CartItemService;
 
 import org.springframework.web.bind.annotation.PostMapping;
 

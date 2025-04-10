@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.CustomUserDetailsService;
-import com.thebugs.back_end.services.UserService;
+import com.thebugs.back_end.services.user.UserService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

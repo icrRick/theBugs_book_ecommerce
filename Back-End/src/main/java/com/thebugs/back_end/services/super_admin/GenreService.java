@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.super_admin;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;

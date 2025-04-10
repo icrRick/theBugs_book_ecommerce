@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.beans.ChangePasswordBean;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.UserService;
+import com.thebugs.back_end.services.user.UserService;
 
 @RestController
 @RequestMapping("/user")

@@ -1,4 +1,4 @@
-package com.thebugs.back_end.services;
+package com.thebugs.back_end.services.super_admin;
 
 
 import org.springframework.beans.factory.annotation.Autowired;

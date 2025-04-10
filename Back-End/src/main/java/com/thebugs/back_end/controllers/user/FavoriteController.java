@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.Favorite;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.FavoriteService;
+import com.thebugs.back_end.services.user.FavoriteService;
 
 import java.util.List;
 

@@ -18,7 +18,7 @@ import com.thebugs.back_end.beans.AuthorBean;
 import com.thebugs.back_end.dto.AuthorDTO;
 import com.thebugs.back_end.entities.Author;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.AuthorService;
+import com.thebugs.back_end.services.super_admin.AuthorService;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 
 

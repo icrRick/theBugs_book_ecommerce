@@ -4,8 +4,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.dto.HomeProductDTO;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.GenreService;
-import com.thebugs.back_end.services.ProductHomeService;
+import com.thebugs.back_end.services.super_admin.GenreService;
+import com.thebugs.back_end.services.user.ProductHomeService;
 
 import java.util.ArrayList;
 

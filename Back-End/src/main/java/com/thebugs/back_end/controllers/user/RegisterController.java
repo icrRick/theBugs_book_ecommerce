@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.beans.RegisterBean;
 import com.thebugs.back_end.dto.UserDTO;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.RegisterService;
+import com.thebugs.back_end.services.user.RegisterService;
 
 import jakarta.validation.Valid;
 
