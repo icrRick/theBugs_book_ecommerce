@@ -160,7 +160,7 @@ const Authors = () => {
 
       const formData = new FormData();
       formData.append('name', data.name.trim());
-      formData.append('urlLink', data.urlLink.trim());
+      formData.append('urlLink', data.urlLink?.trim());
       
       if (selectedFile) {
         formData.append('image', selectedFile);

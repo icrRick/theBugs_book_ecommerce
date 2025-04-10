@@ -1,8 +1,6 @@
 package com.thebugs.back_end.utils;
 
 import java.io.IOException;
-import java.util.Map;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.*;
@@ -22,9 +20,8 @@ public class CloudinaryUpload {
     
         public static String uploadImage(MultipartFile file) throws IOException {
             // Upload file lên Cloudinary, có thể thêm các option nếu cần
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
             // Lấy URL ảnh được upload
-            return (String) uploadResult.get("secure_url");
+            return (String) cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap()).get("secure_url");
         }
 
 }

@@ -3,7 +3,6 @@ package com.thebugs.back_end.entities;
 import java.util.Date;
 import java.util.List;
 
-import org.eclipse.angus.mail.handlers.multipart_mixed;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

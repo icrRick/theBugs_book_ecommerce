@@ -3,6 +3,7 @@ package com.thebugs.back_end.services.super_admin;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,51 +15,61 @@ import com.thebugs.back_end.repository.AuthorJPA;
 
 @Service
 public class AuthorService {
+        @Autowired
+        private AuthorJPA authorJPA;
+        @Autowired
+        private AuthorMapper authorMapper;
 
-        private final AuthorMapper authorMapper;
-        private final AuthorJPA authorJPA;
-
-        public AuthorService(AuthorMapper authorMapper, AuthorJPA authorJPA) {
-                this.authorMapper = authorMapper;
-                this.authorJPA = authorJPA;
-        }
-
-        public int getTotal(String keyword) {
-                return authorJPA.countfindByName(keyword);
-        }
-
-        public List<AuthorDTO> searchKeyWordAndPagination(String keyword, Pageable pageable) {
+        public List<AuthorDTO> getAllListAndSearchKeyWord(String keyword, Pageable pageable) {
                 Page<Author> authorPageable;
-
                 if (keyword == null || keyword.isEmpty()) {
                         authorPageable = authorJPA.findAll(pageable);
                 } else {
                         authorPageable = authorJPA.findByNameAuthor(keyword, pageable);
                 }
 
-                return authorPageable.stream()
-                                .map(authorMapper::toDTO)
-                                .collect(Collectors.toList());
-
+                return authorPageable.stream().map(authorMapper::toDTO).collect(Collectors.toList());
         }
 
-        public AuthorDTO add(Author author) {
+        public int totalItems(String keyword) {
+                if (keyword == null || keyword.isEmpty()) {
+                        return (int) authorJPA.count();
+                } else {
+                        return authorJPA.countFindByName(keyword);
+                }
+        }
+
+        public AuthorDTO addAuthor(Author author) {
                 authorJPA.findByNameExist(null, author.getName())
                                 .ifPresent(a -> {
                                         throw new IllegalArgumentException("Tên tác giả đã tồn tại");
                                 });
-                Author saveAuthor = authorJPA.save(author);
-                AuthorDTO authorDTO = authorMapper.toDTO(saveAuthor);
-                return authorDTO;
+                Author savedAuthor = authorJPA.save(author);
+                return authorMapper.toDTO(savedAuthor);
+
         }
-        public AuthorDTO update(Author author) {
-                authorJPA.findByNameExist(author.getId(), author.getName())
+
+        public AuthorDTO updateAuthor(Author author) {
+                Author existAuthor = getAuthorById(author.getId());
+                authorJPA.findByNameExist(existAuthor.getId(), existAuthor.getName())
                                 .ifPresent(a -> {
                                         throw new IllegalArgumentException("Tên tác giả đã tồn tại");
                                 });
-                Author saveAuthor = authorJPA.save(author);
-                AuthorDTO authorDTO = authorMapper.toDTO(saveAuthor);
-                return authorDTO;
+                Author savedAuthor = authorJPA.save(author);
+                return authorMapper.toDTO(savedAuthor);
+        }
+
+        public Boolean deleteAuthor(Integer id) {
+                Author author = getAuthorById(id);
+                if (author.getId() == 1) {
+                        throw new IllegalArgumentException("Không thể xóa tác giả này");
+                }
+                if (author.getProductAuthors().size() > 0) {
+                        throw new IllegalArgumentException("Tác giả đã có sản phẩm, không thể xóa");
+                }
+
+                authorJPA.deleteById(id);
+                return true;
         }
 
         public Author getAuthorById(Integer id) {
@@ -67,19 +78,6 @@ public class AuthorService {
                 }
                 return authorJPA.findById(id)
                                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy " + id));
-        }
-
-        public boolean deleteAuthor(Integer id) {
-                Author author = getAuthorById(id);
-                if (author.getId() == 1) {
-                        throw new IllegalArgumentException("Không thể xóa tác giả này");
-                }
-                if (author.getProductAuthors().size() > 0) {
-                        throw new IllegalArgumentException("Không thể xóa tác giả này vì đã có sản phẩm liên quan");
-                }
-                authorJPA.deleteById(id);
-                return true;
-
         }
 
 }
