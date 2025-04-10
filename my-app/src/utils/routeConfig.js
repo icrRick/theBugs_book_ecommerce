@@ -10,9 +10,10 @@ import Statistics from "../components/admin/Statistics";
 import SystemSettings from "../components/admin/SystemSettings";
 import ReportManagement from "../components/admin/ReportManagement";
 import ReportDetail from "../components/admin/ReportDetail";
+import ProtectedRoute from "./ProtectedRoute";
+import PaymentStatus from "../components/user/PaymentStatus";
 
 
-const Authors = lazy(() => import("../components/admin/Authors"));
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -52,6 +53,12 @@ const AddPromotion =lazy(()=>import("../components/seller/AddPromotion"));
 const EditPromotion =lazy(()=>import("../components/seller/EditPromotion"))
 const AddProduct = lazy(() => import("../components/seller/AddProduct"));
 const EditProduct = lazy(() => import("../components/seller/EditProduct"));
+const Test = lazy(() => import("../components/auth/Test"));
+const Publishers = lazy(() => import("../components/admin/Publishers"));
+const Authors = lazy(() => import("../components/admin/Authors"));
+const AddAddress = lazy(() => import("../components/user/AddAddress"));
+const EditAddress = lazy(() => import("../components/user/EditAddress"));
+const PlaceOrderAddress = lazy(() => import("../components/user/PlaceOrderAddress"));
 export const PUBLIC_ROUTES = [
   { path: '/', element: <Navigate to="/home" /> },
   { path: 'home', element: <Home /> },
@@ -62,6 +69,14 @@ export const PUBLIC_ROUTES = [
   { path: 'register', element: <Register /> },
   { path: 'search', element: <Search /> },
   { path: "shop/:id", element: <ShopDetail /> },
+  { path: "register-seller", element: <SellerRegistration /> },
+  { path: "forgot-password", element: <ForgotPassword /> },
+  { path: "reset-password", element: <ResetPassword /> },
+  { path: "user/vnpay-return", element: <PaymentStatus /> },
+]
+
+export const USER_ROUTES = [
+  { path: 'payment', element: <Payment /> },
   { path: "report-product/:id", element: <Report /> },
   { path: "register-seller", element: <SellerRegistration /> },
 

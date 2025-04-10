@@ -8,8 +8,7 @@ import com.thebugs.back_end.entities.Address;
 
 public interface AddressJPA extends JpaRepository<Address, Integer> {
 
-        @Query("SELECT a FROM Address a WHERE (a.id = ?1 OR ?1 IS NULL) AND a.user.id = ?2 ORDER BY a.id ASC LIMIT 1")
-        Optional<Address> getAddressDefaultByUserId(Integer addressId, Integer userId);
+  
 
         @Query("SELECT a FROM Address a WHERE a.id =?1 AND a.user.id =?2")
         Optional<Address> findAddressByIdWhereUserId(Integer addressId, Integer userId);

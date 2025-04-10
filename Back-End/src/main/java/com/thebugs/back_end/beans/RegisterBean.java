@@ -13,8 +13,6 @@ public class RegisterBean {
         private String fullName;
         @NotBlank(message = "Email không được bỏ trống")
         private String email;
-        @NotBlank(message = "Số điện thoại không được bỏ trống")
-        private String phone;
         @NotBlank(message = "Mật khẩu không được bỏ trống")
         private String password;
         @NotBlank(message = "Không được bỏ trống xác nhận mật khẩu")

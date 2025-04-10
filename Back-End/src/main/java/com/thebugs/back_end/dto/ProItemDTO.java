@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ProItemDTO {
-    private Integer productId;
+    private int productId;
     private String productName;
-    private Double productPrice;
+    private double productPrice;
     private String productImage;
-    private Double promotionValue;
-    private Double weight;
-    private Double rate;
+    private double promotionValue;
+    private double weight;
+    private double rate;
 }

@@ -1,5 +1,6 @@
 package com.thebugs.back_end.controllers.user;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 public class ProfileController {
 
-        private final UserService userService;
-
-        public ProfileController(UserService userService) {
-                this.userService = userService;
-        }
-
+        @Autowired
+        private UserService userService;
         @GetMapping("/auth/profile")
         public ResponseEntity<ResponseData> getProfile(@RequestHeader("Authorization") String authorizationHeader) {
                 ResponseData responseData = new ResponseData();

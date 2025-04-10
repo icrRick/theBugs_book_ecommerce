@@ -20,11 +20,7 @@ function App() {
           <Routes >
             <Route path="/" element={<LayoutUser />}>
               {PUBLIC_ROUTES.map((route, index) => (
-                <Route key={index} path={route.path} element={route.element} >
-                  {route.children && route.children.map((child, index) => (
-                    <Route key={index} path={child.path} element={child.element} />
-                  ))}
-                </Route>
+                <Route key={index} path={route.path} element={route.element} />
               ))}
             </Route>
 

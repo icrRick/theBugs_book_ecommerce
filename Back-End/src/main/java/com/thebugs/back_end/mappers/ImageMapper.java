@@ -1,11 +1,9 @@
 package com.thebugs.back_end.mappers;
-
-import java.util.ArrayList;
 import java.util.List;
-
+import org.springframework.stereotype.Component;
 import com.thebugs.back_end.dto.ImageDTO;
 import com.thebugs.back_end.entities.Image;
-
+@Component
 public class ImageMapper {
 
         public ImageDTO toDTO(Image image) {
@@ -22,10 +20,6 @@ public class ImageMapper {
                 if (images == null) {
                         return null;
                 }
-                List<ImageDTO> imageDTOs = new ArrayList<ImageDTO>(images.size());
-                for (Image item : images) {
-                        imageDTOs.add(toDTO(item));
-                }
-                return imageDTOs;
+                return images.stream().map(this::toDTO).toList();
         }
 }

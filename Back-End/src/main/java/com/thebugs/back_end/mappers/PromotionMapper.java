@@ -19,7 +19,7 @@ public class PromotionMapper {
                 dto.setStartDate(promotion.getStartDate());
                 dto.setExpireDate(promotion.getExpireDate());
                 dto.setStatus(status(promotion.getStartDate(), promotion.getExpireDate()));
-                dto.setActive(promotion.getActive());
+                dto.setActive(promotion.isActive());
                 if (promotion.getPromotionProducts() != null) {
                         dto.setPromotionProductIds(
                                         promotion.getPromotionProducts().stream()

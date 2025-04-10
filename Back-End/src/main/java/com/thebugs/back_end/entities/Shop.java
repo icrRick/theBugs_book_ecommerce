@@ -55,15 +55,16 @@ public class Shop {
     
     // Còn hoạt động hay không
     @Column(nullable = false)
-    private Boolean active;
-    
-    // Đã được duyệt hay chưa
+    private boolean active;
+
     @Column(nullable = false)
-    private Boolean approve;
-    
-    // Có bị ban không
-    @Column(nullable = true)
-    private Boolean status;
+    private boolean approve;
+
+    @Column(nullable = false)
+    private boolean status;
+
+    @Column(nullable = false)
+    private String shopSlug;
 
     @OneToMany(mappedBy = "shop")
     private List<Product> products;

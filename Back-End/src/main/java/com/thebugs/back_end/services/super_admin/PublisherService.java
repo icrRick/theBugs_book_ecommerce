@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.repository.PublisherJPA;
 
-import jakarta.transaction.Transactional;
 
 import com.thebugs.back_end.dto.PublisherDTO;
 import com.thebugs.back_end.entities.Publisher;
@@ -66,17 +65,8 @@ public class PublisherService {
 
         }
 
-        @Transactional(rollbackOn = Exception.class)
-        public PublisherDTO saved(Publisher publisher) throws Exception {
-                if (publisher == null) {
-                        throw new IllegalArgumentException("Publisher cannot be null");
-                }
-                Publisher saved = publisherJPA.save(publisher);
-                if (saved.getId() <= 0) {
-                        throw new RuntimeException("Failed to generate a valid ID");
-                }
-                return publisherMapper.toDTO(saved);
-        }
+       
+       
         public Publisher getPublisherById(Integer id) {
                 if (id == null) {
                         throw new IllegalArgumentException("ID không được null");
@@ -84,14 +74,24 @@ public class PublisherService {
                 return publisherJPA.findById(id)
                                 .orElseThrow(() -> new IllegalArgumentException("không tìm thấy" + id));
         }
+       
         public boolean deletePublisher(Integer id) {
                 Publisher publisher = getPublisherById(id);
                 if (publisher.getId()==1) {
                         throw new IllegalArgumentException("Không thể xóa nhà xuất bản mặc định");
                 } 
+                if (publisher.getProducts().size() > 0) {
+                        throw new IllegalArgumentException("Không thể xóa nhà xuất bản đã có sản phẩm");
+                }
 
                 publisherJPA.delete(publisher);
                 return true;
+        }
+        public PublisherDTO getPublisherDTO(Publisher publisher) {
+                if (publisher == null) {
+                      return null;
+                }
+                return publisherMapper.toDTO(publisher);
         }
 
 }

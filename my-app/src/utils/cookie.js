@@ -9,15 +9,7 @@ export const getToken = () => {
 export const removeToken = () => {
         return Cookies.remove('JWT_TOKEN');
 };
-export const setRole = (role) => {
-        return Cookies.set('ROLE', role);
-};
-export const getRole = () => {
-        return Cookies.get('ROLE');
-};
-export const removeRole = () => {
-        return Cookies.remove('ROLE');
-};
+
 
 export const setAddressId = (addressId) => {
         return Cookies.set('ADDRESS_ID', addressId);
@@ -28,16 +20,40 @@ export const getAddressId = () => {
 export const removeAddressId = () => {
         return Cookies.remove('ADDRESS_ID');
 };
+
+export const setListProductIds = (listProductIds) => {
+        return Cookies.set('LIST_PRODUCT_IDS', listProductIds);
+};
+export const getListProductIds = () => {
+        return Cookies.get('LIST_PRODUCT_IDS');
+};
+export const removeListProductIds = () => {
+        return Cookies.remove('LIST_PRODUCT_IDS');
+};
+export const setListVoucherIds = (listVoucherIds) => {
+        return Cookies.set('LIST_VOUCHER_IDS', listVoucherIds);
+};
+export const getListVoucherIds = () => {
+        return Cookies.get('LIST_VOUCHER_IDS');
+};
+export const removeListVoucherIds = () => {
+        return Cookies.remove('LIST_VOUCHER_IDS');
+};
+
+
 export const cookie= () => {
         return {
                 setToken,
                 getToken,
                 removeToken,
-                setRole,
-                getRole,
-                removeRole,
                 setAddressId,
                 getAddressId,
                 removeAddressId,
+                setListProductIds,
+                getListProductIds,
+                removeListProductIds,
+                setListVoucherIds,
+                getListVoucherIds,
+                removeListVoucherIds,
         };
 }

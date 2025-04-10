@@ -1,5 +1,6 @@
 package com.thebugs.back_end.controllers.user;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,11 +14,8 @@ import com.thebugs.back_end.services.user.UserService;
 @RestController
 @RequestMapping("/user")
 public class ChangePassController {
-        private final UserService userService;
-
-        public ChangePassController(UserService userService) {
-                this.userService = userService;
-        }
+        @Autowired
+        private UserService userService;
 
         @PostMapping("/change_pass")
         public ResponseEntity<ResponseData> ChangePass(@RequestHeader("Authorization") String authorizationHeader,

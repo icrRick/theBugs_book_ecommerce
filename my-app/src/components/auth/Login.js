@@ -9,7 +9,7 @@ import Loading from "../../utils/Loading";
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login, userInfo } = useAuth();
+  const { login ,fetchUserInfo} = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -35,7 +35,13 @@ const Login = () => {
       
       if (response.data.status === true) {
         await login(response.data.data.token);
-        showSuccessToast(response.data.message);
+        const userData = await fetchUserInfo();
+        if (userData && userData.role === 3) {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/home");
+        }
+        showSuccessToast("Đăng nhập thành công!");
       } else {
         showErrorToast("Đăng nhập không thành công!");
       }

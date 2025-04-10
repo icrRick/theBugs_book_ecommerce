@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.status === true) {
         setUserInfo(response.data.data);
         setIsAuthenticated(true);
-        return response;
+        return response.data.data;
       } else {
         setUserInfo(null);
         setIsAuthenticated(false);
@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
       setIsInitialized(true);
-      return null;
     }
   }
 
@@ -72,6 +71,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isInitialized,
     isLoading,
+    fetchUserInfo,
     login,
     logout,
     hasRole,
