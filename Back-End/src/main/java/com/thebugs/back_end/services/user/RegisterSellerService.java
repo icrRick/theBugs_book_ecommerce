@@ -3,9 +3,6 @@ package com.thebugs.back_end.services.user;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -22,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thebugs.back_end.dto.UserDTO;
+import com.thebugs.back_end.dto.IrRickDTO.ID_RecognitionDTO.FPT_ID_OBJECT;
+import com.thebugs.back_end.dto.IrRickDTO.LiveNessDTO.FPT_LIVEFACE_DTO;
 import com.thebugs.back_end.utils.API_KEY;
 import com.thebugs.back_end.utils.ColorUtil;
 
@@ -37,18 +36,13 @@ public class RegisterSellerService {
     public HashMap<String, Object> idRecognition(List<MultipartFile> images) {
         final String API_URL = "https://api.fpt.ai/vision/idr/vnm";
 
-        // Định nghĩa các trường chính cho front / back
-        Set<String> frontAllowed = Set.of(
-                "id", "name", "dob", "sex", "nationality",
-                "address", "doe", "address_entities", "features", "issue_date", "issue_loc", "type", "errorCode");
-
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             ObjectMapper mapper = new ObjectMapper();
-            HashMap<String, Object> resultFinal = new HashMap<>();
-            HashMap<String, Object> errorCodes = new HashMap<>(); // To store error codes for front and back
+            FPT_ID_OBJECT frontImage = new FPT_ID_OBJECT();
+            FPT_ID_OBJECT backImage = new FPT_ID_OBJECT();
             StringBuffer message = new StringBuffer();
-            for (MultipartFile file : images) {
 
+            for (MultipartFile file : images) {
                 // 1. Gửi ảnh
                 HttpPost post = new HttpPost(API_URL);
                 post.setHeader("api-key", API_KEY.FPT_API_KEY);
@@ -63,86 +57,32 @@ public class RegisterSellerService {
                 try (CloseableHttpResponse response = client.execute(post)) {
                     String responseBody = EntityUtils.toString(
                             response.getEntity(), StandardCharsets.UTF_8);
+                    ColorUtil.print(ColorUtil.RED, responseBody);
 
-                    // 2. Parse toàn bộ JSON
-                    Map<String, Object> fullResult = mapper.readValue(
-                            responseBody,
-                            new TypeReference<Map<String, Object>>() {
-                            });
-
-                    ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                    ColorUtil.print(ColorUtil.BLUE, fullResult.toString());
-
-                    // 3. Lấy errorCode và errorMessage
-                    int errorCode = (int) fullResult.get("errorCode");
-
-                    // 4. Lưu errorCode tương ứng với từng ảnh
-                    if (file.equals(images.get(0))) {
-                        errorCodes.put("errorCodeFrontImage", errorCode);
+                    if (images.get(0).equals(file)) {
+                        frontImage = mapper.readValue(
+                                responseBody,
+                                new TypeReference<FPT_ID_OBJECT>() {
+                                });
                     } else {
-                        errorCodes.put("errorCodeBackImage", errorCode);
+                        backImage = mapper.readValue(
+                                responseBody,
+                                new TypeReference<FPT_ID_OBJECT>() {
+                                });
                     }
 
-                    // 5. Lấy List<Map> từ key "data"
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> dataList = (List<Map<String, Object>>) fullResult.get("data");
-                    if (dataList == null || dataList.isEmpty()) {
-                        throw new IllegalStateException("No data in response");
-                    }
-                    Map<String, Object> dataMap = dataList.get(0);
-
-                    // 6. Chọn bộ key dựa vào type_new
-                    String typeNew = (String) dataMap.get("type");
-                    Set<String> allowed = frontAllowed;
-
-                    // 7. Filter chỉ giữ những entry cần thiết và bỏ qua các giá trị "N/A"
-                    Map<String, Object> filtered = dataMap.entrySet().stream()
-                            .filter(e -> allowed.contains(e.getKey())) // chỉ lọc các trường cần thiết
-                            .filter(e -> !"N/A".equals(e.getValue())) // loại bỏ giá trị "N/A"
-                            .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    Map.Entry::getValue));
-
-                    // 8. Gộp tất cả vào kết quả cuối cùng
-                    if (typeNew != null && typeNew.contains("front")) {
-                        resultFinal.put("frontImage", filtered);
-                    } else {
-                        resultFinal.put("backImage", filtered);
-                    }
                 }
             }
-
-            ColorUtil.print(ColorUtil.RED, "Start validate");
+            frontImage.getData().get(0).setIssue_date(backImage.getData().get(0).getIssue_date());
+            frontImage.getData().get(0).setIssue_loc(backImage.getData().get(0).getIssue_loc());
+            ColorUtil.print(ColorUtil.RED, "DATA_CMND");
+            ColorUtil.print(ColorUtil.RED, frontImage.toString());
             // Bắt lỗi chỉ tách message
-            message.append("FrontImageMessage: " + getErrorMessage((int) errorCodes.get("errorCodeFrontImage")));
-            message.append("\nBackImageMessage: " + getErrorMessage((int) errorCodes.get("errorCodeBackImage")));
-            ColorUtil.print(ColorUtil.RED, "End validate");
-
-            // 9. Gộp frontImage và backImage vào trong một object data duy nhất
-            HashMap<String, Object> mergedData = new HashMap<>();
-            Map<String, Object> frontData = resultFinal.containsKey("frontImage")
-                    ? new ObjectMapper().convertValue(resultFinal.get("frontImage"),
-                            new TypeReference<Map<String, Object>>() {
-                            })
-                    : null;
-            Map<String, Object> backData = resultFinal.containsKey("backImage")
-                    ? new ObjectMapper().convertValue(resultFinal.get("backImage"),
-                            new TypeReference<Map<String, Object>>() {
-                            })
-                    : null;
-
-            // Gộp tất cả các trường front và back vào mergedData
-            if (frontData != null) {
-                mergedData.putAll(frontData);
-            }
-            if (backData != null) {
-                mergedData.putAll(backData);
-            }
 
             // 10. Build response chung
             HashMap<String, Object> responseData = new HashMap<>();
             responseData.put("statusCode", 200);
-            responseData.put("data", mergedData); // Gộp vào chung với resultFinal
+            responseData.put("data", frontImage); // Gộp vào chung với resultFinal
             responseData.put("message", message.toString());
             return responseData;
 
@@ -183,9 +123,9 @@ public class RegisterSellerService {
                         response.getEntity(), StandardCharsets.UTF_8);
 
                 // 2. Parse toàn bộ JSON
-                Map<String, Object> fullResult = mapper.readValue(
+                FPT_LIVEFACE_DTO fullResult = mapper.readValue(
                         responseBody,
-                        new TypeReference<Map<String, Object>>() {
+                        new TypeReference<FPT_LIVEFACE_DTO>() {
                         });
 
                 ColorUtil.print(ColorUtil.BLUE, "Result: ");

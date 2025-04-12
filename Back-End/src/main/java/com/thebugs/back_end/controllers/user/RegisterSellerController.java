@@ -63,7 +63,6 @@ public class RegisterSellerController {
     @PostMapping("/face-match")
     public ResponseEntity<ResponseData> faceMatch(@RequestParam MultipartFile image,
             @RequestParam(required = false) MultipartFile video) {
-
         ColorUtil.print(ColorUtil.RED, "IDRECO Bắt đầu nhận diện face");
         ColorUtil.print(ColorUtil.RED, video.getOriginalFilename());
         Map<String, Object> result = g_RegisterSellerService.faceMatch(image, video);
