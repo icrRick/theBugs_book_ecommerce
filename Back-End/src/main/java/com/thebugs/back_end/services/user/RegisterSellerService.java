@@ -156,6 +156,58 @@ public class RegisterSellerService {
         }
     }
 
+    public HashMap<String, Object> faceMatch(MultipartFile cmnd, MultipartFile video) {
+        final String API_URL = "https://api.fpt.ai/dmp/liveness/v3";
+
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            ObjectMapper mapper = new ObjectMapper();
+            StringBuffer message = new StringBuffer();
+
+            // 1. Gửi ảnh
+            HttpPost post = new HttpPost(API_URL);
+            post.setHeader("api-key", API_KEY.FPT_API_KEY);
+            MultipartEntityBuilder multipartEntity = MultipartEntityBuilder.create()
+                    .addBinaryBody("cmnd",
+                            cmnd.getInputStream(),
+                            ContentType.IMAGE_JPEG,
+                            cmnd.getOriginalFilename());
+
+            multipartEntity.addBinaryBody("video", video.getInputStream(), ContentType.MULTIPART_FORM_DATA,
+                    video.getOriginalFilename());
+
+            HttpEntity entity = multipartEntity.build();
+            post.setEntity(entity);
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                String responseBody = EntityUtils.toString(
+                        response.getEntity(), StandardCharsets.UTF_8);
+
+                // 2. Parse toàn bộ JSON
+                Map<String, Object> fullResult = mapper.readValue(
+                        responseBody,
+                        new TypeReference<Map<String, Object>>() {
+                        });
+
+                ColorUtil.print(ColorUtil.BLUE, "Result: ");
+                ColorUtil.print(ColorUtil.BLUE, fullResult.toString());
+
+                HashMap<String, Object> responseData = new HashMap<>();
+                responseData.put("statusCode", 200);
+                responseData.put("data", fullResult); // Gộp vào chung với resultFinal
+                responseData.put("message", message.toString());
+                return responseData;
+            }
+
+        } catch (Exception e) {
+            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
+            // Bắt mọi lỗi
+            HashMap<String, Object> errorData = new HashMap<>();
+            errorData.put("statusCode", 422);
+            errorData.put("message", "Nhận diện thất bại: " + e.getMessage());
+            return errorData;
+        }
+    }
+
     public String getErrorMessage(int value) {
         StringBuilder result = new StringBuilder();
 

@@ -60,4 +60,22 @@ public class RegisterSellerController {
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
 
+    @PostMapping("/face-match")
+    public ResponseEntity<ResponseData> faceMatch(@RequestParam MultipartFile image,
+            @RequestParam(required = false) MultipartFile video) {
+
+        ColorUtil.print(ColorUtil.RED, "IDRECO Bắt đầu nhận diện face");
+        ColorUtil.print(ColorUtil.RED, video.getOriginalFilename());
+        Map<String, Object> result = g_RegisterSellerService.faceMatch(image, video);
+        ResponseData responseData = new ResponseData();
+        responseData.setMessage((String) result.get("message"));
+        Object data = result.get("data");
+        if (data != null) {
+            responseData.setStatus(true);
+            responseData.setData(data);
+        }
+        ColorUtil.print(ColorUtil.RED, "Kết thúc nhận diện face");
+        return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
+    }
+
 }
