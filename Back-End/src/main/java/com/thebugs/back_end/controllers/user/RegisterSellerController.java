@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.thebugs.back_end.dto.UserDTO;
-import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.RegisterSellerService;
 import com.thebugs.back_end.utils.ColorUtil;

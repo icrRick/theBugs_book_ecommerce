@@ -120,8 +120,16 @@ public class RegisterSellerService {
 
             // 9. Gộp frontImage và backImage vào trong một object data duy nhất
             HashMap<String, Object> mergedData = new HashMap<>();
-            Map<String, Object> frontData = (Map<String, Object>) resultFinal.get("frontImage");
-            Map<String, Object> backData = (Map<String, Object>) resultFinal.get("backImage");
+            Map<String, Object> frontData = resultFinal.containsKey("frontImage")
+                    ? new ObjectMapper().convertValue(resultFinal.get("frontImage"),
+                            new TypeReference<Map<String, Object>>() {
+                            })
+                    : null;
+            Map<String, Object> backData = resultFinal.containsKey("backImage")
+                    ? new ObjectMapper().convertValue(resultFinal.get("backImage"),
+                            new TypeReference<Map<String, Object>>() {
+                            })
+                    : null;
 
             // Gộp tất cả các trường front và back vào mergedData
             if (frontData != null) {

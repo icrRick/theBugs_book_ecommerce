@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import axiosInstance from "../../utils/axiosInstance";
+import VideoCapture from "../user/VideoCaptured";
 
 const IdRecognitionStep = ({
       idRecognition, // Nhận dữ liệu từ trang chính
@@ -28,6 +29,22 @@ const IdRecognitionStep = ({
 
       const frontInputRef = useRef(null);
       const backInputRef = useRef(null);
+
+      const [videoFile, setVideoFile] = useState(null);
+      const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+      const handleOpenPopup = () => {
+            setIsPopupOpen(true);
+      };
+
+      const handleClosePopup = () => {
+            setIsPopupOpen(false);
+      };
+
+      const handleVideoCaptured = (file) => {
+            setVideoFile(file);
+            handleClosePopup();
+      };
 
       // Xử lý tải lên ảnh mặt trước CCCD/CMND
       const handleFrontImageChange = (e) => {
@@ -177,7 +194,6 @@ const IdRecognitionStep = ({
                         Vui lòng cung cấp hình ảnh CCCD/CMND để xác minh danh
                         tính của bạn. Thông tin sẽ được trích xuất tự động.
                   </p>
-
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
                         <div className="flex items-start">
                               <svg
@@ -217,7 +233,6 @@ const IdRecognitionStep = ({
                               </div>
                         </div>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Ảnh mặt trước CCCD/CMND */}
                         <div>
@@ -439,7 +454,6 @@ const IdRecognitionStep = ({
                               )}
                         </div>
                   </div>
-
                   {/* Nút nhận diện */}
                   <div className="flex justify-center mt-6">
                         <button
@@ -485,7 +499,6 @@ const IdRecognitionStep = ({
                                     : "Nhận diện giấy tờ"}
                         </button>
                   </div>
-
                   {/* Thông báo kết quả nhận diện */}
                   {recognitionStatus && (
                         <div
@@ -563,7 +576,6 @@ const IdRecognitionStep = ({
                               </div>
                         </div>
                   )}
-
                   {errors.idRecognitionData && (
                         <p className="text-red-500 text-sm mt-1">
                               {errors.idRecognitionData}
@@ -681,7 +693,10 @@ const IdRecognitionStep = ({
                                           </label>
                                           <select
                                                 name="gender"
-                                                value={idRecognition?.gender || ""}
+                                                value={
+                                                      idRecognition?.gender ||
+                                                      ""
+                                                }
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
                                                 disabled
@@ -779,7 +794,12 @@ const IdRecognitionStep = ({
                               </div>
                         </div>
                   )}
-
+                  <button
+                        onClick={handleOpenPopup}
+                        className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                  >
+                        Bắt đầu xác minh
+                  </button>
                   <div className="border-t border-gray-200 pt-6 mt-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">
                               Thông tin tài khoản ngân hàng
@@ -877,6 +897,12 @@ const IdRecognitionStep = ({
                               </div>
                         </div>
                   </div>
+                  {isPopupOpen && (
+                        <VideoCapture
+                              onClose={handleClosePopup}
+                              onVideoCaptured={handleVideoCaptured}
+                        />
+                  )}
             </div>
       );
 };

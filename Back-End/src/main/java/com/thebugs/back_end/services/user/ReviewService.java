@@ -1,12 +1,7 @@
 package com.thebugs.back_end.services.user;
 
-import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.thebugs.back_end.dto.ReviewDTO;
-import com.thebugs.back_end.repository.ReviewJPA;
 
 @Service
 public class ReviewService { // Không cần abstract nếu là service cụ thể

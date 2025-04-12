@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -154,7 +153,6 @@ public class AuthorController {
         public ResponseEntity<ResponseData> deleteAuthor(@RequestParam Integer id) {
                 ResponseData responseData = new ResponseData();
                 try {
-
                         boolean deleteAuthor = authorService.deleteAuthor(id);
 
                         if (deleteAuthor) {
