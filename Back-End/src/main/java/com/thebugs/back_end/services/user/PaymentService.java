@@ -84,12 +84,7 @@ public class PaymentService {
             
             if (cartBean2.getPaymentMethod().equals("Thanh toán tiền mặt khi nhận hàng")) {
                 order.setPaymentStatus("Chưa thanh toán");
-            }else{
-                order.setPaymentStatus(null);
             }
-        
-          
-
             Order savedOrder = orderService.saveOrder(order);
             orderIdIntegers.add(savedOrder.getId());
             for (CartItemBean cartItemBean : cartBean2.getCartItems()) {
@@ -108,11 +103,11 @@ public class PaymentService {
 
     public List<Map<String, Object>> list(String authorizationHeader, PaymentBean paymentBeans) {
         Map<Integer, Map<String, Object>> shopMap = new LinkedHashMap<>();
-
+        User user = userService.getUserToken(authorizationHeader);
         for (Integer productId : paymentBeans.getProductIntegers()) {
 
             Shop shop = productService.getProductById(productId).getShop();
-            Integer cartItemQuantity = cartItemService.findProductByUser(productId, authorizationHeader).getQuantity();
+            Integer cartItemQuantity = cartItemService.findProductByUser(productId, user.getId()).getQuantity();
             Integer shopId = shop.getId();
             String shopName = shop.getName();
 

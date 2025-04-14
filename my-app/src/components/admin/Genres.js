@@ -229,10 +229,10 @@ const Genres = () => {
       }
 
       return (
-            <div className="my-6 bg-white">
+            <div className="my-4 bg-white">
                   {/* Header */}
                   <div className="bg-white shadow-sm border-b border-gray-200">
-                        <div className="px-4 sm:px-6 lg:px-8 py-6 ">
+                        <div className="p-4">
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                     <div className="flex-1 min-w-0">
                                           <div className="flex items-center text-sm text-gray-500 mb-1">
@@ -300,7 +300,7 @@ const Genres = () => {
                   </div>
 
                   {/* Main Content */}
-                  <div className=" px-4 sm:px-6 lg:px-8 py-8">
+                  <div className="p-4">
                         {/* Search Box */}
                         <div className="mb-6">
                               <div className="max-w-md w-full">
@@ -542,10 +542,8 @@ const Genres = () => {
 
                                                       <div className="mb-4">
                                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                  Hình ảnh{" "}
-                                                                  <span className="text-red-500">
-                                                                        *
-                                                                  </span>
+                                                                  Hình ảnh
+                                                                  
                                                             </label>
                                                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors duration-200">
                                                                   <div className="space-y-2 text-center">

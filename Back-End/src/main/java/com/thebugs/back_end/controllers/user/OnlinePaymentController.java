@@ -95,32 +95,32 @@ public class OnlinePaymentController {
             return ResponseEntity.status(500).body(new ResponseData(false, "Error creating payment: " + e.getMessage(), null));
         }
     }
-
     @PostMapping("/return-payment")
     public ResponseEntity<ResponseData> handlePaymentReturn(
-        @RequestHeader("Authorization") String authorizationHeader,
-        @RequestBody PaymentOnlineBean paymentOnlineBean) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody PaymentOnlineBean paymentOnlineBean) {
     
         try {
-             String paymentStatus = "";
-          
-           
-            if ("00".equals(paymentOnlineBean.getVnp_ResponseCode())) {
-                paymentStatus = "Đã thanh toán";
+            if (paymentOnlineBean == null || paymentOnlineBean.getVnp_ResponseCode() == null || paymentOnlineBean.getOrderIdIntegers() == null) {
+                return ResponseEntityUtil.badRequest("Thông tin thanh toán không đầy đủ.");
             }
-
-            boolean check =orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
+    
+            String paymentStatus = "00".equals(paymentOnlineBean.getVnp_ResponseCode()) ? "Đã thanh toán" : "";
+    
+            boolean check = orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
     
             if (check) {
                 return ResponseEntityUtil.OK("Thanh toán thành công", null);
             } else {
                 return ResponseEntityUtil.badRequest("Thanh toán thất bại");
             }
-         
-        } catch (Exception e) {
+    
+        }catch (Exception e) {
             return ResponseEntityUtil.badRequest("Thanh toán thất bại: " + e.getMessage());
         }
     }
+    
+    
     
     private void addOptionalBillingInfo(Map<String, String> params, HttpServletRequest req) {
         params.put("vnp_Bill_Mobile", req.getParameter("txt_billing_mobile"));

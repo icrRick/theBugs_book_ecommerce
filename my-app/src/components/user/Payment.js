@@ -299,7 +299,10 @@ const Payment = () => {
                     })),
                 };
             });
-
+            
+            // if(!validatePaymentData()){
+            //     return;
+            // }
             if (responseData.length < 0) {
                 navigate('/cart');
                 return;
@@ -311,9 +314,9 @@ const Payment = () => {
                 console.log("responseCreateOrder.data.data",responseCreateOrder.data.data);
              
                 if (Array.isArray(responseCreateOrder.data.data)) {
-                    setListOrderId(responseCreateOrder.data.data); // Nếu là mảng, trực tiếp gán
+                    setListOrderId(responseCreateOrder.data.data); 
                 } else {
-                    setListOrderId([responseCreateOrder.data.data]); // Nếu không phải mảng, bao bọc nó trong một mảng
+                    setListOrderId([responseCreateOrder.data.data]); 
                 }
                 
 
@@ -348,7 +351,7 @@ const Payment = () => {
         
                         console.log("Kết quả từ API VNPAY:", responseVnpay.data);
         
-                        if (responseVnpay.data?.status === true) {
+                        if (responseVnpay.status===200 && responseVnpay.data?.status === true) {
                             window.location.href = responseVnpay.data.data;
                         } else {
                             let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";

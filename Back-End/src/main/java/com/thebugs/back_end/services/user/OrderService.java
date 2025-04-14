@@ -29,7 +29,10 @@ public class OrderService {
         public boolean updatePaymentStatus(List<Integer> orderIdIntegers, String paymentStatus) {
                 for (Integer orderId : orderIdIntegers) {
                         Order order = findById(orderId);
-                        order.setPaymentStatus((order.getPaymentStatus().isEmpty()||order.getPaymentStatus()==null)?paymentStatus:order.getPaymentStatus());
+                        if ("Thanh toán chuyển khoản ngân hàng".equals(order.getPaymentMethod()) &&
+                                        (order.getPaymentStatus() == null || order.getPaymentStatus().isEmpty())) {
+                                order.setPaymentStatus(paymentStatus);
+                        }
                         saveOrder(order);
                 }
                 return true;
