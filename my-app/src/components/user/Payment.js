@@ -174,7 +174,7 @@ const Payment = () => {
   // Tính tổng tiền bao gồm phí ship
   const calculateTotal = (products) => {
     const subtotal = products.reduce((sum, product) => {
-      const price = Number.parseInt(product.discountPrice.replace(/[^\d]/g, ""))
+      const price = Number.parseInt((product.discountPrice || product.price || "0").replace(/[^\d]/g, ""))
       return sum + price * product.quantity
     }, 0);
 

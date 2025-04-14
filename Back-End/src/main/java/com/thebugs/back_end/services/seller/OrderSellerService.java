@@ -71,60 +71,67 @@ public class OrderSellerService {
         }
 
         // code cua tam
-        public ArrayList<OrderSimpleDTO> getAllOrders(int page, int size, String token) {
-                User user = userService.getUserToken(token);
-                int shopId = user.getShop().getId();
-                Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-                Page<OrderSimpleDTO> getAllListOrder = orderJPA.findOrderByShopId(shopId, pageable);
-                return getAllListOrder.stream()
-                                .collect(Collectors.toCollection(ArrayList::new));
+        // public ArrayList<OrderSimpleDTO> getAllOrders(int page, int size, String
+        // token) {
+        // User user = userService.getUserToken(token);
+        // int shopId = user.getShop().getId();
+        // Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.DESC,
+        // "id");
+        // Page<OrderSimpleDTO> getAllListOrder = orderJPA.findOrderByShopId(shopId,
+        // pageable);
+        // return getAllListOrder.stream()
+        // .collect(Collectors.toCollection(ArrayList::new));
 
-        }
+        // }
 
-        public ArrayList<OrderSimpleDTO> searchSellerOrder(String token, Date startDate, Date endDate,
+        public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
                         Integer orderStatusName, // Đảm bảo là Integer
-                        String nameUser, int page, int size) {
+                        String nameUser, Pageable pageable) {
                 User user = userService.getUserToken(token);
                 int shopId = user.getShop().getId();
-                Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-                Page<OrderSimpleDTO> page2 = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate,
-                                orderStatusName,
-                                nameUser, pageable);
-                return page2.stream()
+                Page<OrderSimpleDTO> orderPage;
+                if (startDate == null && endDate == null && orderStatusName == null
+                                && (nameUser == null || nameUser.trim().isEmpty())) {
+
+                        orderPage = orderJPA.findOrderByShopId(shopId, pageable);
+                } else {
+
+                        orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
+                                        nameUser, pageable);
+                }
+                return orderPage.stream()
                                 .collect(Collectors.toCollection(ArrayList::new));
         }
 
-        public int getTotalItems(String token) {
+        public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName, String nameUser) {
                 User user = userService.getUserToken(token);
                 int shopId = user.getShop().getId();
-                return orderJPA.countByShopId(shopId);
+
+                if (startDate == null && endDate == null && orderStatusName == null
+                                && (nameUser == null || nameUser.trim().isEmpty())) {
+                        // Không có bộ lọc, đếm tất cả đơn hàng
+                        return orderJPA.countByShopId(shopId);
+                } else {
+                        // Có bộ lọc, đếm đơn hàng theo tiêu chí
+                        return orderJPA.countBySearch(shopId, startDate, endDate, orderStatusName, nameUser);
+                }
         }
 
-        public int getTotalItemsBySearch(String token, Date startDate, Date endDate, Integer orderStatusName, // Đảm bảo
-                                                                                                              // là
-                                                                                                              // Integer
-                        String nameUser) {
-                User user = userService.getUserToken(token);
-                int shopId = user.getShop().getId();
-                return orderJPA.countBySearch(shopId, startDate, endDate, orderStatusName, nameUser);
-        }
+        // public int getTotalItems(String token) {
+        // User user = userService.getUserToken(token);
+        // int shopId = user.getShop().getId();
+        // return orderJPA.countByShopId(shopId);
+        // }
 
-        // public OrderDetailSellerDTO getOrderDetail(int orderId, String token) {
-        // int shopId = userService.getUserToken(token).getShop().getId();
-        // List<OrderDetailSellerDTO> orderDetailSellerDTO =
-        // orderJPA.findOrderDetailByIdAndShopId(orderId,
-        // shopId);
-        // if (orderDetailSellerDTO.isEmpty()) {
-        // throw new IllegalArgumentException("Không tìm thấy đơn hàng với id: " +
-        // orderId);
-        // }
-        // for (OrderDetailSellerDTO orderDetailById : orderDetailSellerDTO) {
-        // if (orderDetailById.getId() == orderId) {
-        // return orderDetailById;
-        // }
-        // }
-        // return null;
-
+        // public int getTotalItemsBySearch(String token, Date startDate, Date endDate,
+        // Integer orderStatusName, // Đảm bảo
+        // // là
+        // // Integer
+        // String nameUser) {
+        // User user = userService.getUserToken(token);
+        // int shopId = user.getShop().getId();
+        // return orderJPA.countBySearch(shopId, startDate, endDate, orderStatusName,
+        // nameUser);
         // }
 
         public Object getOrderDetail(int orderId, String token) {
@@ -140,6 +147,7 @@ public class OrderSellerService {
                 map.put("shippingFee", order.getShippingFee());
                 map.put("createdAt", order.getCreatedAt());
                 map.put("orderStatusName", order.getOrderStatus().getName());
+                map.put("noted", order.getNoted());
                 map.put("orderItems", order.getOrderItems().stream()
                                 .map(item -> {
                                         ProductOrderDTO productOrderDTO = new ProductOrderDTO();
@@ -158,13 +166,14 @@ public class OrderSellerService {
 
                 double total = order.getOrderItems().stream()
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
-                double discount = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
+                double discountVoucher = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
                 double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
                 double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
-                double totalDiscount = order.getOrderItems().stream()
-                                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discount / 100;
+                double totalOrderWithDiscount = order.getOrderItems().stream()
+                                .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discountVoucher
+                                / 100;
 
-                double min = Math.min(totalDiscount, maxDiscount);
+                double min = Math.min(totalOrderWithDiscount, maxDiscount);
                 double totalPrice = total - min + shippingFee;
                 map.put("totalPrice", total);
                 map.put("totalDiscount", min);
@@ -198,6 +207,10 @@ public class OrderSellerService {
 
                         if (!getUserEmail(orderId, cancelReason)) {
                                 throw new IllegalArgumentException("Không tìm thấy email user");
+                        } else if (orderStatusId == 2 && (cancelReason == null || cancelReason.trim().isEmpty())) {
+                                throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
+                        } else {
+                                checkShopId.setNoted(cancelReason);
                         }
                 }
                 if (orderStatusId == 3) {
@@ -241,7 +254,7 @@ public class OrderSellerService {
                         }
                 } else if (currentStatus == 4) {
                         if (newOrderStatusId == 5) {
-                                return true;
+                                return false;
                         }
                 }
 
@@ -321,21 +334,87 @@ public class OrderSellerService {
                                 product.setQuantity(quantityProduct);
                                 productJPA.save(product);
 
-                                PromotionProduct promotionProduct = promotionProductJPA
+                                Optional<PromotionProduct> promotionProductOptional = promotionProductJPA
                                                 .findByPromotionProductByProductId(product.getId());
-                                if (promotionProduct == null) {
-                                        throw new IllegalArgumentException("Không tìm thấy sản phẩm khuyến mãi với id: "
-                                                        + product.getId());
+
+                                if (promotionProductOptional.isPresent()) {
+                                        PromotionProduct promotionProduct = promotionProductOptional.get();
+                                        if (promotionProduct == null) {
+                                                throw new IllegalArgumentException(
+                                                                "Không tìm thấy sản phẩm khuyến mãi với id: "
+                                                                                + product.getId());
+                                        }
+                                        if (promotionProduct.getQuantity() < orderItem.getQuantity()) {
+                                                int promotionAvailable = promotionProduct.getQuantity();
+                                                int quantityOrder = orderItem.getQuantity();
+
+                                                // Tính lại tiền product nếu vượt quá số lượng khuyến mãi
+                                                int quantityProductWithDiscount = Math.max(quantityOrder,
+                                                                promotionAvailable);
+                                                int quantityProductWithoutDiscount = quantityOrder
+                                                                - quantityProductWithDiscount;
+                                                // tính giá khuyến mãi
+                                                double discountedPrice = promotionProduct.getPromotion()
+                                                                .getPromotionValue();
+                                                double totalPriceProductWithDiscount = quantityProductWithDiscount
+                                                                * discountedPrice;
+
+                                                // Tinh giá gốc của sản phẩm
+                                                double regularPrice = orderItem.getPrice();
+                                                double totalPriceWithoutDiscount = quantityProductWithoutDiscount
+                                                                * regularPrice;
+
+                                                double totalOrderItemPrice = totalPriceProductWithDiscount
+                                                                + totalPriceWithoutDiscount;
+                                                ProductOrderDTO productOrderDTO = new ProductOrderDTO();
+                                                productOrderDTO.setTotalPriceProduct(totalOrderItemPrice);
+                                                System.out.println(
+                                                                "Tổng tiền là:========================================= "
+                                                                                + totalOrderItemPrice);
+                                                // set lại số lương promostion và sold promostion
+                                                int quantityPromotionProduct = promotionProduct.getQuantity()
+                                                                - orderItem.getQuantity();
+                                                promotionProduct.setQuantity(quantityPromotionProduct);
+
+                                                int soldQuantity = promotionProduct.getSoldQuantity()
+                                                                + orderItem.getQuantity();
+
+                                                promotionProduct.setSoldQuantity(soldQuantity);
+                                        }
+
+                                        int quantityPromotionProduct = promotionProduct.getQuantity()
+                                                        - orderItem.getQuantity();
+                                        promotionProduct.setQuantity(quantityPromotionProduct);
+
+                                        int soldQuantity = promotionProduct.getSoldQuantity()
+                                                        + orderItem.getQuantity();
+
+                                        promotionProduct.setSoldQuantity(soldQuantity);
+
+                                        promotionProductJPA.save(promotionProduct);
+                                        if (!checkQuantityPromotionProduct(token, orderId)) {
+                                                promotionProductJPA.delete(promotionProduct);
+                                        }
                                 }
-                                if (promotionProduct.getQuantity() < orderItem.getQuantity()) {
-                                        throw new IllegalArgumentException("Số lượng sản phẩm khuyến mãi không đủ");
-                                }
-                                int quantityPromotionProduct = promotionProduct.getQuantity() - orderItem.getQuantity();
-                                promotionProduct.setQuantity(quantityPromotionProduct);
-                                promotionProductJPA.save(promotionProduct);
-                                break;
+
                         }
                         break;
                 }
         }
+
+        private boolean checkQuantityPromotionProduct(String token, int orderId) {
+                List<OrderItem> listOrderItems = orderItemJPA.findByOrderId(orderId);
+
+                for (OrderItem orderItem : listOrderItems) {
+                        PromotionProduct promotionProduct = promotionProductJPA
+                                        .findByPromotionProductByProductId(orderItem.getProduct().getId()).get();
+
+                        if (promotionProduct.getQuantity() <= 0) {
+
+                                return false;
+                        }
+                }
+                return true;
+        }
+
 }

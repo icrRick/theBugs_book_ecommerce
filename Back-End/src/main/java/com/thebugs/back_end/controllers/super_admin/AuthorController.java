@@ -105,7 +105,7 @@ public class AuthorController {
 
         }
 
-        @PostMapping(value = "/updatex", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<ResponseData> updateAuthor(@RequestParam Integer id,
                         @Valid @ModelAttribute AuthorBean authorBean, BindingResult result) {
                 ResponseData responseData = new ResponseData();

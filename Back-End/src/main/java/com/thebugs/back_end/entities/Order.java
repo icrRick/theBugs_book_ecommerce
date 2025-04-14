@@ -51,6 +51,9 @@ public class Order {
     @Column(nullable = false)
     private Date createdAt;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deliveredAt;
+
     @ManyToOne
     @JoinColumn(name = "order_status_id", nullable = false)
     private OrderStatus orderStatus;

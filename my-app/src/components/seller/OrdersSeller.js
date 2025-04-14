@@ -1,11 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
-import { debounce } from 'lodash';
 import Pagination from "../admin/Pagination"
-
 
 const OrdersSeller = () => {
   const navigate = useNavigate()
@@ -16,7 +14,6 @@ const OrdersSeller = () => {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [orders, setOrders] = useState([])
-  const [allOrders, setAllOrders] = useState([])
   const [totalOrders, setTotalOrders] = useState(0)
   const [tabCounts, setTabCounts] = useState({})
   const [filters, setFilters] = useState({
@@ -28,23 +25,9 @@ const OrdersSeller = () => {
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [orderToCancel, setOrderToCancel] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
-  const [searchText, setSearchText] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const pageSize = 10;
-
-  const debouncedSearch = useCallback(
-    debounce((userName, page) => {
-      if (userName) {
-        searchOrders(userName, page);
-      } else {
-        fetchAllOrders(page);
-      }
-    }, 500),
-    []
-  );
-
-
-  
 
   const statusConfig = {
     "Chờ duyệt": {
@@ -112,57 +95,30 @@ const OrdersSeller = () => {
     { id: "1", label: "Chờ duyệt" },
     { id: "2", label: "Đã hủy" },
     { id: "3", label: "Đã duyệt" },
-    { id: "4", label: "Đã giao" },
+    { id: "4", label: "Đang giao" },
     { id: "5", label: "Đã nhận" },
   ]
 
   const getStatusIdFromName = (statusName) => {
     switch (statusName) {
-      case "Chờ duyệt":
-        return 1
-      case "Hủy":
-        return 2
-      case "Đã duyệt":
-        return 3
-      case "Đã giao":
-        return 4
-      case "Đã nhận":
-        return 5
-      default:
-        return 0
+      case "Chờ duyệt": return 1
+      case "Đã hủy": return 2
+      case "Đã duyệt": return 3
+      case "Đang giao": return 4
+      case "Đã nhận": return 5
+      default: return 0
     }
   }
 
   const getStatusNameFromId = (statusId) => {
     switch (statusId) {
-      case "1":
-        return "Chờ duyệt"
-      case "2":
-        return "Đã hủy"
-      case "3":
-        return "Đã duyệt"
-      case "4":
-        return "Đang giao"
-      case "5":
-        return "Đã nhận"
-      default:
-        return ""
+      case "1": return "Chờ duyệt"
+      case "2": return "Đã hủy"
+      case "3": return "Đã duyệt"
+      case "4": return "Đang giao"
+      case "5": return "Đã nhận"
+      default: return ""
     }
-  }
-
-  // Modified to always use allOrders for calculating tab counts
-  const calculateTabCounts = (ordersList) => {
-    const counts = {}
-    tabs.forEach((tab) => {
-      if (tab.id === "") {
-        counts[tab.id] = ordersList.length
-      } else {
-        counts[tab.id] = ordersList.filter(
-          (order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(tab.id),
-        ).length
-      }
-    })
-    return counts
   }
 
   const showSuccessToast = (message) => {
@@ -172,113 +128,88 @@ const OrdersSeller = () => {
     }, 3000)
   }
 
-  const fetchAllOrders = async (page = 1) => {
+  const showErrorToast = (message) => {
+    setErrorMessage(message)
+    setTimeout(() => {
+      setErrorMessage(null)
+    }, 3000)
+  }
+
+  // Hàm lấy danh sách đơn hàng (hợp nhất getAllOrders và searchOrders)
+  const fetchOrders = async (page = 1, statusOrder = activeTab) => {
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const response = await axiosInstance.get("/seller/order/all", {
+      const response = await axiosInstance.get("/seller/order", {
         params: {
+          userName: filters.userName || undefined,
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+          statusOrder: statusOrder || undefined,
           page: page,
           size: pageSize,
         },
       })
-      const { data, message } = response.data
+      const { data } = response.data
       if (response.status === 200) {
-        const ordersList = data.objects || []
-        setAllOrders(ordersList)
-        setOrders(ordersList)
+        setOrders(data.objects || [])
         setTotalOrders(data.totalItems || 0)
-
-        // Always calculate tab counts based on all orders
-        setTabCounts(calculateTabCounts(ordersList))
+        setTotalPages(Math.ceil(data.totalItems / pageSize))
       } else {
-        console.error("Không thể tải đơn hàng:", message)
-        setErrorMessage(message || "Không thể tải danh sách đơn hàng.")
-        setAllOrders([])
+        console.error("Không thể tải đơn hàng:", response.data.message)
+        setErrorMessage(response.data.message || "Không thể tải danh sách đơn hàng.")
         setOrders([])
-        setTabCounts({})
       }
     } catch (error) {
       console.error("Error fetching orders:", error)
-      setAllOrders([])
+      setErrorMessage("Đã xảy ra lỗi khi tải đơn hàng.")
       setOrders([])
-      setTabCounts({})
     } finally {
       setIsLoading(false)
     }
   }
 
-  
-
-  const searchOrders = async (userName ,page = 1) => {
-    setIsLoading(true)
+  // Hàm lấy số lượng đơn hàng cho các tab
+  const fetchTabCounts = async () => {
+    const counts = {}
     try {
-      console.log("Search params:", {
-        customerInfo: filters.userName || undefined,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
-        statusOrder: activeTab || undefined,
-      })
-      const response = await axiosInstance.get("/seller/order/search", {
-        params: {
-          userName: userName || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-          statusOrder: activeTab || undefined,
-          page: page,
-          size: pageSize,
-        },
-      })
-      const { data, message } = response.data
-      console.log("Search response:", response.data)
-      if (response.status === 200) {
-        const ordersList = data.objects || []
-        setOrders(ordersList)
-        setTotalOrders(data.totalItems || 0)
-
-        // Don't update tabCounts here - keep using the counts from all orders
-      } else {
-        console.error("Failed to search orders:", message)
-        setOrders([])
+      for (const tab of tabs) {
+        const response = await axiosInstance.get("/seller/order", {
+          params: {
+            statusOrder: tab.id || undefined,
+            page: 1,
+            size: 1, // Chỉ cần tổng số
+          },
+        })
+        counts[tab.id] = response.data.data.totalItems || 0
       }
+      setTabCounts(counts)
     } catch (error) {
-      console.error("Error searching orders:", error)
-      setOrders([])
-    } finally {
-      setIsLoading(false)
+      console.error("Error fetching tab counts:", error)
+      setTabCounts({})
     }
   }
-
-
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchText(value);
-    setCurrentPage(1);
-    debouncedSearch(value, 1);
-  };
-  useEffect(() => {
-    debouncedSearch(searchText, currentPage);
-  }, [currentPage, searchText, debouncedSearch]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const response = await axiosInstance.put(`/seller/order/update/${orderId}`, {
         orderStatus: newStatus,
-        cancelReason: newStatus === 2 ? "Lý do hủy mặc định" : "",
+        cancelReason: newStatus === 2 ? cancelReason : "",
       })
-      const { message } = response.data
-      const status = response.data.status
+      const { message, status } = response.data
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString())
         showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`)
-        fetchAllOrders() // This will update both orders and allOrders
+        fetchOrders(currentPage, activeTab)
+        fetchTabCounts()
       } else {
-        alert(`Cập nhật trạng thái thất bại: ${message}`)
+        showErrorToast(`Cập nhật trạng thái thất bại: ${message}`)
+        closeCancelModal()
       }
     } catch (error) {
       console.error("Error updating order status:", error)
-      alert("Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!")
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!")
+      closeCancelModal()
     }
   }
 
@@ -296,7 +227,7 @@ const OrdersSeller = () => {
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
-      alert("Lý do hủy không được để trống!")
+      showErrorToast("Lý do hủy không được để trống")
       return
     }
     try {
@@ -304,24 +235,26 @@ const OrdersSeller = () => {
         orderStatus: 2,
         cancelReason: cancelReason,
       })
-      const { message } = response.data
-      const { status } = response.data
+      const { message, status } = response.data
       if (status) {
         showSuccessToast("Đơn hàng đã được hủy thành công!")
         closeCancelModal()
-        fetchAllOrders() // This will update both orders and allOrders
+        fetchOrders(currentPage, activeTab)
+        fetchTabCounts()
       } else {
-        alert(`Hủy đơn hàng thất bại: ${message}`)
+        showErrorToast(`Hủy đơn hàng thất bại: ${message}`)
+        closeCancelModal()
       }
     } catch (error) {
-      console.error("Error cancelling order:", error)
-      alert("Đã xảy ra lỗi khi hủy đơn hàng!")
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi hủy đơn hàng!")
+      closeCancelModal()
     }
   }
 
   const handleTabClick = (tabId) => {
     setIsTransitioning(true)
     setActiveTab(tabId)
+    setCurrentPage(1)
     if (tabId) {
       setSearchParams({ status: tabId })
     } else {
@@ -342,7 +275,6 @@ const OrdersSeller = () => {
     } else if (id === "end-date") {
       fieldName = "endDate"
     }
-    console.log(`Changing ${fieldName} to ${value}`)
     setFilters((prev) => ({
       ...prev,
       [fieldName]: value,
@@ -351,7 +283,8 @@ const OrdersSeller = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault()
-    searchOrders()
+    setCurrentPage(1)
+    fetchOrders(1, activeTab)
   }
 
   const handleViewDetails = (orderId) => {
@@ -359,34 +292,14 @@ const OrdersSeller = () => {
   }
 
   useEffect(() => {
-    if(searchText){
-      searchOrders(searchText, currentPage)
-    }else{
-      fetchAllOrders(currentPage)
-    }
-   
-  }, [currentPage]) // Only fetch all orders once on component mount
-
-  
-
-  useEffect(() => {
-    if (activeTab) {
-      searchOrders(currentPage)
-    } else {
-      // If no active tab (All tab), use all orders
-      setOrders(allOrders)
-    }
-  }, [activeTab, currentPage])
+    fetchOrders(currentPage, activeTab)
+    fetchTabCounts()
+  }, [currentPage, activeTab])
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }
     return new Date(dateString).toLocaleDateString("vi-VN", options)
   }
-
-  // Use filtered orders for display, but not for tab counts
-  const filteredOrders = activeTab
-    ? orders.filter((order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab))
-    : orders
 
   return (
     <div className="w-full mx-auto">
@@ -404,6 +317,20 @@ const OrdersSeller = () => {
         </div>
       )}
 
+      {/* Thông báo lỗi */}
+      {errorMessage && (
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50 shadow-md flex items-center">
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       <h2 className="text-xl font-bold text-gray-800 my-6">Danh sách đơn hàng</h2>
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Bộ lọc đơn hàng</h2>
@@ -415,9 +342,9 @@ const OrdersSeller = () => {
             <input
               type="text"
               id="name-filter"
-              placeholder="Nhập tên khách hàng, số điện thoại, địa chỉ"
-              value={searchText}
-              onChange={handleSearchChange}
+              placeholder="Nhập tên khách hàng..."
+              value={filters.userName}
+              onChange={handleFilterChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
             />
           </div>
@@ -484,12 +411,9 @@ const OrdersSeller = () => {
               `}
             >
               {tab.label}
-              {tab.id === "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
-              )}
-              {tab.id !== "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
-              )}
+              <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">
+                {tabCounts[tab.id] || 0}
+              </span>
             </button>
           ))}
         </div>
@@ -520,8 +444,8 @@ const OrdersSeller = () => {
                 </div>
               </div>
             ))
-        ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
+        ) : orders.length > 0 ? (
+          orders.map((order) => (
             <div
               key={order.id}
               className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
@@ -544,9 +468,6 @@ const OrdersSeller = () => {
                     <div className="text-sm text-gray-500 mt-1">
                       {order.paymentMethod || "Đã Thanh Toán"} • {order.paymentStatus || "Chưa thanh toán"}
                     </div>
-                    {order.orderStatusName === "Đã hủy" && order.cancelReason && (
-                      <div className="text-sm text-red-600 mt-1">Lý do hủy: {order.cancelReason}</div>
-                    )}
                   </div>
                   <div className="flex flex-col items-end space-y-2">
                     <div
@@ -576,6 +497,9 @@ const OrdersSeller = () => {
                         {order.totalPrice?.toLocaleString("vi-VN")}đ
                       </span>
                     </div>
+                    {order.orderStatusName === "Hủy" && (
+                      <div className="text-sm text-red-600 mt-1 "><p className="fw-bolder">Lý do hủy : {order?.noted}</p> </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -652,44 +576,6 @@ const OrdersSeller = () => {
                       <span>Đang giao</span>
                     </button>
                   )}
-                  {order.orderStatusName === "Đang giao" && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 5)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                        <path
-                          fillRule="evenodd"
-                          d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span>Đã nhận</span>
-                    </button>
-                  )}
-                  {order.orderStatusName === "Đã nhận" && (
-                    <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-1.5">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v10a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 011-1zm11 14a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v9a1 1 0 001 1h12z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span>Mua lại</span>
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -725,16 +611,14 @@ const OrdersSeller = () => {
             </button>
           </div>
         )}
-        {
-          totalOrders > 0 && (
-            <Pagination
-            currentPage={currentPage}
-            totalPages = {Math.ceil(totalOrders / pageSize)}
-            setCurrentPage={setCurrentPage}
-            />
-          )
-        }
       </div>
+      {totalOrders > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
+      )}
 
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -778,4 +662,3 @@ const OrdersSeller = () => {
 }
 
 export default OrdersSeller
-

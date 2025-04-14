@@ -8,11 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import com.thebugs.back_end.dto.OrderDetailSellerDTO;
 import com.thebugs.back_end.dto.OrderSimpleDTO;
 
-import com.thebugs.back_end.dto.UserOrderDTO;
 import com.thebugs.back_end.entities.Order;
 
 public interface OrderJPA extends JpaRepository<Order, Integer> {
@@ -41,14 +40,34 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "       LEAST(SUM(oi.quantity * oi.price) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
                         "   ELSE 0 " +
-                        "END) " +
+                        "END, o.noted) " + // Sửa để khớp với 8 tham số
                         "FROM Order o " +
                         "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
                         "WHERE o.shop.id = ?1 " +
-                        "GROUP BY o.id")
+                        "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus, "
+                        +
+                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable);
 
         // Order của User
+        // @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
+        // "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod,
+        // o.paymentStatus, "
+        // +
+        // "SUM(oi.quantity * oi.price) + o.shippingFee - " +
+        // "CASE " +
+        // " WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
+        // " LEAST(SUM(oi.quantity * oi.price) * o.voucher.discountPercentage / 100,
+        // o.voucher.maxDiscount) "
+        // +
+        // " ELSE 0 " +
+        // "END, o.noted) " +
+        // "FROM Order o " +
+        // "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
+        // "WHERE o.user.id = ?1 " +
+        // "GROUP BY o.id")
+        // Page<OrderSimpleDTO> findOrderByUserId(Integer userId, Pageable pageable);
+
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
                         "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus, " +
                         "SUM(oi.quantity * oi.price) + o.shippingFee - " +
@@ -57,23 +76,26 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "       LEAST(SUM(oi.quantity * oi.price) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
                         "   ELSE 0 " +
-                        "END) " +
+                        "END, o.noted) " + // Sửa để khớp với 8 tham số
                         "FROM Order o " +
                         "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
                         "WHERE o.user.id = ?1 " +
-                        "GROUP BY o.id")
+                        "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus, "
+                        +
+                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderByUserId(Integer userId, Pageable pageable);
 
         @Query("SELECT COUNT(o) FROM Order o WHERE o.user.id = ?1")
         int countOrderByUserId(Integer userId);
 
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
-                        "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus, " +
+                        "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus,  "
+                        +
                         "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
                         "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
                         "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
-                        "ELSE 0 END) " +
+                        "ELSE 0 END, o.noted) " +
                         "FROM Order o " +
                         "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
                         "WHERE o.user.id = ?1 " +
@@ -82,7 +104,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "AND (?5 IS NULL OR o.customerInfo LIKE CONCAT('%', ?5, '%')) " +
                         "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.id, o.paymentMethod, o.paymentStatus, "
                         +
-                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount")
+                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
 
         Page<OrderSimpleDTO> findOrderUserByDateAndKeyWordAndStatus(
                         Integer userId,
@@ -109,13 +131,41 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         @Query("SELECT o FROM Order o WHERE o.id = ?1 AND o.shop.id = ?2 ")
         Optional<Order> getOrderByShopId(Integer orderId, Integer shopId);
 
+        // @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
+        // "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod,
+        // o.paymentStatus, " +
+        // "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
+        // "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
+        // "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) *
+        // o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
+        // +
+        // "ELSE 0 END) " +
+        // "FROM Order o " +
+        // "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
+        // "WHERE o.shop.id = ?1 " +
+        // "AND ((?2 IS NULL OR ?3 IS NULL) OR o.createdAt BETWEEN ?2 AND ?3) " +
+        // "AND (?4 IS NULL OR o.orderStatus.id = ?4) " +
+        // "AND (?5 IS NULL OR o.customerInfo LIKE CONCAT('%', ?5, '%')) " +
+        // "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.id,
+        // o.paymentMethod, o.paymentStatus, "
+        // +
+        // "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount")
+
+        // Page<OrderSimpleDTO> findOrderbyDateOrStatusOrName(
+        // Integer shopId,
+        // Date startDate,
+        // Date endDate,
+        // Integer orderStatusName,
+        // String keyword,
+        // Pageable pageable);
+
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
                         "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, o.paymentMethod, o.paymentStatus, " +
                         "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
                         "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
                         "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
-                        "ELSE 0 END) " +
+                        "ELSE 0 END, o.noted) " + // Thêm o.noted
                         "FROM Order o " +
                         "LEFT JOIN OrderItem oi ON o.id = oi.order.id " +
                         "WHERE o.shop.id = ?1 " +
@@ -124,8 +174,8 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "AND (?5 IS NULL OR o.customerInfo LIKE CONCAT('%', ?5, '%')) " +
                         "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.id, o.paymentMethod, o.paymentStatus, "
                         +
-                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount")
-
+                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted") // Thêm o.noted
+                                                                                                       // vào GROUP BY
         Page<OrderSimpleDTO> findOrderbyDateOrStatusOrName(
                         Integer shopId,
                         Date startDate,
@@ -228,5 +278,6 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         // o.paymentStatus, o.shippingFee, o.shippingMethod")
         // List<OrderDetailSellerDTO> findOrderDetailByIdAndShopId(Integer orderId,
         // Integer shopId);
-
+        @Query("SELECT o FROM Order o WHERE o.orderStatus.id = ?1 AND o.deliveredAt IS NOT NULL")
+        List<Order> findDeliveredOrdersByStatus(@Param("statusId") int statusId);
 }
