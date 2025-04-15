@@ -30,7 +30,8 @@ public class JwtUtil {
                     .claim("roleId", roleId)
                     .claim("typeJWT", typeJWT)
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                    .setExpiration(new Date(System.currentTimeMillis()
+                            + (typeJWT.equals(TYPEJWT_LOGIN) ? EXPIRATION_TIME : EXPIRATION_TIME_RESETPASSWORD)))
                     .signWith(SIGNING_KEY, SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {

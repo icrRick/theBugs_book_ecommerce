@@ -8,8 +8,8 @@ import com.thebugs.back_end.beans.PaymentBean;
 import com.thebugs.back_end.beans.ShippingFreeBean;
 
 import com.thebugs.back_end.resp.ResponseData;
+import com.thebugs.back_end.services.user.ApiGHNService;
 import com.thebugs.back_end.services.user.PaymentService;
-import com.thebugs.back_end.services.user.ShippingService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class PaymentController {
         private PaymentService paymentService;
 
         @Autowired
-        private ShippingService shippingService;
+        private ApiGHNService apiGHNService;
 
         @PostMapping("/shipping-fee")
         public ResponseEntity<ResponseData> calculateShippingFee(@RequestBody ShippingFreeBean shippingFreeBean) {
@@ -38,7 +38,7 @@ public class PaymentController {
                 try {
                         responseData.setStatus(true);
                         responseData.setMessage("Lấy phí vận chuyển thành công");
-                        responseData.setData(shippingService.calculateFee(shippingFreeBean.getShopId(),
+                        responseData.setData(apiGHNService.calculateFee(shippingFreeBean.getShopId(),
                                         shippingFreeBean.getAddressUserId(), shippingFreeBean.getWeight()));
                         return ResponseEntity.ok(responseData);
                 } catch (Exception e) {
