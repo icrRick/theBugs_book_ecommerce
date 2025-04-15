@@ -51,3 +51,4 @@ Back-End/hs_err_pid*
 # Optional: Exclude application properties for Spring Boot if needed
 # Back-End/src/main/resources/application.properties
 # Back-End/src/main/resources/application.yml
+Back-End/src/main/java/com/thebugs/back_end/utils/ResponseEntityUtil.java

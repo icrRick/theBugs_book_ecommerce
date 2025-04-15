@@ -25,6 +25,6 @@ public class LoginService {
                 if (!passwordEncoder.matches(password, user.getPassword())) {
                         throw new BadCredentialsException("Tài khoản hoặc mật khẩu không đúng");
                 }
-                return jwtUtil.generateToken(user.getId(), user.getRole().getId(), "login");
+                return jwtUtil.generateToken(user.getId(), user.getRole().getId(), "LOGIN");
         }
 }

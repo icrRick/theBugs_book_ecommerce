@@ -71,6 +71,7 @@ const EditAddress = lazy(() => import("../components/user/EditAddress"));
 const PlaceOrderAddress = lazy(() =>
       import("../components/user/PlaceOrderAddress")
 );
+const Otp = lazy(() => import("../components/auth/OtpInput"));
 export const PUBLIC_ROUTES = [
       { path: "/", element: <Navigate to="/home" /> },
       { path: "home", element: <Home /> },
@@ -84,6 +85,7 @@ export const PUBLIC_ROUTES = [
       { path: "register-seller", element: <SellerRegistration /> },
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
+      { path: "otp", element: <Otp /> },
     
 ];
 export const USER_ROUTES = [

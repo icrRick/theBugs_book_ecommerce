@@ -43,6 +43,10 @@ public class UserService {
 
         }
 
+
+
+
+
         public User getUserByEmailLogin(String email) {
                 return userJPA.findByEmail(email)
                                 .orElseThrow(() -> new IllegalArgumentException(
@@ -72,6 +76,16 @@ public class UserService {
                 if (!passwordEncoder.matches(passOld, user.getPassword())) {
                         throw new IllegalArgumentException("Tài khoản hoặc mật khẩu không đúng");
                 }
+                if (!newPass.equals(confirmPass)) {
+                        throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+                }
+                String hashedPassword = passwordEncoder.encode(newPass);
+                user.setPassword(hashedPassword);
+                userJPA.save(user);
+                return true;
+        }
+        public boolean resetPassword(Integer userId, String newPass, String confirmPass) {
+                User user = getUserById(userId);
                 if (!newPass.equals(confirmPass)) {
                         throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
                 }

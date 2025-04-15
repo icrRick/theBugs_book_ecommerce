@@ -14,7 +14,8 @@ public class JwtUtil {
 
         private static final String SECRET_KEY = "IUhuQQpG1l3gA5aFf9SjfjRau2WiXYDIORDGWkggqNBIv4aGb5";
         private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 7;
-
+        private static final long EXPIRATION_TIME_RESETPASSWORD = 1000 * 60 * 15;
+        private static final String TYPEJWT_LOGIN="LOGIN";
         private Key getSigningKey() {
                 return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
         }
@@ -25,10 +26,11 @@ public class JwtUtil {
                                 .claim("roleId", roleId)
                                 .claim("typeJWT", typeJWT)
                                 .setIssuedAt(new Date())
-                                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                                .setExpiration(new Date(System.currentTimeMillis() + (typeJWT.equals(TYPEJWT_LOGIN)? EXPIRATION_TIME : EXPIRATION_TIME_RESETPASSWORD)))
                                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                                 .compact();
         }
+
 
         public String extractUserId(String token) {
                 try {
