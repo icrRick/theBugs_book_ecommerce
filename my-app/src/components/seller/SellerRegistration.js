@@ -18,7 +18,6 @@ const SellerRegistration = () => {
             phone: "",
             password: "",
             confirmPassword: "",
-            agreeTerms: false,
       });
 
       const [idRecognition, setIdRecognition] = useState({
@@ -68,11 +67,12 @@ const SellerRegistration = () => {
       useEffect(() => {
             const fetchUserData = async () => {
                   try {
-                        const { data } = await axiosInstance.get("/users/me");
-                        if (data) {
-                              const userData = data;
+                        const { data } = await axiosInstance.get("api/users/me");
+                        if (data?.status) {
+                              const userData = data.data;
                               console.log("UserData: ");
-                              console.log(data);
+                              console.log(userData);
+                              setAccountInfo(userData);
                               setCurrentStep(2);
                         } else {
                               setCurrentStep(1);
@@ -82,7 +82,7 @@ const SellerRegistration = () => {
                   }
             };
             fetchUserData();
-      });
+      }, []);
       useEffect(() => {
             console.log("AccountInfor: ");
             console.log(accountInfo);

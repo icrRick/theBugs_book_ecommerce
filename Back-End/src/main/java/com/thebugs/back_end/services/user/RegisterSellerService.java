@@ -19,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thebugs.back_end.dto.UserDTO;
-import com.thebugs.back_end.dto.IrRickDTO.ID_RecognitionDTO.FPT_ID_OBJECT;
-import com.thebugs.back_end.dto.IrRickDTO.LiveNessDTO.FPT_LIVEFACE_DTO;
+import com.thebugs.back_end.dto.FPT_API_DTO.ID_RecognitionDTO.FPT_ID_OBJECT;
+import com.thebugs.back_end.dto.FPT_API_DTO.LiveNessDTO.FPT_LIVEFACE_DTO;
 import com.thebugs.back_end.utils.API_KEY;
 import com.thebugs.back_end.utils.ColorUtil;
 
@@ -73,6 +73,9 @@ public class RegisterSellerService {
 
                 }
             }
+            message.append("FrontMessage: " + getErrorMessage(frontImage.getErrorCode()) + "\n");
+            message.append("BackMessage: " + getErrorMessage(backImage.getErrorCode()));
+
             frontImage.getData().get(0).setIssue_date(backImage.getData().get(0).getIssue_date());
             frontImage.getData().get(0).setIssue_loc(backImage.getData().get(0).getIssue_loc());
             ColorUtil.print(ColorUtil.RED, "DATA_CMND");

@@ -1,4 +1,4 @@
-package com.thebugs.back_end.dto.IrRickDTO.LiveNessDTO;
+package com.thebugs.back_end.dto.FPT_API_DTO.LiveNessDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class RegisterSellerController {
     @Autowired
     RegisterSellerService g_RegisterSellerService;
@@ -46,7 +46,8 @@ public class RegisterSellerController {
     }
 
     @PostMapping("/id-recognition")
-    public ResponseEntity<ResponseData> idRecognition(@RequestParam List<MultipartFile> images) {
+    public ResponseEntity<ResponseData> idRecognition(
+            @RequestHeader("Authorization") @RequestParam List<MultipartFile> images) {
         ColorUtil.print(ColorUtil.RED, "IDRECO Bắt đầu nhận diện");
         Map<String, Object> result = g_RegisterSellerService.idRecognition(images);
         ResponseData responseData = new ResponseData();
@@ -61,7 +62,7 @@ public class RegisterSellerController {
     }
 
     @PostMapping("/face-match")
-    public ResponseEntity<ResponseData> faceMatch(@RequestParam MultipartFile image,
+    public ResponseEntity<ResponseData> faceMatch(@RequestHeader("Authorization") @RequestParam MultipartFile image,
             @RequestParam(required = false) MultipartFile video) {
         ColorUtil.print(ColorUtil.RED, "IDRECO Bắt đầu nhận diện face");
         ColorUtil.print(ColorUtil.RED, video.getOriginalFilename());
@@ -76,5 +77,15 @@ public class RegisterSellerController {
         ColorUtil.print(ColorUtil.RED, "Kết thúc nhận diện face");
         return ResponseEntity.status(HttpStatus.valueOf((int) result.get("statusCode"))).body(responseData);
     }
+
+    
+    @PostMapping("register-seller")
+    public ResponseEntity<ResponseData> registerUser(@RequestParam String a) {
+        
+        return null;
+    }
+
+
+
 
 }
