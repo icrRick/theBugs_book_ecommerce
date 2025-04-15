@@ -6,7 +6,6 @@ import ReportStores from "../components/admin/ReportStores";
 import SellerRegistrationRequests from "../components/admin/SellerRegistrationRequests";
 import UserManagement from "../components/admin/UserManagement";
 import Statistics from "../components/admin/Statistics";
-import SystemSettings from "../components/admin/SystemSettings";
 import ReportManagement from "../components/admin/ReportManagement";
 import ReportDetail from "../components/admin/ReportDetail";
 import ProtectedRoute from "./ProtectedRoute";

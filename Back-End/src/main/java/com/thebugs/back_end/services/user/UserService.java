@@ -33,6 +33,7 @@ public class UserService {
         }
 
         public UserDTO getUserDTO(String token) {
+                System.out.println("token "+token);
                 return userMapper.toDTO(getUserToken(token));
         }
 
