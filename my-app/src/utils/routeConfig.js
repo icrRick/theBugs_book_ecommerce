@@ -1,6 +1,5 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
-import Products from "../components/seller/Products";
 import Stores from "../components/admin/Stores";
 import ReportStores from "../components/admin/ReportStores";
 import SellerRegistrationRequests from "../components/admin/SellerRegistrationRequests";
@@ -10,7 +9,7 @@ import ReportManagement from "../components/admin/ReportManagement";
 import ReportDetail from "../components/admin/ReportDetail";
 import ProtectedRoute from "./ProtectedRoute";
 import PaymentStatus from "../components/user/PaymentStatus";
-
+import Products from "../components/seller/Products";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -71,6 +70,8 @@ const PlaceOrderAddress = lazy(() =>
       import("../components/user/PlaceOrderAddress")
 );
 const Otp = lazy(() => import("../components/auth/OtpInput"));
+
+const AdminProducts = lazy(() => import("../components/admin/Products"));
 export const PUBLIC_ROUTES = [
       { path: "/", element: <Navigate to="/home" /> },
       { path: "home", element: <Home /> },
@@ -117,7 +118,7 @@ export const USER_ROUTES = [
 export const ADMIN_ROUTES = [
       { path: "dashboard", element: <Dashboard /> },
       { path: "genres", element: <Genres /> },
-      { path: "products", element: <Products /> },
+      { path: "products", element: <AdminProducts /> },
       { path: "stores", element: <Stores /> },
       { path: "publishers", element: <Publishers /> },
       { path: "reports/products", element: <ReportProducts /> },

@@ -15,4 +15,5 @@ public class AdminProductDTO {
     private Boolean status;
     private boolean approve;
     private boolean active;
+    
 }
