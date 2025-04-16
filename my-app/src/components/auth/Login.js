@@ -74,7 +74,7 @@ const Login = () => {
                   <p className="text-gray-600 text-sm">Chào mừng bạn quay trở lại</p>
                 </div>
 
-                <div className="w-full space-y-3">
+                <div className="w-full space-y-2">
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                       Email <span className=" font-semibold text-red-900">*</span>

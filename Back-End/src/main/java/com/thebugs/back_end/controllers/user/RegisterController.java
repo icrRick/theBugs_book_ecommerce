@@ -14,6 +14,7 @@ import com.thebugs.back_end.beans.RegisterBean;
 import com.thebugs.back_end.dto.UserDTO;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.RegisterService;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import jakarta.validation.Valid;
 
@@ -42,16 +43,11 @@ public class RegisterController {
                         }
                         responseData.setStatus(true);
                         responseData.setMessage("Đăng ký thành công");
-                        UserDTO userDTO = registerService.Register(registerBean.getFullName(), registerBean.getEmail(),
-                                       registerBean.getPassword(),
-                                        registerBean.getConfirmPassword());
+                        UserDTO userDTO = registerService.Register(registerBean);
                         responseData.setData(userDTO);
                         return ResponseEntity.ok(responseData);
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi đăng ký" + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(401).body(responseData);
+                        return ResponseEntityUtil.badRequest(e.getMessage());
                 }
         }
 

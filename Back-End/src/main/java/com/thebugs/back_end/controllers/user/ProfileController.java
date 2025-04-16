@@ -22,12 +22,14 @@ public class ProfileController {
 
         @Autowired
         private UserService userService;
+
         @GetMapping("/auth/profile")
         public ResponseEntity<ResponseData> getProfile(@RequestHeader("Authorization") String authorizationHeader) {
                 ResponseData responseData = new ResponseData();
                 try {
                         UserDTO userDTO = userService.getUserDTO(authorizationHeader);
                         responseData.setStatus(true);
+                        System.out.println("thông tin "+userDTO);
                         responseData.setMessage("Lấy thông tin người dùng thành công");
                         responseData.setData(userDTO);
                         return ResponseEntity.ok(responseData);

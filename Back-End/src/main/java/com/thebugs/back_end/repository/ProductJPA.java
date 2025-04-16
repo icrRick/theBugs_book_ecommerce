@@ -15,6 +15,7 @@ import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.entities.Product;
 
 public interface ProductJPA extends JpaRepository<Product, Integer> {
+        
         @Query("SELECT g FROM Product g WHERE :keyword IS NULL OR g.name LIKE %:keyword% ")
         Page<Product> findByName(@Param("keyword") String keyword, Pageable pageable);
 

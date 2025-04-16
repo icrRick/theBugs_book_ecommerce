@@ -1,22 +1,27 @@
-"use client"
-
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { useAuth } from "../../contexts/AuthContext"
+import axiosInstance from "../../utils/axiosInstance"
+import { showErrorToast, showSuccessToast } from "../../utils/Toast"
+import Loading from "../../utils/Loading"
 
 const Profile = () => {
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState("https://placehold.co/100x100/2ecc71/ffffff?text=avatar")
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: "Nguyễn Văn A",
-    email: "nguyenvana@example.com",
-    phone: "0912345678",
-    dob: "1990-01-01",
-    gender: "male",
-    cccd: "012345678901",
-    address: "123 Đường ABC, Quận 1, TP. HCM",
+  const [loading, setLoading] = useState(false)
+  const { userInfo, setUserInfo } = useAuth();
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    defaultValues: {
+      fullName: userInfo?.fullName,
+      email: userInfo?.email,
+      phone: userInfo?.phone,
+      dob: userInfo?.dob,
+      gender: userInfo?.gender,
+      cccd: userInfo?.cccd,
+      address: userInfo?.address,
+    }
   })
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -30,114 +35,59 @@ const Profile = () => {
     }
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+  const onSubmit = async (data) => {
+    setLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // đợi 4s
+      const response = await axiosInstance.post("/auth/profile", data);
+      if (response.data.status === true) {
+        setUserInfo(response.data.data);
+        reset(response.data.data);
+        showSuccessToast(response.data.message);
+      }
+    } catch (error) {
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi trong quá trình cập nhật profile. Vui lòng thử lại.");
+      console.error("Lỗi cập nhật profile:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsSaving(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setIsSaving(false)
-    setSaveSuccess(true)
-    setIsEditing(false)
-
-    // Reset success message after 3 seconds
-    setTimeout(() => {
-      setSaveSuccess(false)
-    }, 3000)
-  }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      {/* Header with background */}
-      <div className="relative h-40 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-lg">
-        <div className="absolute -bottom-16 left-8">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
-              <img src={previewUrl || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
-            </div>
-            <label
-              htmlFor="avatar-upload"
-              className="absolute bottom-0 right-0 bg-emerald-500 text-white p-2 rounded-full hover:bg-emerald-600 cursor-pointer shadow-md"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
-              <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            </label>
-          </div>
-        </div>
-
-        {/* Edit/Save buttons */}
-        <div className="absolute top-4 right-4 flex space-x-2">
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-white text-emerald-600 rounded-lg hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
-              Chỉnh sửa
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Hủy
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* User info section */}
-      <div className="pt-20 px-8 pb-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">{formData.fullName}</h1>
-          <p className="text-gray-500">{formData.email}</p>
-        </div>
-
-        {saveSuccess && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-green-500"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
+    <>
+      {loading && <Loading />}
+      <div className="bg-white rounded-lg shadow-sm">
+        {/* Header with background */}
+        <div className="relative h-40 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-lg">
+          <div className="absolute -bottom-16 left-8">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
+                <img src={previewUrl || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-0 right-0 bg-emerald-500 text-white p-2 rounded-full hover:bg-emerald-600 cursor-pointer shadow-md"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-green-700">Thông tin tài khoản đã được cập nhật thành công!</p>
-              </div>
+                <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              </label>
             </div>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
+
+        </div>
+
+        {/* User info section */}
+        <div className="pt-20 px-8 pb-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">{userInfo?.fullName}</h1>
+            <p className="text-gray-500">{userInfo?.email}</p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information Section */}
             <div className="md:col-span-2">
@@ -163,88 +113,88 @@ const Profile = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
               <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("fullName", {
+                  required: "Vui lòng nhập họ tên",
+                  minLength: { value: 2, message: "Họ tên phải có ít nhất 2 ký tự" }
+                })}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
+              {errors.fullName && (
+                <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("email", {
+                  required: "Vui lòng nhập email",
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Email không hợp lệ"
+                  }
+                })}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
               <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("phone", {
+                  required: "Vui lòng nhập số điện thoại",
+                })}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
               <input
                 type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("dob", {
+                  required: "Vui lòng chọn ngày sinh"
+                })}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
+              {errors.dob && (
+                <p className="mt-1 text-sm text-red-600">{errors.dob.message}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
               <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("gender")}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               >
-                <option value="male">Nam</option>
-                <option value="female">Nữ</option>
-                <option value="other">Khác</option>
+                <option value="true">Nam</option>
+                <option value="false">Nữ</option>
+                <option value="">Khác</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">CCCD/CMND</label>
               <input
-                type="text"
-                name="cccd"
-                value={formData.cccd}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+                {...register("cccd", {
+                  required: "Vui lòng nhập CCCD/CMND",
+                  pattern: {
+                    value: /^[0-9]{12}$/,
+                    message: "CCCD/CMND không hợp lệ"
+                  }
+                })}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
+              {errors.cccd && (
+                <p className="mt-1 text-sm text-red-600">{errors.cccd.message}</p>
+              )}
             </div>
 
             {/* Address Section */}
@@ -270,15 +220,9 @@ const Profile = () => {
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-                  !isEditing ? "bg-gray-50 text-gray-500" : "bg-white"
-                }`}
+              <textarea
+                {...register("address")}
+                className="px-4 py-2 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm"
               />
             </div>
 
@@ -311,70 +255,44 @@ const Profile = () => {
                 </div>
                 <a
                   href="/account/change-password"
-                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm"
+                  className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition duration-150 ease-in-out"
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
                   Đổi mật khẩu
                 </a>
               </div>
             </div>
           </div>
+          <div className="flex items-center justify-end space-x-4 mt-6 p-4">
 
-          {isEditing && (
-            <div className="mt-8 flex justify-end">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 flex items-center"
+
+            <button
+              type="submit"
+              onClick={handleSubmit(onSubmit)}
+              className="inline-flex items-center px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                {isSaving ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-2"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Lưu thay đổi
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </form>
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Lưu thay đổi
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
+
   )
 }
 
-export default Profile
-
+export default Profile;
