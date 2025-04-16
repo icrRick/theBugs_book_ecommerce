@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FPT_LIVEFACE_DTO extends FPT_DTO {
-    private FPT_LIVENESS_DTO liveness;
-    private FPT_FACEMATCH_DTO face_match;
+public class FPT_LiveFace_DTO extends FPT_BaseResponse {
+    private FPT_Liveness_Data liveness;
+    private FPT_FaceMatch_Data face_match;
 }

@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import VideoCapture from "../user/VideoCaptured";
+import { Pause, Play, RefreshCw, Maximize2 } from "lucide-react";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 const IdRecognitionStep = ({
       idRecognition, // Nhận dữ liệu từ trang chính
@@ -10,8 +12,31 @@ const IdRecognitionStep = ({
       handleIdRecognitionData,
       isProcessingId,
       setIsProcessingId,
+      handleNext,
       errors,
 }) => {
+      const videoRef = useRef(null);
+      const [isPlaying, setIsPlaying] = useState(true);
+
+      const togglePlayPause = () => {
+            if (!videoRef.current) return;
+
+            if (videoRef.current.paused) {
+                  videoRef.current.play();
+                  setIsPlaying(true);
+            } else {
+                  videoRef.current.pause();
+                  setIsPlaying(false);
+            }
+      };
+
+      const replayVideo = () => {
+            if (videoRef.current) {
+                  videoRef.current.currentTime = 0;
+                  videoRef.current.play();
+                  setIsPlaying(true);
+            }
+      };
       const [frontPreview, setFrontPreview] = useState(
             idRecognition?.idFrontImage
                   ? URL.createObjectURL(idRecognition.idFrontImage)
@@ -43,6 +68,8 @@ const IdRecognitionStep = ({
 
       const handleVideoCaptured = (file) => {
             setVideoFile(file);
+            console.log("FILE");
+            console.log(file);
             handleClosePopup();
       };
 
@@ -83,6 +110,49 @@ const IdRecognitionStep = ({
                   handleIdRecognitionData(null);
             }
       };
+      const handleSubmitStep2 = async () => {
+            if (!idRecognition?.idFrontImage || !idRecognition?.idBackImage) {
+                  showErrorToast(
+                        "Vui lòng tải lên ảnh mặt trước và sau của cmnd"
+                  );
+                  return;
+            }
+            if (!videoFile) {
+                  showErrorToast(
+                        "Vui lòng xác minh khuôn mặt trước khi qua bước kế tiếp"
+                  );
+            }
+            try {
+                  const formDataToSend = new FormData();
+                  formDataToSend.append("image", idRecognition.idFrontImage);
+                  formDataToSend.append("video", videoFile);
+                  const response = await axiosInstance.post(
+                        "api/users/face-match",
+                        formDataToSend,
+                        {
+                              headers: {
+                                    "Content-Type": "multipart/form-data",
+                              },
+                        }
+                  );
+                  // Xử lý kết quả từ API
+                  if (response.data.data.code === "200") {
+                        // Cập nhật dữ liệu form
+                        showSuccessToast("Nhận diện khuôn mặt thành công");
+                        handleNext();
+                  } else {
+                        showErrorToast("Nhận diện khuôn mặt thất bại vui lòng kiểm tra lại video");
+                  }
+                  console.log("Response: ");
+                  console.log(response);
+                  console.log("ResponseData: ");
+                  console.log(response.data);
+            } catch (error) {
+                  console.error("Error recognizing ID:", error);
+                  showErrorToast("Nhận diện khuôn mặt thất bại vui lòng kiểm tra lại video");
+
+            } 
+      };
 
       // Xử lý nhận diện CCCD/CMND
       const handleRecognizeId = async () => {
@@ -106,7 +176,7 @@ const IdRecognitionStep = ({
                   formDataToSend.append("images", idRecognition.idFrontImage);
                   formDataToSend.append("images", idRecognition.idBackImage);
                   const response = await axiosInstance.post(
-                        "/users/id-recognition",
+                        "api/users/id-recognition",
                         formDataToSend,
                         {
                               headers: {
@@ -117,7 +187,7 @@ const IdRecognitionStep = ({
                   // Xử lý kết quả từ API
                   if (response.status === 200) {
                         // Cập nhật dữ liệu form
-                        handleIdRecognitionData(response.data.data);
+                        handleIdRecognitionData(response.data.data.data[0]);
                         setRecognitionStatus("success");
                         setRecognitionMessage(
                               "Nhận diện thành công! Thông tin đã được cập nhật tự động."
@@ -142,47 +212,6 @@ const IdRecognitionStep = ({
             } finally {
                   setIsProcessingId(false);
             }
-      };
-
-      // Trích xuất dữ liệu từ kết quả API
-      const extractDataFromResponse = (data) => {
-            // Chuyển đổi định dạng ngày tháng từ API sang định dạng phù hợp với form
-            const formatDate = (dateString) => {
-                  if (!dateString) return "";
-                  // Nếu định dạng là DD/MM/YYYY, chuyển thành YYYY-MM-DD cho input type="date"
-                  if (dateString.includes("/")) {
-                        const [day, month, year] = dateString.split("/");
-                        return `${year}-${month.padStart(
-                              2,
-                              "0"
-                        )}-${day.padStart(2, "0")}`;
-                  }
-                  return dateString;
-            };
-
-            return {
-                  id: data.id || "",
-                  name: data.name || "",
-                  dob: formatDate(
-                        data.features?.frontSide?.dob || data.dob || ""
-                  ),
-                  gender:
-                        data.features?.frontSide?.gender === "Nam"
-                              ? "male"
-                              : data.features?.frontSide?.gender === "Nữ"
-                              ? "female"
-                              : data.gender || "",
-                  address: data.address || data.home || "",
-                  issueDate: formatDate(
-                        data.features?.backSide?.issueDate ||
-                              data.issueDate ||
-                              ""
-                  ),
-                  issuedBy:
-                        data.features?.backSide?.issuedBy ||
-                        data.issuedBy ||
-                        "",
-            };
       };
 
       return (
@@ -499,7 +528,6 @@ const IdRecognitionStep = ({
                                     : "Nhận diện giấy tờ"}
                         </button>
                   </div>
-                  {/* Thông báo kết quả nhận diện */}
                   {recognitionStatus && (
                         <div
                               className={`mt-4 p-4 rounded-lg ${
@@ -581,322 +609,290 @@ const IdRecognitionStep = ({
                               {errors.idRecognitionData}
                         </p>
                   )}
-                  {/* Thông tin cá nhân từ CCCD/CMND */}
-                  {idRecognition?.idRecognitionData && (
-                        <div className="border-t border-gray-200 pt-6 mt-6">
-                              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                                    Thông tin từ giấy tờ
-                              </h3>
+                  {videoFile && (
+                        <>
+                              <div className="relative w-full max-w-md mx-auto">
+                                    <video
+                                          ref={videoRef}
+                                          src={URL.createObjectURL(videoFile)}
+                                          className="w-full rounded-lg"
+                                          autoPlay
+                                    />
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Loại giấy tờ */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Loại giấy tờ{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <select
-                                                name="idType"
-                                                value={
-                                                      idRecognition?.idType ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300"
-                                                disabled
+                                    <div className="flex justify-center gap-4 mt-3">
+                                          <button
+                                                onClick={togglePlayPause}
+                                                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                                           >
-                                                <option value="chip_back">
-                                                      Căn cước công dân
-                                                </option>
-                                                <option value="chip_front">
-                                                      Căn cước công dân
-                                                </option>
-                                                <option value="cmnd">
-                                                      Chứng minh nhân dân
-                                                </option>
-                                                <option value="passport">
-                                                      Hộ chiếu
-                                                </option>
-                                          </select>
-                                    </div>
-
-                                    {/* Số giấy tờ */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Số CCCD/CMND{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="text"
-                                                name="idNumber"
-                                                value={
-                                                      idRecognition?.idNumber ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                placeholder="Số CCCD/CMND"
-                                                readOnly
-                                          />
-                                    </div>
-
-                                    {/* Họ tên */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Họ và tên{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="text"
-                                                name="fullName"
-                                                value={
-                                                      idRecognition?.name || ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                placeholder="Họ và tên"
-                                                readOnly
-                                          />
-                                    </div>
-
-                                    {/* Ngày sinh */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Ngày sinh{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="date"
-                                                name="dob"
-                                                value={idRecognition?.dob || ""}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                readOnly
-                                          />
-                                    </div>
-
-                                    {/* Giới tính */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Giới tính{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <select
-                                                name="gender"
-                                                value={
-                                                      idRecognition?.gender ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                disabled
+                                                {isPlaying ? (
+                                                      <Pause className="w-5 h-5" />
+                                                ) : (
+                                                      <Play className="w-5 h-5" />
+                                                )}
+                                          </button>
+                                          <button
+                                                onClick={replayVideo}
+                                                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
                                           >
-                                                <option value="">
-                                                      -- Chọn giới tính --
-                                                </option>
-                                                <option value="NAM">Nam</option>
-                                                <option value="NỮ">Nữ</option>
-                                                <option value="other">
-                                                      Khác
-                                                </option>
-                                          </select>
-                                    </div>
-
-                                    {/* Ngày cấp */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Ngày cấp{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="date"
-                                                name="idIssueDate"
-                                                value={
-                                                      idRecognition?.idIssueDate ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                readOnly
-                                          />
-                                    </div>
-
-                                    {/* Nơi cấp */}
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Nơi cấp{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="text"
-                                                name="idIssuedBy"
-                                                value={
-                                                      idRecognition?.idIssuedBy ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                placeholder="Nơi cấp"
-                                                readOnly
-                                          />
-                                    </div>
-                                    <div>
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Ngày hết hạn{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="date"
-                                                name="idIssueDate"
-                                                value={idRecognition?.doe || ""}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                readOnly
-                                          />
-                                    </div>
-                                    {/* Địa chỉ */}
-                                    <div className="md:col-span-2">
-                                          <label className="block text-gray-700 font-medium mb-2">
-                                                Địa chỉ{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
-                                          </label>
-                                          <input
-                                                type="text"
-                                                name="address"
-                                                value={
-                                                      idRecognition?.address ||
-                                                      ""
-                                                }
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
-                                                placeholder="Địa chỉ"
-                                                readOnly
-                                          />
+                                                <RefreshCw className="w-5 h-5" />
+                                          </button>
                                     </div>
                               </div>
+                        </>
+                  )}
+
+                  <div className="flex justify-center mt-4">
+                        <button
+                              onClick={handleOpenPopup}
+                              disabled={!idRecognition?.idNumber} // Chỉ cho click khi có idRecognition hợp lệ
+                              className={`px-6 py-3 rounded-lg transition-colors flex items-center
+      ${
+            idRecognition?.idNumber
+                  ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                  : "bg-gray-400 text-gray-200 cursor-not-allowed"
+      }
+    `}
+                        >
+                              Bấm vào đây để xác minh khuôn mặt
+                        </button>
+                  </div>
+                  {videoFile && (
+                        <div className="mt-4 p-4 rounded-lg bg-green-50 border border-green-200 flex items-center gap-2">
+                              <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 text-green-500"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                              >
+                                    <path
+                                          fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"
+                                    />
+                              </svg>
+                              <p className="text-green-700">
+                                    Đã quay video khuôn mặt thành công!
+                              </p>
                         </div>
                   )}
-                  <button
-                        onClick={handleOpenPopup}
-                        className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
-                  >
-                        Bắt đầu xác minh
-                  </button>
+                  {videoFile === null && idRecognition?.idNumber && (
+                        <div className="mt-4 p-4 rounded-lg flex items-center gap-2 bg-yellow-50 border border-yellow-200">
+                              <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 text-yellow-500"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                              >
+                                    <path
+                                          fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 8a1 1 0 012 0v2a1 1 0 11-2 0V8zm0 6a1 1 0 112 0 1 1 0 01-2 0z"
+                                          clipRule="evenodd"
+                                    />
+                              </svg>
+                              <p className="text-yellow-700 font-medium">
+                                    Vui lòng quay xác minh khuôn mặt!
+                              </p>
+                        </div>
+                  )}
+
                   <div className="border-t border-gray-200 pt-6 mt-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                              Thông tin tài khoản ngân hàng
+                              Thông tin từ giấy tờ
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {/* Tên ngân hàng */}
+                              {/* Loại giấy tờ */}
                               <div>
                                     <label className="block text-gray-700 font-medium mb-2">
-                                          Tên ngân hàng{" "}
+                                          Loại giấy tờ{" "}
                                           <span className="text-red-500">
                                                 *
                                           </span>
                                     </label>
-                                    <input
-                                          type="text"
-                                          name="bankName"
-                                          value={idRecognition?.bankName || ""}
+                                    <select
+                                          name="idType"
+                                          value={idRecognition?.idType || ""}
                                           onChange={handleChange}
-                                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                errors.bankName
-                                                      ? "border-red-500"
-                                                      : "border-gray-300"
-                                          }`}
-                                          placeholder="Ví dụ: Vietcombank, Techcombank..."
-                                    />
-                                    {errors.bankName && (
-                                          <p className="text-red-500 text-sm mt-1">
-                                                {errors.bankName}
-                                          </p>
-                                    )}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300"
+                                          disabled
+                                    >
+                                          <option value="chip_back">
+                                                Căn cước công dân
+                                          </option>
+                                          <option value="chip_front">
+                                                Căn cước công dân
+                                          </option>
+                                          <option value="cmnd">
+                                                Chứng minh nhân dân
+                                          </option>
+                                          <option value="passport">
+                                                Hộ chiếu
+                                          </option>
+                                    </select>
                               </div>
 
-                              {/* Số tài khoản */}
+                              {/* Số giấy tờ */}
                               <div>
                                     <label className="block text-gray-700 font-medium mb-2">
-                                          Số tài khoản{" "}
+                                          Số CCCD/CMND{" "}
                                           <span className="text-red-500">
                                                 *
                                           </span>
                                     </label>
                                     <input
                                           type="text"
-                                          name="bankAccount"
+                                          name="idNumber"
+                                          value={idRecognition?.idNumber || ""}
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          placeholder="Số CCCD/CMND"
+                                          readOnly
+                                    />
+                              </div>
+
+                              {/* Họ tên */}
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Họ và tên{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <input
+                                          type="text"
+                                          name="fullName"
+                                          value={idRecognition?.name || ""}
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          placeholder="Họ và tên"
+                                          readOnly
+                                    />
+                              </div>
+
+                              {/* Ngày sinh */}
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Ngày sinh{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <input
+                                          type="date"
+                                          name="dob"
+                                          value={idRecognition?.dob || ""}
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          readOnly
+                                    />
+                              </div>
+
+                              {/* Giới tính */}
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Giới tính{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <select
+                                          name="gender"
+                                          value={idRecognition?.gender || ""}
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          disabled
+                                    >
+                                          <option value="">
+                                                -- Chọn giới tính --
+                                          </option>
+                                          <option value="true">Nam</option>
+                                          <option value="false">Nữ</option>
+                                          <option value="other">Khác</option>
+                                    </select>
+                              </div>
+
+                              {/* Ngày cấp */}
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Ngày cấp{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <input
+                                          type="date"
+                                          name="idIssueDate"
                                           value={
-                                                idRecognition?.bankAccount || ""
+                                                idRecognition?.idIssueDate || ""
                                           }
                                           onChange={handleChange}
-                                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                errors.bankAccount
-                                                      ? "border-red-500"
-                                                      : "border-gray-300"
-                                          }`}
-                                          placeholder="Nhập số tài khoản ngân hàng"
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          readOnly
                                     />
-                                    {errors.bankAccount && (
-                                          <p className="text-red-500 text-sm mt-1">
-                                                {errors.bankAccount}
-                                          </p>
-                                    )}
                               </div>
 
-                              {/* Tên chủ tài khoản */}
+                              {/* Nơi cấp */}
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Nơi cấp{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <input
+                                          type="text"
+                                          name="idIssuedBy"
+                                          value={
+                                                idRecognition?.idIssuedBy || ""
+                                          }
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          placeholder="Nơi cấp"
+                                          readOnly
+                                    />
+                              </div>
+                              <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                          Ngày hết hạn{" "}
+                                          <span className="text-red-500">
+                                                *
+                                          </span>
+                                    </label>
+                                    <input
+                                          type="date"
+                                          name="idIssueDate"
+                                          value={idRecognition?.doe || ""}
+                                          onChange={handleChange}
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          readOnly
+                                    />
+                              </div>
+                              {/* Địa chỉ */}
                               <div className="md:col-span-2">
                                     <label className="block text-gray-700 font-medium mb-2">
-                                          Tên chủ tài khoản{" "}
+                                          Địa chỉ{" "}
                                           <span className="text-red-500">
                                                 *
                                           </span>
                                     </label>
                                     <input
                                           type="text"
-                                          name="bankAccountName"
-                                          value={
-                                                idRecognition?.bankAccountName ||
-                                                ""
-                                          }
+                                          name="address"
+                                          value={idRecognition?.address || ""}
                                           onChange={handleChange}
-                                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                errors.bankAccountName
-                                                      ? "border-red-500"
-                                                      : "border-gray-300"
-                                          }`}
-                                          placeholder="Nhập tên chủ tài khoản"
+                                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent border-gray-300 bg-gray-50"
+                                          placeholder="Địa chỉ"
+                                          readOnly
                                     />
-                                    {errors.bankAccountName && (
-                                          <p className="text-red-500 text-sm mt-1">
-                                                {errors.bankAccountName}
-                                          </p>
-                                    )}
-                                    <p className="text-gray-500 text-sm mt-1">
-                                          Lưu ý: Tên chủ tài khoản phải trùng
-                                          với tên đăng ký
-                                    </p>
                               </div>
                         </div>
                   </div>
+                  <button
+                        onClick={handleSubmitStep2}
+                        className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                        Tiếp tục bước tiếp theo
+                  </button>
                   {isPopupOpen && (
                         <VideoCapture
                               onClose={handleClosePopup}

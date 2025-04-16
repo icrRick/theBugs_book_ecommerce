@@ -11,9 +11,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FPT_FACEMATCH_DTO extends FPT_DTO {
+public class FPT_FaceMatch_Data extends FPT_BaseResponse {
     @JsonProperty("isMatch")
-    private boolean isMatch;
+    private String isMatch;
     @JsonProperty("similarity")
-    private float similarity; // Đổi thành String
+    private String similarity; // Đổi thành String
 }

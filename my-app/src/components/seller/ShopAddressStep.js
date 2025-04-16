@@ -1,320 +1,456 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
+import { getToken } from "../../utils/cookie";
+import axios from "axios";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
-const ShopAddressStep = ({ formData, handleChange, handleAddressChange, errors }) => {
-  const [provinces, setProvinces] = useState([])
-  const [districts, setDistricts] = useState([])
-  const [wards, setWards] = useState([])
-  const [loading, setLoading] = useState({
-    provinces: false,
-    districts: false,
-    wards: false,
-  })
+const ShopAddressStep = ({
+      shopAddress,
+      handleChange,
+      handleAddressChange,
+      errors,
+      shopInfo,
+}) => {
+      const [provinces, setProvinces] = useState([]);
+      const [districts, setDistricts] = useState([]);
+      const [wards, setWards] = useState([]);
+      const [loading, setLoading] = useState({
+            provinces: false,
+            districts: false,
+            wards: false,
+      });
 
-  // Fetch tỉnh/thành phố khi component mount
-  useEffect(() => {
-    fetchProvinces()
-  }, [])
+      // Fetch tỉnh/thành phố khi component mount
+      useEffect(() => {
+            fetchProvinces();
+      }, []);
 
-  // Fetch quận/huyện khi tỉnh/thành phố thay đổi
-  useEffect(() => {
-    if (formData.provinceId) {
-      fetchDistricts(formData.provinceId)
-    } else {
-      setDistricts([])
-      handleAddressChange("districtId", "")
-      handleAddressChange("wardId", "")
-    }
-  }, [formData.provinceId])
+      // Fetch quận/huyện khi tỉnh/thành phố thay đổi
+      useEffect(() => {
+            console.log("Change");
 
-  // Fetch phường/xã khi quận/huyện thay đổi
-  useEffect(() => {
-    if (formData.districtId) {
-      fetchWards(formData.districtId)
-    } else {
-      setWards([])
-      handleAddressChange("wardId", "")
-    }
-  }, [formData.districtId])
+            if (shopAddress?.provinceId) {
+                  fetchDistricts(shopAddress.provinceId);
+            } else {
+                  setDistricts([]);
+                  handleAddressChange("districtId", "");
+                  handleAddressChange("wardId", "");
+            }
+      }, [shopAddress?.provinceId]);
 
-  // Giả lập API call để lấy danh sách tỉnh/thành phố
-  const fetchProvinces = async () => {
-    setLoading((prev) => ({ ...prev, provinces: true }))
-    try {
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Fetch phường/xã khi quận/huyện thay đổi
+      useEffect(() => {
+            if (shopAddress?.districtId) {
+                  fetchWards(shopAddress.districtId);
+            } else {
+                  setWards([]);
+                  handleAddressChange("wardId", "");
+            }
+      }, [shopAddress?.districtId]);
 
-      // Dữ liệu mẫu
-      const sampleProvinces = [
-        { ProvinceID: 201, ProvinceName: "Hà Nội" },
-        { ProvinceID: 202, ProvinceName: "TP. Hồ Chí Minh" },
-        { ProvinceID: 203, ProvinceName: "Đà Nẵng" },
-        { ProvinceID: 204, ProvinceName: "Hải Phòng" },
-        { ProvinceID: 205, ProvinceName: "Cần Thơ" },
-        { ProvinceID: 206, ProvinceName: "An Giang" },
-        { ProvinceID: 207, ProvinceName: "Bà Rịa - Vũng Tàu" },
-        { ProvinceID: 208, ProvinceName: "Bắc Giang" },
-        { ProvinceID: 209, ProvinceName: "Bắc Kạn" },
-        { ProvinceID: 210, ProvinceName: "Bạc Liêu" },
-      ]
+      // Giả lập API call để lấy danh sách tỉnh/thành phố
+      const fetchProvinces = async () => {
+            setLoading((prev) => ({ ...prev, provinces: true }));
+            try {
+                  const response = await axios.get(
+                        "http://localhost:8080/api/users/get-province-infor",
+                        {
+                              headers: {
+                                    Authorization: `Bearer ${getToken()}`,
+                                    "Content-Type": "application/json",
+                              },
+                        }
+                  );
 
-      setProvinces(sampleProvinces)
-    } catch (error) {
-      console.error("Error fetching provinces:", error)
-    } finally {
-      setLoading((prev) => ({ ...prev, provinces: false }))
-    }
-  }
+                  console.log("Provinces:", response);
+                  setProvinces(response.data.data);
+            } catch (error) {
+                  console.error("Error fetching provinces:", error);
+            } finally {
+                  setLoading((prev) => ({ ...prev, provinces: false }));
+            }
+      };
 
-  // Giả lập API call để lấy danh sách quận/huyện
-  const fetchDistricts = async (provinceId) => {
-    setLoading((prev) => ({ ...prev, districts: true }))
-    try {
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      // Giả lập API call để lấy danh sách quận/huyện
+      const fetchDistricts = async (provinceId) => {
+            setLoading((prev) => ({ ...prev, districts: true }));
+            try {
+                  const response = await axios.get(
+                        "http://localhost:8080/api/users/get-district-infor",
+                        {
+                              params: {
+                                    provinceID: provinceId,
+                              },
+                              headers: {
+                                    Authorization: `Bearer ${getToken()}`,
+                                    "Content-Type": "application/json",
+                              },
+                        }
+                  );
 
-      // Dữ liệu mẫu
-      const sampleDistricts = [
-        { DistrictID: 1001, DistrictName: "Quận Ba Đình", ProvinceID: 201 },
-        { DistrictID: 1002, DistrictName: "Quận Hoàn Kiếm", ProvinceID: 201 },
-        { DistrictID: 1003, DistrictName: "Quận Tây Hồ", ProvinceID: 201 },
-        { DistrictID: 1004, DistrictName: "Quận Long Biên", ProvinceID: 201 },
-        { DistrictID: 1005, DistrictName: "Quận Cầu Giấy", ProvinceID: 201 },
-        { DistrictID: 1006, DistrictName: "Quận 1", ProvinceID: 202 },
-        { DistrictID: 1007, DistrictName: "Quận 3", ProvinceID: 202 },
-        { DistrictID: 1008, DistrictName: "Quận 4", ProvinceID: 202 },
-        { DistrictID: 1009, DistrictName: "Quận 5", ProvinceID: 202 },
-        { DistrictID: 1010, DistrictName: "Quận 6", ProvinceID: 202 },
-      ]
+                  console.log("Provinces:", response.data);
+                  setDistricts(response.data.data);
+            } catch (error) {
+                  console.error("Error fetching provinces:", error);
+            } finally {
+                  setLoading((prev) => ({ ...prev, districts: false }));
+            }
+      };
 
-      // Lọc quận/huyện theo tỉnh/thành phố
-      const filteredDistricts = sampleDistricts.filter(
-        (district) => district.ProvinceID === Number.parseInt(provinceId),
-      )
+      // Giả lập API call để lấy danh sách phường/xã
+      const fetchWards = async (districtId) => {
+            setLoading((prev) => ({ ...prev, wards: true }));
+            try {
+                  const response = await axios.get(
+                        "http://localhost:8080/api/users/get-ward-infor",
+                        {
+                              params: {
+                                    districtID: districtId,
+                              },
+                              headers: {
+                                    Authorization: `Bearer ${getToken()}`,
+                                    "Content-Type": "application/json",
+                              },
+                        }
+                  );
 
-      setDistricts(filteredDistricts)
-    } catch (error) {
-      console.error("Error fetching districts:", error)
-    } finally {
-      setLoading((prev) => ({ ...prev, districts: false }))
-    }
-  }
+                  setWards(response.data.data);
+            } catch (error) {
+                  console.error("Error fetching wards:", error);
+            } finally {
+                  setLoading((prev) => ({ ...prev, wards: false }));
+            }
+      };
 
-  // Giả lập API call để lấy danh sách phường/xã
-  const fetchWards = async (districtId) => {
-    setLoading((prev) => ({ ...prev, wards: true }))
-    try {
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      const onSubmit = (e) => {
+            e.preventDefault();
+            const addressInfor = {
+                  fullName: "ShopName",
+                  phone: "0000000000",
+                  provinceId: shopAddress.provinceId,
+                  districtId: shopAddress.districtId,
+                  wardId: shopAddress.wardId,
+                  street: shopAddress.address,
+            };
 
-      // Dữ liệu mẫu
-      const sampleWards = [
-        { WardCode: "00001", WardName: "Phường Phúc Xá", DistrictID: 1001 },
-        { WardCode: "00002", WardName: "Phường Trúc Bạch", DistrictID: 1001 },
-        { WardCode: "00003", WardName: "Phường Vĩnh Phúc", DistrictID: 1001 },
-        { WardCode: "00004", WardName: "Phường Cống Vị", DistrictID: 1001 },
-        { WardCode: "00005", WardName: "Phường Liễu Giai", DistrictID: 1001 },
-        { WardCode: "00006", WardName: "Phường Phạm Đình Hổ", DistrictID: 1002 },
-        { WardCode: "00007", WardName: "Phường Hàng Mã", DistrictID: 1002 },
-        { WardCode: "00008", WardName: "Phường Hàng Buồm", DistrictID: 1002 },
-        { WardCode: "00009", WardName: "Phường Hàng Đào", DistrictID: 1002 },
-        { WardCode: "00010", WardName: "Phường Bến Nghé", DistrictID: 1006 },
-        { WardCode: "00011", WardName: "Phường Bến Thành", DistrictID: 1006 },
-        { WardCode: "00012", WardName: "Phường Nguyễn Thái Bình", DistrictID: 1006 },
-        { WardCode: "00013", WardName: "Phường Phạm Ngũ Lão", DistrictID: 1006 },
-      ]
+            axios.post(
+                  "http://localhost:8080/api/users/register-add-address",
+                  addressInfor,
+                  {
+                        headers: {
+                              Authorization: `Bearer ${getToken()}`,
+                        },
+                  }
+            )
+                  .then((response) => {
+                        const data = response.data;
+                        console.log("RESPONSE: ");
+                        console.log(response);
+                        if (data.status) {
+                              showSuccessToast("Thêm địa chỉ shop thành công");
+                        } else {
+                              showErrorToast(
+                                    "Lỗi trong quá trình tạo  địa chỉ shop"
+                              );
+                        }
+                  })
+                  .catch((error) => {
+                        console.log("error: ");
+                        console.log(error);
+                        showErrorToast("Lỗi trong quá trình tạo địa chỉ shop");
+                  });
+      };
+      // Xử lý thay đổi tỉnh/thành phố
+      const handleProvinceChange = (e) => {
+            const provinceId = Number.parseInt(e.target.value, 10); // Chuyển sang number
+            const provinceName = e.target.options[e.target.selectedIndex].text;
+            handleAddressChange("provinceId", provinceId, provinceName);
+      };
 
-      // Lọc phường/xã theo quận/huyện
-      const filteredWards = sampleWards.filter((ward) => ward.DistrictID === Number.parseInt(districtId))
+      // Xử lý thay đổi quận/huyện
+      const handleDistrictChange = (e) => {
+            const districtId = e.target.value;
+            const districtName = e.target.options[e.target.selectedIndex].text;
+            handleAddressChange("districtId", districtId, districtName);
+      };
 
-      setWards(filteredWards)
-    } catch (error) {
-      console.error("Error fetching wards:", error)
-    } finally {
-      setLoading((prev) => ({ ...prev, wards: false }))
-    }
-  }
+      // Xử lý thay đổi phường/xã
+      const handleWardChange = (e) => {
+            const wardId = e.target.value;
+            const wardName = e.target.options[e.target.selectedIndex].text;
+            handleAddressChange("wardId", wardId, wardName);
+      };
 
-  // Xử lý thay đổi tỉnh/thành phố
-  const handleProvinceChange = (e) => {
-    const provinceId = e.target.value
-    const provinceName = e.target.options[e.target.selectedIndex].text
-    handleAddressChange("provinceId", provinceId, provinceName)
-  }
+      return (
+            <div className="space-y-6">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                        Địa chỉ cửa hàng
+                  </h2>
+                  <p className="text-gray-600 mb-6">
+                        Vui lòng cung cấp địa chỉ chính xác của cửa hàng để
+                        khách hàng có thể tìm thấy bạn.
+                  </p>
 
-  // Xử lý thay đổi quận/huyện
-  const handleDistrictChange = (e) => {
-    const districtId = e.target.value
-    const districtName = e.target.options[e.target.selectedIndex].text
-    handleAddressChange("districtId", districtId, districtName)
-  }
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Tỉnh/Thành phố */}
+                        <div>
+                              <label className="block text-gray-700 font-medium mb-2">
+                                    Tỉnh/Thành phố{" "}
+                                    <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                    name="provinceId"
+                                    value={shopAddress?.provinceId ?? ""}
+                                    onChange={handleProvinceChange}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                          errors.provinceId
+                                                ? "border-red-500"
+                                                : "border-gray-300"
+                                    }`}
+                                    disabled={loading.provinces}
+                              >
+                                    <option value="">
+                                          -- Chọn Tỉnh/Thành phố --
+                                    </option>
+                                    {provinces?.map((province) => (
+                                          <option
+                                                key={province.ProvinceID}
+                                                value={province.ProvinceID} // Giả sử ProvinceID là number
+                                          >
+                                                {province.ProvinceName}
+                                          </option>
+                                    ))}
+                              </select>
+                              {loading.provinces && (
+                                    <div className="flex items-center mt-2">
+                                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                                          <span className="text-sm text-gray-500">
+                                                Đang tải...
+                                          </span>
+                                    </div>
+                              )}
+                              {errors.provinceId && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                          {errors.provinceId}
+                                    </p>
+                              )}
+                        </div>
 
-  // Xử lý thay đổi phường/xã
-  const handleWardChange = (e) => {
-    const wardId = e.target.value
-    const wardName = e.target.options[e.target.selectedIndex].text
-    handleAddressChange("wardId", wardId, wardName)
-  }
+                        {/* Quận/Huyện */}
+                        <div>
+                              <label className="block text-gray-700 font-medium mb-2">
+                                    Quận/Huyện{" "}
+                                    <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                    name="districtId"
+                                    value={shopAddress?.districtId || ""}
+                                    onChange={handleDistrictChange}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                          errors.districtId
+                                                ? "border-red-500"
+                                                : "border-gray-300"
+                                    }`}
+                                    disabled={
+                                          !shopAddress?.provinceId ||
+                                          loading.districts
+                                    }
+                              >
+                                    <option value="">
+                                          -- Chọn Quận/Huyện --
+                                    </option>
+                                    {districts.map((district) => (
+                                          <option
+                                                key={district.DistrictID}
+                                                value={district.DistrictID}
+                                          >
+                                                {district.DistrictName}
+                                          </option>
+                                    ))}
+                              </select>
+                              {loading.districts && (
+                                    <div className="flex items-center mt-2">
+                                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                                          <span className="text-sm text-gray-500">
+                                                Đang tải...
+                                          </span>
+                                    </div>
+                              )}
+                              {errors.districtId && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                          {errors.districtId}
+                                    </p>
+                              )}
+                        </div>
 
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Địa chỉ cửa hàng</h2>
-      <p className="text-gray-600 mb-6">
-        Vui lòng cung cấp địa chỉ chính xác của cửa hàng để khách hàng có thể tìm thấy bạn.
-      </p>
+                        {/* Phường/Xã */}
+                        <div>
+                              <label className="block text-gray-700 font-medium mb-2">
+                                    Phường/Xã{" "}
+                                    <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                    name="wardId"
+                                    value={shopAddress?.wardId || ""}
+                                    onChange={handleWardChange}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                          errors.wardId
+                                                ? "border-red-500"
+                                                : "border-gray-300"
+                                    }`}
+                                    disabled={
+                                          !shopAddress?.districtId ||
+                                          loading.wards
+                                    }
+                              >
+                                    <option value="">
+                                          -- Chọn Phường/Xã --
+                                    </option>
+                                    {wards.map((ward) => (
+                                          <option
+                                                key={ward.WardCode}
+                                                value={ward.WardCode}
+                                          >
+                                                {ward.WardName}
+                                          </option>
+                                    ))}
+                              </select>
+                              {loading.wards && (
+                                    <div className="flex items-center mt-2">
+                                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                                          <span className="text-sm text-gray-500">
+                                                Đang tải...
+                                          </span>
+                                    </div>
+                              )}
+                              {errors.wardId && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                          {errors.wardId}
+                                    </p>
+                              )}
+                        </div>
+                  </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Tỉnh/Thành phố */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Tỉnh/Thành phố <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="provinceId"
-            value={formData.provinceId}
-            onChange={handleProvinceChange}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.provinceId ? "border-red-500" : "border-gray-300"
-            }`}
-            disabled={loading.provinces}
-          >
-            <option value="">-- Chọn Tỉnh/Thành phố --</option>
-            {provinces.map((province) => (
-              <option key={province.ProvinceID} value={province.ProvinceID}>
-                {province.ProvinceName}
-              </option>
-            ))}
-          </select>
-          {loading.provinces && (
-            <div className="flex items-center mt-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-              <span className="text-sm text-gray-500">Đang tải...</span>
+                  {/* Địa chỉ chi tiết */}
+                  <div>
+                        <label className="block text-gray-700 font-medium mb-2">
+                              Địa chỉ chi tiết{" "}
+                              <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                              type="text"
+                              name="address"
+                              value={shopAddress?.address || ""}
+                              onChange={(e) =>
+                                    handleChange(e.target.name, e.target.value)
+                              }
+                              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.address
+                                          ? "border-red-500"
+                                          : "border-gray-300"
+                              }`}
+                              placeholder="Số nhà, tên đường, tòa nhà, khu vực..."
+                        />
+                        {errors.address && (
+                              <p className="text-red-500 text-sm mt-1">
+                                    {errors.address}
+                              </p>
+                        )}
+                  </div>
+
+                  {/* Địa chỉ trụ sở chính */}
+                  <div className="flex items-center mt-4">
+                        <input
+                              type="checkbox"
+                              id="isHeadquarter"
+                              name="isHeadquarter"
+                              checked={shopAddress?.isHeadquarter || false}
+                              onChange={handleChange}
+                              className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <label
+                              htmlFor="isHeadquarter"
+                              className="ml-2 text-gray-700"
+                        >
+                              Đây là địa chỉ trụ sở chính của cửa hàng
+                        </label>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-6 mt-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                              Xác nhận thông tin
+                        </h3>
+
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                              <p className="text-gray-700 mb-4">
+                                    Vui lòng kiểm tra lại thông tin địa chỉ
+                                    trước khi hoàn tất đăng ký. Địa chỉ này sẽ
+                                    được sử dụng để:
+                              </p>
+                              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                                    <li>
+                                          Hiển thị trên trang cửa hàng của bạn
+                                    </li>
+                                    <li>
+                                          Tính phí vận chuyển cho các đơn hàng
+                                    </li>
+                                    <li>
+                                          Gửi các thông báo quan trọng từ hệ
+                                          thống
+                                    </li>
+                              </ul>
+                        </div>
+
+                        {shopAddress?.provinceId &&
+                              shopAddress?.districtId &&
+                              shopAddress?.wardId &&
+                              shopAddress?.address && (
+                                    <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                          <h4 className="font-medium text-gray-800 mb-2">
+                                                Địa chỉ đã nhập:
+                                          </h4>
+                                          <p className="text-gray-700">
+                                                {shopAddress?.address || ""},{" "}
+                                                {shopAddress?.wardName || ""},{" "}
+                                                {shopAddress?.districtName ||
+                                                      ""}
+                                                ,{" "}
+                                                {shopAddress?.provinceName ||
+                                                      ""}
+                                          </p>
+                                    </div>
+                              )}
+                  </div>
+                  <div className="mt-6">
+                        <button
+                              type="button"
+                              onClick={onSubmit}
+                              className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
+                              disabled={
+                                    !shopAddress?.provinceId ||
+                                    !shopAddress?.districtId ||
+                                    !shopAddress?.wardId ||
+                                    !shopAddress?.address
+                              }
+                        >
+                              <span>Tiếp tục</span>
+                              <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 ml-2"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                              >
+                                    <path
+                                          fillRule="evenodd"
+                                          d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                                          clipRule="evenodd"
+                                    />
+                              </svg>
+                        </button>
+                  </div>
             </div>
-          )}
-          {errors.provinceId && <p className="text-red-500 text-sm mt-1">{errors.provinceId}</p>}
-        </div>
+      );
+};
 
-        {/* Quận/Huyện */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Quận/Huyện <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="districtId"
-            value={formData.districtId}
-            onChange={handleDistrictChange}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.districtId ? "border-red-500" : "border-gray-300"
-            }`}
-            disabled={!formData.provinceId || loading.districts}
-          >
-            <option value="">-- Chọn Quận/Huyện --</option>
-            {districts.map((district) => (
-              <option key={district.DistrictID} value={district.DistrictID}>
-                {district.DistrictName}
-              </option>
-            ))}
-          </select>
-          {loading.districts && (
-            <div className="flex items-center mt-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-              <span className="text-sm text-gray-500">Đang tải...</span>
-            </div>
-          )}
-          {errors.districtId && <p className="text-red-500 text-sm mt-1">{errors.districtId}</p>}
-        </div>
-
-        {/* Phường/Xã */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Phường/Xã <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="wardId"
-            value={formData.wardId}
-            onChange={handleWardChange}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.wardId ? "border-red-500" : "border-gray-300"
-            }`}
-            disabled={!formData.districtId || loading.wards}
-          >
-            <option value="">-- Chọn Phường/Xã --</option>
-            {wards.map((ward) => (
-              <option key={ward.WardCode} value={ward.WardCode}>
-                {ward.WardName}
-              </option>
-            ))}
-          </select>
-          {loading.wards && (
-            <div className="flex items-center mt-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-              <span className="text-sm text-gray-500">Đang tải...</span>
-            </div>
-          )}
-          {errors.wardId && <p className="text-red-500 text-sm mt-1">{errors.wardId}</p>}
-        </div>
-      </div>
-
-      {/* Địa chỉ chi tiết */}
-      <div>
-        <label className="block text-gray-700 font-medium mb-2">
-          Địa chỉ chi tiết <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            errors.address ? "border-red-500" : "border-gray-300"
-          }`}
-          placeholder="Số nhà, tên đường, tòa nhà, khu vực..."
-        />
-        {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-      </div>
-
-      {/* Địa chỉ trụ sở chính */}
-      <div className="flex items-center mt-4">
-        <input
-          type="checkbox"
-          id="isHeadquarter"
-          name="isHeadquarter"
-          checked={formData.isHeadquarter}
-          onChange={handleChange}
-          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-        />
-        <label htmlFor="isHeadquarter" className="ml-2 text-gray-700">
-          Đây là địa chỉ trụ sở chính của cửa hàng
-        </label>
-      </div>
-
-      <div className="border-t border-gray-200 pt-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Xác nhận thông tin</h3>
-
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-          <p className="text-gray-700 mb-4">
-            Vui lòng kiểm tra lại thông tin địa chỉ trước khi hoàn tất đăng ký. Địa chỉ này sẽ được sử dụng để:
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-gray-600">
-            <li>Hiển thị trên trang cửa hàng của bạn</li>
-            <li>Tính phí vận chuyển cho các đơn hàng</li>
-            <li>Gửi các thông báo quan trọng từ hệ thống</li>
-          </ul>
-        </div>
-
-        {formData.provinceId && formData.districtId && formData.wardId && formData.address && (
-          <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <h4 className="font-medium text-gray-800 mb-2">Địa chỉ đã nhập:</h4>
-            <p className="text-gray-700">
-              {formData.address}, {formData.wardName}, {formData.districtName}, {formData.provinceName}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default ShopAddressStep
-
+export default ShopAddressStep;

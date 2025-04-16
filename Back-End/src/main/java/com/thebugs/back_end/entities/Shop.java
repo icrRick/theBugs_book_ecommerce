@@ -74,4 +74,20 @@ public class Shop {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+
+    public Shop(String shop_slug, String name, String description, String accoutNumber, String accoutName, String bankName, String image, Double totalPayout,boolean active, boolean approve, boolean status) {
+        this.shop_slug = shop_slug;
+        this.name = name;
+        this.description = description;
+        this.accoutNumber = accoutNumber;
+        this.accoutName = accoutName;
+        this.bankName = bankName;
+        this.image = image;
+        this.active = active;
+        this.approve = approve;
+        this.status = status;
+        this.totalPayout = totalPayout;
+    }
+
 }

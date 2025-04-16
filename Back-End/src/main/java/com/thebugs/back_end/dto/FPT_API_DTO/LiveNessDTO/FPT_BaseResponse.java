@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FPT_DTO {
+public class FPT_BaseResponse {
     @JsonProperty("code")
-    private int code; // ← đổi từ int sang String
+    private String code;
+    
     private String message;
     private String warning;
 }

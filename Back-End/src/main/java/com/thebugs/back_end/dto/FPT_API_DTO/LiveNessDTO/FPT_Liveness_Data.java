@@ -13,12 +13,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties({
-        "spoof_prob", "deepfake_prob"
+        "spoof_prob", "deepfake_prob", "is_deepfake"
 })
-public class FPT_LIVENESS_DTO extends FPT_DTO {
+public class FPT_Liveness_Data extends FPT_BaseResponse {
     @JsonProperty("is_live")
     private boolean isLive;
     @JsonProperty("need_to_review")
     private boolean need_to_review;
-    private String is_deepfake;
 }
