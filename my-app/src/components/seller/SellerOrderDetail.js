@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
+import { formatCurrency } from '../../utils/Format';
 
 
 const SellerOrderDetail = () => {
@@ -183,7 +184,7 @@ const statusConfig = {
                             </h3>
                             <div className="space-y-3">
                                 <p className="text-sm text-gray-700">Phương thức: Giao hang nhanh</p>
-                                <p className="text-sm text-gray-700">Phí vận chuyển: {item?.shippingFee}</p>
+                                <p className="text-sm text-gray-700">Phí vận chuyển: {formatCurrency(item?.shippingFee)}</p>
                             </div>
                         </div>
 
@@ -248,10 +249,10 @@ const statusConfig = {
                                             <div className="text-sm text-gray-900">{product.quantityProduct}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm text-gray-900">{product.priceProduct}</div>
+                                            <div className="text-sm text-gray-900">{formatCurrency(product.priceProduct)}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-sm text-gray-900">{product.totalPriceProduct}</div>
+                                            <div className="text-sm text-gray-900">{formatCurrency(product.totalPriceProduct)}</div>
                                         </td>
                                     </tr>
                                 ))}
@@ -265,19 +266,19 @@ const statusConfig = {
                     <div className="pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center text-base text-gray-700 mb-2">
                             <span>Tạm tính:</span>
-                            <span>{item?.totalPrice}</span>
+                            <span>{formatCurrency(item?.totalPrice)}</span>
                         </div>
                         <div className="flex justify-between items-center text-base text-green-600 mb-2">
                             <span>Giảm giá:</span>
-                            <span>-{item?.totalDiscount}</span>
+                            <span>-{formatCurrency(item?.totalDiscount)}</span>
                         </div>
                         <div className="flex justify-between items-center text-base text-gray-700 mb-2">
                             <span>Phí vận chuyển:</span>
-                            <span>{item?.shippingFee}</span>
+                            <span>{formatCurrency(item?.shippingFee)}</span>
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold text-blue-600 mt-4 pt-4 border-t border-gray-200">
                             <span>Tổng cộng:</span>
-                            <span>{item?.total}</span>
+                            <span>{formatCurrency(item?.total)}</span>
                         </div>
                     </div>
                 </div>
@@ -294,21 +295,6 @@ const statusConfig = {
     );
 }
 
-const getStatusBadgeColor = (status) => {
-    switch (status) {
-        case 'Chờ duyệt':
-            return 'bg-yellow-100 text-yellow-800';
-        case 'Đã duyệt':
-            return 'bg-blue-100 text-blue-800';
-        case 'Đang giao':
-            return 'bg-purple-100 text-purple-800';
-        case 'Đã nhận':
-            return 'bg-green-100 text-green-800';
-        case 'Đã hủy':
-            return 'bg-red-100 text-red-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
-    }
-};
+
 
 export default SellerOrderDetail;

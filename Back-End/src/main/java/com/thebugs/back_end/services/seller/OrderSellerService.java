@@ -10,10 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -71,19 +68,6 @@ public class OrderSellerService {
         }
 
         // code cua tam
-        // public ArrayList<OrderSimpleDTO> getAllOrders(int page, int size, String
-        // token) {
-        // User user = userService.getUserToken(token);
-        // int shopId = user.getShop().getId();
-        // Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.DESC,
-        // "id");
-        // Page<OrderSimpleDTO> getAllListOrder = orderJPA.findOrderByShopId(shopId,
-        // pageable);
-        // return getAllListOrder.stream()
-        // .collect(Collectors.toCollection(ArrayList::new));
-
-        // }
-
         public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
                         Integer orderStatusName, // Đảm bảo là Integer
                         String nameUser, Pageable pageable) {
@@ -109,30 +93,11 @@ public class OrderSellerService {
 
                 if (startDate == null && endDate == null && orderStatusName == null
                                 && (nameUser == null || nameUser.trim().isEmpty())) {
-                        // Không có bộ lọc, đếm tất cả đơn hàng
                         return orderJPA.countByShopId(shopId);
                 } else {
-                        // Có bộ lọc, đếm đơn hàng theo tiêu chí
                         return orderJPA.countBySearch(shopId, startDate, endDate, orderStatusName, nameUser);
                 }
         }
-
-        // public int getTotalItems(String token) {
-        // User user = userService.getUserToken(token);
-        // int shopId = user.getShop().getId();
-        // return orderJPA.countByShopId(shopId);
-        // }
-
-        // public int getTotalItemsBySearch(String token, Date startDate, Date endDate,
-        // Integer orderStatusName, // Đảm bảo
-        // // là
-        // // Integer
-        // String nameUser) {
-        // User user = userService.getUserToken(token);
-        // int shopId = user.getShop().getId();
-        // return orderJPA.countBySearch(shopId, startDate, endDate, orderStatusName,
-        // nameUser);
-        // }
 
         public Object getOrderDetail(int orderId, String token) {
                 int shopId = userService.getUserToken(token).getShop().getId();

@@ -5,7 +5,7 @@ import { formatCurrency } from '../../utils/Format';
 
 
 const OrderDetail = () => {
-    const { orderId } = useParams(); 
+    const { id } = useParams(); 
     const [item, setItem] = useState(null); 
     const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null); 
@@ -33,10 +33,10 @@ const OrderDetail = () => {
     };
 
     useEffect(() => {
-        if (orderId) {
-            fetchOrderDetails(orderId); 
+        if (id) {
+            fetchOrderDetails(id); 
         }
-    }, [orderId]);
+    }, [id]);
 if(item === null) {
     return (
         <div className="flex items-center justify-center h-screen">
