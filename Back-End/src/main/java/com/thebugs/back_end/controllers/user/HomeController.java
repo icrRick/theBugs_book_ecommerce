@@ -2,13 +2,8 @@ package com.thebugs.back_end.controllers.user;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.thebugs.back_end.dto.HomeProductDTO;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.super_admin.GenreService;
 import com.thebugs.back_end.services.user.ProductHomeService;
-
-import java.util.ArrayList;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -22,64 +17,147 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 public class HomeController {
 
-        @Autowired
-        private ProductHomeService productHomeService;
-
-        @Autowired
-        private GenreService genreService;
-
         // @Autowired
         // private ReviewService reviewService; // Thêm ReviewService
 
-        @GetMapping("/home")
-        public ResponseEntity<ResponseData> getPageHome1(@RequestParam(defaultValue = "1") int page) {
+        // @GetMapping("/home")
+        // public ResponseEntity<ResponseData> getPageHome1(@RequestParam(defaultValue =
+        // "1") int page) {
+        // ResponseData responseData = new ResponseData();
+        // Pageable pageable = PageRequest.of(page - 1, 12,
+        // Sort.by(Sort.Order.desc("id")));
+        // try {
+        // responseData.setStatus(true);
+        // responseData.setMessage("Load thành công");
+        // List<HomeProductDTO> homeProductDTOs =
+        // productHomeService.getProducts("defaultCategory",
+        // pageable);
+        // responseData.setData(homeProductDTOs);
+        // return ResponseEntity.ok(responseData);
+        // } catch (Exception e) {
+        // responseData.setStatus(false);
+        // responseData.setMessage("Lỗi " + e.getMessage());
+        // responseData.setData(null);
+        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        // }
+        // }
+        @Autowired
+        private ProductHomeService homeService;
+
+        @GetMapping("/home/products")
+        public ResponseEntity<ResponseData> getHomeProducts(
+                        @RequestParam(defaultValue = "1") int page,
+                        @RequestParam(defaultValue = "") String filter) {
                 ResponseData responseData = new ResponseData();
                 Pageable pageable = PageRequest.of(page - 1, 12, Sort.by(Sort.Order.desc("id")));
                 try {
                         responseData.setStatus(true);
-                        responseData.setMessage("Load thành công");
-                        ArrayList<HomeProductDTO> homeProductDTOs = productHomeService.AllProduct(pageable);
-                        responseData.setData(homeProductDTOs);
+                        responseData.setMessage("Load sản phẩm thành công");
+                        responseData.setData(homeService.getProducts(filter, pageable));
                         return ResponseEntity.ok(responseData);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                         responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
+                        responseData.setMessage("Lỗi: " + e.getMessage());
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
         }
 
-        @GetMapping("/genre/list")
-        public ResponseEntity<ResponseData> getAllGenre() {
+        @GetMapping("/home/authors")
+        public ResponseEntity<ResponseData> getFeaturedAuthors() {
                 ResponseData responseData = new ResponseData();
                 try {
                         responseData.setStatus(true);
-                        responseData.setMessage("Load thành công");
-                        responseData.setData(genreService.getAllGenreDTOs());
+                        responseData.setMessage("Load tác giả thành công");
+                        responseData.setData(homeService.getFeaturedAuthors());
                         return ResponseEntity.ok(responseData);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                         responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
+                        responseData.setMessage("Lỗi: " + e.getMessage());
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                 }
         }
 
+        @GetMapping("/home/genres")
+        public ResponseEntity<ResponseData> getGenres() {
+                ResponseData responseData = new ResponseData();
+                try {
+                        responseData.setStatus(true);
+                        responseData.setMessage("Load danh mục thành công");
+                        responseData.setData(homeService.getGenres());
+                        return ResponseEntity.ok(responseData);
+                } catch (IllegalArgumentException e) {
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi: " + e.getMessage());
+                        responseData.setData(null);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                }
+        }
+
+        // @GetMapping("/home/promotions")
+        // public ResponseEntity<ResponseData> getActivePromotions() {
+        // ResponseData responseData = new ResponseData();
+        // try {
+        // responseData.setStatus(true);
+        // responseData.setMessage("Load khuyến mãi thành công");
+        // responseData.setData(homeService.getActivePromotions());
+        // return ResponseEntity.ok(responseData);
+        // } catch (IllegalArgumentException e) {
+        // responseData.setStatus(false);
+        // responseData.setMessage("Lỗi: " + e.getMessage());
+        // responseData.setData(null);
+        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        // }
+        // }
+
+        @GetMapping("/home/shops/flash-sale")
+        public ResponseEntity<ResponseData> getFlashSaleShops() {
+                ResponseData responseData = new ResponseData();
+                try {
+                        responseData.setStatus(true);
+                        responseData.setMessage("Load cửa hàng flash sale thành công");
+                        responseData.setData(homeService.getFlashSaleShops());
+                        return ResponseEntity.ok(responseData);
+                } catch (IllegalArgumentException e) {
+                        responseData.setStatus(false);
+                        responseData.setMessage("Lỗi: " + e.getMessage());
+                        responseData.setData(null);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                }
+        }
+        // @GetMapping("/genre/list")
+        // public ResponseEntity<ResponseData> getAllGenre() {
+        // ResponseData responseData = new ResponseData();
+        // try {
+        // responseData.setStatus(true);
+        // responseData.setMessage("Load thành công");
+        // responseData.setData(genreService.getAllGenreDTOs());
+        // return ResponseEntity.ok(responseData);
+        // } catch (Exception e) {
+        // responseData.setStatus(false);
+        // responseData.setMessage("Lỗi " + e.getMessage());
+        // responseData.setData(null);
+        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        // }
+        // }
+
         // // Endpoint mới để lấy review theo productId
         // @GetMapping("/reviews")
-        // public ResponseEntity<ResponseData> getReviewsByProductId(@RequestParam("productId") Integer productId) {
-        //         ResponseData responseData = new ResponseData();
-        //         try {
-        //                 List<ReviewDTO> reviews = reviewService.getReviewDTOsByProductId(productId);
-        //                 responseData.setStatus(true);
-        //                 responseData.setMessage("Load reviews thành công");
-        //                 responseData.setData(reviews);
-        //                 return ResponseEntity.ok(responseData);
-        //         } catch (Exception e) {
-        //                 responseData.setStatus(false);
-        //                 responseData.setMessage("Lỗi " + e.getMessage());
-        //                 responseData.setData(null);
-        //                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-        //         }
+        // public ResponseEntity<ResponseData>
+        // getReviewsByProductId(@RequestParam("productId") Integer productId) {
+        // ResponseData responseData = new ResponseData();
+        // try {
+        // List<ReviewDTO> reviews = reviewService.getReviewDTOsByProductId(productId);
+        // responseData.setStatus(true);
+        // responseData.setMessage("Load reviews thành công");
+        // responseData.setData(reviews);
+        // return ResponseEntity.ok(responseData);
+        // } catch (Exception e) {
+        // responseData.setStatus(false);
+        // responseData.setMessage("Lỗi " + e.getMessage());
+        // responseData.setData(null);
+        // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        // }
         // }
 }

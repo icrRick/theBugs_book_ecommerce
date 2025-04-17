@@ -1,5 +1,6 @@
 package com.thebugs.back_end.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.thebugs.back_end.dto.HomeAuthorDTO;
 import com.thebugs.back_end.entities.Author;
 
 public interface AuthorJPA extends JpaRepository<Author, Integer> {
@@ -20,4 +22,11 @@ public interface AuthorJPA extends JpaRepository<Author, Integer> {
         @Query("SELECT g FROM Author g WHERE g.name = ?2 AND (g.id <> ?1 OR ?1 IS NULL)")
         Optional<Author> findByNameExist(Integer id, String name);
 
+        @Query("SELECT new com.thebugs.back_end.dto.HomeAuthorDTO(" +
+                        "a.id, a.name, a.urlImage, a.urlLink, CAST(COUNT(pa.product.id) AS integer)) " +
+                        "FROM Author a " +
+                        "LEFT JOIN ProductAuthor pa ON a.id = pa.author.id " +
+                        "GROUP BY a.id, a.name, a.urlImage, a.urlLink " +
+                        "ORDER BY COUNT(pa.product.id) DESC")
+        List<HomeAuthorDTO> findFeaturedAuthors();
 }

@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.thebugs.back_end.dto.HomeProductDTO;
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.dto.ProductDetailDTO;
 import com.thebugs.back_end.entities.Genre;
@@ -24,21 +23,6 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
 
         @Query("SELECT g FROM Product g WHERE g.active = ?1")
         Page<Product> PageProductAllByActive(boolean active, Pageable pageable);
-
-        @Query("SELECT new com.thebugs.back_end.dto.HomeProductDTO(" +
-                        "p.id, p.name, p.price, " +
-                        "(SELECT i.imageName FROM Image i WHERE i.product.id = p.id AND i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id)), "
-                        +
-                        "COALESCE(ROUND(AVG(r.rate), 1), 0), " +
-                        "pr.promotionValue) " +
-                        "FROM Product p " +
-                        "LEFT JOIN OrderItem o ON o.product.id = p.id " +
-                        "LEFT JOIN Review r ON r.orderItem.id = o.id " +
-                        "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
-                        "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id " +
-                        "WHERE p.active = true " +
-                        "GROUP BY p.id, p.name, p.price, pr.promotionValue")
-        Page<HomeProductDTO> getHomeProducts(Pageable pageable);
 
         @Query("SELECT new com.thebugs.back_end.dto.ProductDetailDTO(" +
                         "p.id, p.name, p.weight ," +

@@ -8,12 +8,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class HomeProductDTO {
-
         private Integer productId;
         private String productName;
         private Double productPrice;
         private String productImage;
         private Double rate;
         private Double promotionValue;
-
+        private Boolean isNew;
+        private Double discount;
+        private String authorName;
 }
