@@ -40,6 +40,8 @@ public class OrderMapper {
                                                                                                       // tiên
             productOrderDTO.setPriceProduct(orderItem.getPrice());
             productOrderDTO.setQuantityProduct(orderItem.getQuantity());
+            productOrderDTO.setShopId(orderItem.getProduct().getShop().getId());
+            productOrderDTO.setShopName(orderItem.getProduct().getShop().getName());
             productOrderDTOs.add(productOrderDTO);
         }
         return productOrderDTOs;

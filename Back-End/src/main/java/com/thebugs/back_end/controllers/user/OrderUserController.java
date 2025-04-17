@@ -4,6 +4,9 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,21 +33,35 @@ public class OrderUserController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/all")
-    public ResponseEntity<ResponseData> getAllListOrder(@RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestHeader("Authorization") String authorizationHeader) {
+    @GetMapping("")
+    public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) Integer statusOrder,
+            @RequestParam(defaultValue = "1") int page) {
         try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date start = startDate != null ? new java.sql.Date(sdf.parse(startDate).getTime()) : null;
+            Date end = endDate != null ? new java.sql.Date(sdf.parse(endDate).getTime() + 86399999) : null;
+            Pageable pageable = PageRequest.of(page - 1, 10, Sort.Direction.DESC, "id");
             ResponseDataPagination responseDataPagination = new ResponseDataPagination();
-            responseDataPagination.setObjects(userOrderService.getAll(authorizationHeader, page, size));
-            responseDataPagination.setTotalItems(userOrderService.getTotalItemsOrderByUserId(authorizationHeader));
+            responseDataPagination.setObjects(
+                    userOrderService.findOrders(authorizationHeader, start, end, statusOrder, userName,
+                            pageable));
+            responseDataPagination.setTotalItems(
+                    userOrderService.countOrders(authorizationHeader, start, end, statusOrder, userName));
+            String message = (start == null && end == null && statusOrder == null
+                    && (userName == null || userName.isEmpty()))
+                            ? "Load danh sách thành công"
+                            : "Tìm kiếm thành công";
             return ResponseEntity.ok()
-                    .body(new ResponseData(true, "Lấy danh sách đơn hàng thành công", responseDataPagination));
+                    .body(new ResponseData(true, message, responseDataPagination));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ResponseData(false, "Lỗi khi lấy danh sách đơn hàng", null));
         }
-
     }
 
     @GetMapping("/{orderId}")
@@ -61,33 +78,6 @@ public class OrderUserController {
             responseData.setStatus(false);
             responseData.setMessage(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-        }
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(required = false) String startDate, // Đổi thành String
-            @RequestParam(required = false) String endDate, // Đổi thành String
-            @RequestParam(required = false) String userName,
-            @RequestParam(required = false) Integer statusOrder,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Date start = startDate != null ? new java.sql.Date(sdf.parse(startDate).getTime()) : null;
-            Date end = endDate != null ? new java.sql.Date(sdf.parse(endDate).getTime() + 86399999) : null;
-            ResponseDataPagination responseDataPagination = new ResponseDataPagination();
-            responseDataPagination.setObjects(
-                    userOrderService.searchOrderUser(authorizationHeader, start, end, statusOrder, userName,
-                            page, size));
-            responseDataPagination.setTotalItems(
-                    userOrderService.getTotalItemsBySearch(authorizationHeader, start, end, statusOrder, userName));
-            return ResponseEntity.ok()
-                    .body(new ResponseData(true, "Lấy danh sách đơn hàng thành công", responseDataPagination));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseData(false, "Lỗi khi lấy danh sách đơn hàng", null));
         }
     }
 
