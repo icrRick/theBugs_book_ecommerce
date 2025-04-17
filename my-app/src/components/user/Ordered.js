@@ -165,6 +165,8 @@ const OrdersSeller = () => {
           size: pageSize,
         },
       })
+      console.log("RESPONSE");
+      console.log(response);
       const { data, message } = response.data
       if (response.status === 200) {
         const ordersList = data.objects || []

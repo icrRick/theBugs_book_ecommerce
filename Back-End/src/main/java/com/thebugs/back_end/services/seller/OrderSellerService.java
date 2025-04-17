@@ -130,7 +130,7 @@ public class OrderSellerService {
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
                 double discountVoucher = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
                 double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
-                double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
+                double shippingFee = order.getShippingFee();
                 double totalOrderWithDiscount = order.getOrderItems().stream()
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discountVoucher
                                 / 100;

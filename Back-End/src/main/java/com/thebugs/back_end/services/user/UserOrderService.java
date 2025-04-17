@@ -18,11 +18,13 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.OrderDTO;
 import com.thebugs.back_end.dto.OrderSimpleDTO;
+import com.thebugs.back_end.dto.ProductOrderDTO;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderStatus;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
+import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
 
 @Service
@@ -56,7 +58,9 @@ public class UserOrderService {
         Page<OrderSimpleDTO> page;
         if (startDate == null && endDate == null && orderStatusName == null
                 && (nameUser == null || nameUser.trim().isEmpty())) {
+            ColorUtil.print(ColorUtil.RED, "ServiceOrder");
             page = orderJPA.findOrderByUserId(userId, pageable);
+            ColorUtil.print(ColorUtil.RED, page.toString());
         } else {
             page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate, endDate,
                     orderStatusName,
@@ -71,6 +75,8 @@ public class UserOrderService {
         int userId = userService.getUserToken(token).getId();
         if (startDate == null && endDate == null && orderStatusName == null
                 && (nameUser == null || nameUser.trim().isEmpty())) {
+                    System.out.println("USER ID");
+                    System.out.println(userId);
             return orderJPA.countOrderByUserId(userId);
         }
 
@@ -189,7 +195,7 @@ public class UserOrderService {
                     productOrderDTO.setProductImage(
                             item.getProduct().getImages().get(0).getImageName());// lấy ảnh
                                                                                  // đầu
-                                                                                 // tiên
+                                                                                   // tiên
                     productOrderDTO.setPriceProduct(item.getPrice());
                     productOrderDTO.setQuantityProduct(item.getQuantity());
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
@@ -203,7 +209,7 @@ public class UserOrderService {
                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
         double discount = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
         double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
-        double shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0;
+        double shippingFee = order.getShippingFee();
         double totalDiscount = order.getOrderItems().stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum() * discount / 100;
 
