@@ -71,6 +71,9 @@ public class Shop {
     private List<Promotion> promotions;
     @OneToMany(mappedBy = "shop")
     private List<Order> orders;
+    @OneToMany(mappedBy = "shop")
+    private List<ReportShop> reportShops;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

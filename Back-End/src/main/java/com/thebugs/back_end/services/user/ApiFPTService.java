@@ -1,8 +1,5 @@
 package com.thebugs.back_end.services.user;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

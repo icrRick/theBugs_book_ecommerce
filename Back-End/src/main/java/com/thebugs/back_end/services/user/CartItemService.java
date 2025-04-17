@@ -63,7 +63,7 @@ public class CartItemService {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);
                     shopInfo.put("shopName", shopName);
-                    shopInfo.put("vouchers", voucherService.findByShopId(id));
+                    shopInfo.put("vouchers", voucherService.findByShopIdNotInOrderByUser(id,user.getId()));
                     shopInfo.put("products", new ArrayList<Map<String, Object>>());
                     return shopInfo;
                 });
