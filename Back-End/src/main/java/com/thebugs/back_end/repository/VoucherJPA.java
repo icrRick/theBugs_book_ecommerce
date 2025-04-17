@@ -13,7 +13,7 @@ import com.thebugs.back_end.entities.Voucher;
 
 public interface VoucherJPA extends JpaRepository<Voucher, Integer> {
 
-        @Query("SELECT v FROM Voucher v WHERE v.id=?1 AND v.shop.id=?2")
+        @Query("SELECT v FROM Voucher v WHERE v.id=?1 AND v.shop.id=?2 ")
         Optional<Voucher> getVoucherIdByShopId(Integer Id, Integer shopId);
 
         @Query("SELECT p FROM Voucher p WHERE " +
@@ -30,5 +30,8 @@ public interface VoucherJPA extends JpaRepository<Voucher, Integer> {
 
         @Query("SELECT v FROM Voucher v WHERE v.shop.id = ?1 AND v.active = true AND v.quantity > 0 AND v.startDate <= CURRENT_DATE AND v.expireDate >= CURRENT_DATE")
         List<Voucher> findByShopId(Integer shopId);
+
+        @Query("SELECT v FROM Voucher v WHERE v.shop.id=?1 AND v.quantity > 0 AND v.active=true AND  CURRENT_TIMESTAMP BETWEEN v.startDate AND v.expireDate  AND v.id NOT IN (SELECT o.voucher.id FROM Order o WHERE o.user.id=?2 AND o.voucher IS NOT NULL)")
+        List<Voucher> findByShopIdNotInOrderByUser(Integer shopId,Integer userId);
 
 }

@@ -179,6 +179,7 @@ const Products = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 truncate">Quản lý sản phẩm</h1>
+                  <p className="text-gray-500 text-sm">Quản lý sản phẩm trong hệ thống</p>
                 </div>
               </div>
             </div>

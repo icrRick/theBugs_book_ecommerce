@@ -460,51 +460,54 @@ const Cart = () => {
                             {/* Footer của shop */}
                             <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                                 <div className="flex flex-col space-y-4">
-
-
-                                    <div className="flex items-center space-x-2">
-                                        <button
-                                            onClick={() => {
-                                                const currentShop = cart.find(s => s.shopId === shop.shopId);
-                                                const hasCheckedProducts = currentShop.products.some(p => p.checked);
-                                                if (hasCheckedProducts) {
-                                                    setSelectedShopId(shop.shopId);
-                                                    setShowVoucherModal(true);
-                                                }
-                                            }}
-                                            disabled={!shop.products.some(p => p.checked)}
-                                            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-sm ${shop.products.some(p => p.checked)
-                                                ? 'text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100'
-                                                : 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                                                <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-                                            </svg>
-                                            <span>{selectedVouchers[shop.shopId] ? 'Đổi mã khác' : 'Chọn mã giảm giá'}</span>
-                                        </button>
-                                        {selectedVouchers[shop.shopId] && (
-                                            <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
-                                                <span className="text-sm font-medium">
-                                                    Mã: {selectedVouchers[shop.shopId].codeVoucher} <span className="text-red-600 font-medium">(-{formatCurrency(calculateVoucherDiscount(
-                                                        shop.products.reduce((total, product) => total + (product.productPrice * product.productQuantity), 0),
-                                                        selectedVouchers[shop.shopId]
-                                                    ))})</span>
-                                                </span>
-                                                <button
-                                                    onClick={() => handleRemoveVoucher(shop.shopId)}
-                                                    className="text-gray-400 hover:text-red-500 transition-colors duration-200"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-
+                                    {
+                                        shop.vouchers.length > 0 && (
+                                            <>
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const currentShop = cart.find(s => s.shopId === shop.shopId);
+                                                            const hasCheckedProducts = currentShop.products.some(p => p.checked);
+                                                            if (hasCheckedProducts) {
+                                                                setSelectedShopId(shop.shopId);
+                                                                setShowVoucherModal(true);
+                                                            }
+                                                        }}
+                                                        disabled={!shop.products.some(p => p.checked)}
+                                                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors duration-200 text-sm ${shop.products.some(p => p.checked)
+                                                            ? 'text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100'
+                                                            : 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                                            }`}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                                                            <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span>{selectedVouchers[shop.shopId] ? 'Đổi mã khác' : 'Chọn mã giảm giá'}</span>
+                                                    </button>
+                                                    {selectedVouchers[shop.shopId] && (
+                                                        <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
+                                                            <span className="text-sm font-medium">
+                                                                Mã: {selectedVouchers[shop.shopId].codeVoucher} <span className="text-red-600 font-medium">(-{formatCurrency(calculateVoucherDiscount(
+                                                                    shop.products.reduce((total, product) => total + (product.productPrice * product.productQuantity), 0),
+                                                                    selectedVouchers[shop.shopId]
+                                                                ))})</span>
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleRemoveVoucher(shop.shopId)}
+                                                                className="text-gray-400 hover:text-red-500 transition-colors duration-200"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                            </>
+                                        )
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -527,13 +530,13 @@ const Cart = () => {
                                         Giảm giá trực tiếp:
                                     </span>
                                     <span className="text-sm font-medium text-green-600">
-                                        -{formatCurrency(cart.reduce((total, shop) => 
-                                            total + shop.products.reduce((shopTotal, product) => 
-                                                product.checked && product.productPromotionValue > 0 
+                                        -{formatCurrency(cart.reduce((total, shop) =>
+                                            total + shop.products.reduce((shopTotal, product) =>
+                                                product.checked && product.productPromotionValue > 0
                                                     ? shopTotal + (product.productPrice * product.productPromotionValue / 100 * product.productQuantity)
                                                     : shopTotal
-                                            , 0)
-                                        , 0))}
+                                                , 0)
+                                            , 0))}
                                     </span>
                                 </div>
                             </div>
