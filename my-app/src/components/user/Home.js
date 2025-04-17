@@ -11,6 +11,7 @@ import "swiper/css/effect-coverflow"
 import "../../assets/css/home.css"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import axios from "axios"
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("popular")
@@ -20,6 +21,12 @@ const Home = () => {
     seconds: 0,
   })
   const [isVisible, setIsVisible] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [featuredAuthors, setFeaturedAuthors] = useState([])
+  const [genres, setGenres] = useState([])
+  const [products, setProducts] = useState([])
+  const [promotions, setPromotions] = useState([])
+  const [flashSaleShops, setFlashSaleShops] = useState([])
 
   // Effect for countdown timer
   useEffect(() => {
@@ -46,13 +53,130 @@ const Home = () => {
     }
 
     window.addEventListener("scroll", handleScroll)
-    // Trigger once on load
     handleScroll()
 
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Dữ liệu mẫu cho banner
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Fetch products
+        const productsResponse = await axios.get("http://localhost:8080/home/products?page=1&filter=")
+        const productsData = productsResponse.data.data.map(product => ({
+          id: product.productId,
+          name: product.productName,
+          price: product.productPrice,
+          images: [{ image_name: product.productImage || "/placeholder.svg" }],
+          authors: product.authorName ? [{ name: product.authorName }] : [],
+          promotions: product.promotionValue ? [{ promotion_value: product.promotionValue }] : [],
+          reviews: product.rate ? [{ rate: product.rate }] : [],
+          is_new: product.isNew,
+          discount: product.discount,
+          is_bestseller: product.promotionValue || product.isNew // Giả định bestseller
+        }))
+
+        // Fetch authors
+        const authorsResponse = await axios.get("http://localhost:8080/home/authors")
+        const authorsData = authorsResponse.data.data
+
+        // Fetch genres
+        const genresResponse = await axios.get("http://localhost:8080/home/genres")
+        const genresData = genresResponse.data.data
+
+        // Fetch flash sale shops
+        const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
+        const shopsData = shopsResponse.data.data
+
+        // Mock promotions (since endpoint is commented out)
+        const mockPromotions = [
+          {
+            id: 1,
+            title: "Giảm 20% cho đơn hàng đầu tiên",
+            code: "WELCOME20",
+            expiry: "30/04/2025",
+            backgroundColor: "bg-gradient-to-r from-blue-500 to-purple-600",
+          },
+          {
+            id: 2,
+            title: "Miễn phí vận chuyển",
+            code: "FREESHIP",
+            expiry: "15/05/2025",
+            backgroundColor: "bg-gradient-to-r from-emerald-500 to-teal-600",
+          },
+          {
+            id: 3,
+            title: "Giảm 50K cho đơn từ 300K",
+            code: "SAVE50K",
+            expiry: "10/05/2025",
+            backgroundColor: "bg-gradient-to-r from-orange-500 to-red-600",
+          },
+        ]
+
+        setProducts(productsData)
+        setFeaturedAuthors(authorsData)
+        setGenres(genresData)
+        setFlashSaleShops(shopsData)
+        setPromotions(mockPromotions)
+        setLoading(false)
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // Helper function to get product image
+  const getProductImage = (product) => {
+    if (!product.images || product.images.length === 0) {
+      return "/placeholder.svg"
+    }
+    return product.images[0].image_name
+  }
+
+  // Helper function to calculate discounted price
+  const calculateDiscountedPrice = (product) => {
+    if (!product.promotions || product.promotions.length === 0) {
+      return product.price
+    }
+    const discount = product.promotions[0].promotion_value
+    return product.price - (product.price * discount) / 100
+  }
+
+  // Helper function to get average rating
+  const getAverageRating = (product) => {
+    if (!product.reviews || product.reviews.length === 0) {
+      return 0
+    }
+    const sum = product.reviews.reduce((total, review) => total + review.rate, 0)
+    return (sum / product.reviews.length).toFixed(1)
+  }
+
+  // Filter products based on tab
+  const filteredProducts = () => {
+    switch (activeTab) {
+      case "popular":
+        return products.filter((product) => product.is_bestseller)
+      case "new":
+        return products.filter((product) => product.is_new)
+      case "sale":
+        return products
+          .filter((product) => product.promotions && product.promotions.length > 0)
+          .sort((a, b) => {
+            const discountA = a.promotions[0].promotion_value
+            const discountB = b.promotions[0].promotion_value
+            return discountB - discountA
+          })
+      default:
+        return products
+    }
+  }
+
+  // Mock data for banner
   const bannerSlides = [
     {
       id: 1,
@@ -83,239 +207,7 @@ const Home = () => {
     },
   ]
 
-  // Dữ liệu mẫu cho danh mục
-  const categories = [
-    {
-      id: 1,
-      name: "Văn học Việt Nam",
-      image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 120,
-      color: "from-pink-500 to-rose-500",
-    },
-    {
-      id: 2,
-      name: "Kinh tế - Quản lý",
-      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 85,
-      color: "from-blue-500 to-indigo-600",
-    },
-    {
-      id: 3,
-      name: "Kỹ năng sống",
-      image: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 64,
-      color: "from-amber-500 to-orange-600",
-    },
-    {
-      id: 4,
-      name: "Sách thiếu nhi",
-      image:
-        "https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 92,
-      color: "from-emerald-500 to-green-600",
-    },
-    {
-      id: 5,
-      name: "Sách giáo khoa",
-      image:
-        "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 45,
-      color: "from-purple-500 to-violet-600",
-    },
-    {
-      id: 6,
-      name: "Sách ngoại ngữ",
-      image:
-        "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      count: 78,
-      color: "from-cyan-500 to-teal-600",
-    },
-  ]
-
-  // Dữ liệu mẫu cho sản phẩm
-  const products = [
-    {
-      id: 1,
-      name: "Đắc Nhân Tâm",
-      image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      author: "Dale Carnegie",
-      shop: "Nhà sách Phương Nam",
-      rate: 4.8,
-      price: 150000,
-      discountPrice: 120000,
-      stock: 50,
-      sold: 1200,
-      isNew: true,
-      isBestseller: true,
-      badge: "Bán chạy #1",
-    },
-    {
-      id: 2,
-      name: "Nhà Giả Kim",
-      image:
-        "https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      author: "Paulo Coelho",
-      shop: "Fahasa",
-      rate: 4.9,
-      price: 120000,
-      discountPrice: 95000,
-      stock: 30,
-      sold: 980,
-      isNew: false,
-      isBestseller: true,
-      badge: "Giảm 20%",
-    },
-    {
-      id: 3,
-      name: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-      image:
-        "https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      author: "Rosie Nguyễn",
-      shop: "Tiki Trading",
-      rate: 4.5,
-      price: 90000,
-      discountPrice: 76000,
-      stock: 45,
-      sold: 850,
-      isNew: false,
-      isBestseller: true,
-    },
-    {
-      id: 4,
-      name: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh",
-      image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      author: "Nguyễn Nhật Ánh",
-      shop: "Nhà sách Phương Nam",
-      rate: 4.7,
-      price: 85000,
-      discountPrice: 68000,
-      stock: 60,
-      sold: 750,
-      isNew: false,
-      isBestseller: true,
-    },
-    {
-      id: 5,
-      name: "Sapiens: Lược Sử Loài Người",
-      image:
-        "https://images.unsplash.com/photo-1535398089889-dd807df1dfaa?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      author: "Yuval Noah Harari",
-      shop: "Fahasa",
-      rate: 4.9,
-      price: 220000,
-      discountPrice: 189000,
-      stock: 25,
-      sold: 620,
-      isNew: true,
-      isBestseller: false,
-      badge: "Mới",
-    },
-  ]
-
-  // Dữ liệu mẫu cho bộ sưu tập
-  const collections = [
-    {
-      id: 1,
-      name: "Sách văn học kinh điển",
-      image:
-        "https://images.unsplash.com/photo-1476275466078-4007374efbbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
-      count: 45,
-    },
-    {
-      id: 2,
-      name: "Sách doanh nhân",
-      image:
-        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
-      count: 32,
-    },
-    {
-      id: 3,
-      name: "Sách tâm lý học",
-      image:
-        "https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
-      count: 28,
-    },
-    {
-      id: 4,
-      name: "Sách khoa học",
-      image:
-        "https://images.unsplash.com/photo-1532153975070-2e9ab71f1b14?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80",
-      count: 36,
-    },
-  ]
-
-  // Dữ liệu mẫu cho tác giả
-  const authors = [
-    {
-      id: 1,
-      name: "Nguyễn Nhật Ánh",
-      image:
-        "https://images.unsplash.com/photo-1564106888495-9a5d3a3e0e0e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 45,
-    },
-    {
-      id: 2,
-      name: "Dale Carnegie",
-      image:
-        "https://images.unsplash.com/photo-1566753323558-f4e0952af115?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 12,
-    },
-    {
-      id: 3,
-      name: "Paulo Coelho",
-      image:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 28,
-    },
-    {
-      id: 4,
-      name: "J.K. Rowling",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 15,
-    },
-    {
-      id: 5,
-      name: "Adam Khoo",
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 8,
-    },
-    {
-      id: 6,
-      name: "Rosie Nguyễn",
-      image:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-      bookCount: 5,
-    },
-  ]
-
-  // Dữ liệu mẫu cho khuyến mãi
-  const promotions = [
-    {
-      id: 1,
-      title: "Giảm 20% cho đơn hàng đầu tiên",
-      code: "WELCOME20",
-      expiry: "30/04/2025",
-      backgroundColor: "bg-gradient-to-r from-blue-500 to-purple-600",
-    },
-    {
-      id: 2,
-      title: "Miễn phí vận chuyển",
-      code: "FREESHIP",
-      expiry: "15/05/2025",
-      backgroundColor: "bg-gradient-to-r from-emerald-500 to-teal-600",
-    },
-    {
-      id: 3,
-      title: "Giảm 50K cho đơn từ 300K",
-      code: "SAVE50K",
-      expiry: "10/05/2025",
-      backgroundColor: "bg-gradient-to-r from-orange-500 to-red-600",
-    },
-  ]
-
-  // Dữ liệu mẫu cho đánh giá
+  // Mock data for testimonials
   const testimonials = [
     {
       id: 1,
@@ -343,24 +235,31 @@ const Home = () => {
     },
   ]
 
-  // Lọc sản phẩm theo tab
-  const filteredProducts = () => {
-    switch (activeTab) {
-      case "popular":
-        return products.filter((product) => product.isBestseller)
-      case "new":
-        return products.filter((product) => product.isNew)
-      case "sale":
-        return products
-          .sort((a, b) => {
-            const discountA = (a.price - a.discountPrice) / a.price
-            const discountB = (b.price - b.discountPrice) / b.price
-            return discountB - discountA
-          })
-          .slice(0, 5)
-      default:
-        return products
-    }
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-[500px] bg-gray-200 rounded-2xl mb-12"></div>
+          <div className="bg-gray-200 rounded-2xl p-6 mb-12 h-80"></div>
+          <div className="mb-12">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="h-40 bg-gray-200 rounded-xl"></div>
+              ))}
+            </div>
+          </div>
+          <div className="mb-12">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {[...Array(5)].map((_, index) => (
+                <div key={index} className="h-64 bg-gray-200 rounded-xl"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -420,10 +319,10 @@ const Home = () => {
         </Swiper>
       </section>
 
-      {/* Flash Sale Section */}
+      {/* Flash Sale Section - Shop Specific */}
       <section className="mb-12 overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-r from-red-600 to-orange-500 rounded-2xl p-6 md:p-8 shadow-xl">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl p-6 md:p-8 shadow-xl">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
               <div className="flex items-center mb-4 md:mb-0">
                 <svg
@@ -438,14 +337,14 @@ const Home = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <h2 className="text-3xl md:text-4xl font-bold text-white">Flash Sale</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-white">Flash Sale Shops</h2>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-white text-sm">Kết thúc sau:</div>
                 <div className="flex space-x-2">
                   <div className="bg-white rounded-lg w-12 h-12 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-xl font-bold text-red-600">
+                      <div className="text-xl font-bold text-blue-600">
                         {countdown.hours.toString().padStart(2, "0")}
                       </div>
                       <div className="text-xs text-gray-500">Giờ</div>
@@ -453,7 +352,7 @@ const Home = () => {
                   </div>
                   <div className="bg-white rounded-lg w-12 h-12 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-xl font-bold text-red-600">
+                      <div className="text-xl font-bold text-blue-600">
                         {countdown.minutes.toString().padStart(2, "0")}
                       </div>
                       <div className="text-xs text-gray-500">Phút</div>
@@ -461,7 +360,7 @@ const Home = () => {
                   </div>
                   <div className="bg-white rounded-lg w-12 h-12 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-xl font-bold text-red-600">
+                      <div className="text-xl font-bold text-blue-600">
                         {countdown.seconds.toString().padStart(2, "0")}
                       </div>
                       <div className="text-xs text-gray-500">Giây</div>
@@ -491,50 +390,56 @@ const Home = () => {
                 autoplay={{ delay: 3000 }}
                 className="flash-sale-swiper"
               >
-                {products.map((product) => (
-                  <SwiperSlide key={product.id}>
-                    <div className="bg-white rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative group">
-                      <div className="relative">
-                        <Link to={`/product-detail/${product.id}`}>
+                {flashSaleShops.map((shop) => (
+                  <SwiperSlide key={shop.id}>
+                    <Link to={`/shop-detail/${shop.id}`} className="block">
+                      <div className="bg-white rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative group">
+                        <div className="relative">
                           <img
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            className="w-full h-48 object-cover"
+                            src={shop.banner || "/placeholder.svg"}
+                            alt={shop.name}
+                            className="w-full h-32 object-cover"
                           />
-                          <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-bold text-sm">
-                            -{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%
-                          </div>
-                        </Link>
-                      </div>
-                      <Link to={`/product-detail/${product.id}`}>
-                        <div className="p-4">
-                          <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{product.name}</h3>
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-1">{product.author}</p>
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/70 to-transparent"></div>
+                          <div className="absolute bottom-0 left-0 p-4 w-full">
                             <div className="flex items-center">
-                              <span className="text-red-600 font-bold text-lg">
-                                {product.discountPrice.toLocaleString()}đ
-                              </span>
-                              <span className="text-gray-400 line-through text-sm ml-2">
-                                {product.price.toLocaleString()}đ
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-3">
-                            <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="absolute top-0 left-0 h-full bg-red-500 rounded-full"
-                                style={{ width: `${Math.min(100, (product.sold / product.stock) * 100)}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex justify-between text-xs mt-1">
-                              <span className="text-red-600 font-medium">Đã bán {product.sold}</span>
-                              <span className="text-gray-500">Còn lại {product.stock}</span>
+                              <img
+                                src={shop.logo || "/placeholder.svg"}
+                                alt={`${shop.name} logo`}
+                                className="w-12 h-12 rounded-full border-2 border-white mr-3"
+                              />
+                              <div>
+                                <h3 className="font-bold text-white">{shop.name}</h3>
+                                <p className="text-white/90 text-sm">{shop.products} sản phẩm</p>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    </div>
+                        <div className="p-4">
+                          <div className="flex justify-between items-center">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                              Flash Sale
+                            </span>
+                            <span className="text-red-600 font-bold">{shop.discount}</span>
+                          </div>
+                          <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-300 flex items-center justify-center">
+                            Xem ngay
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 ml-1"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </Link>
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -568,24 +473,24 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {categories.map((category) => (
-              <Link to={`/search?category=${category.id}`} key={category.id} className="group">
+            {genres.map((genre) => (
+              <Link to={`/search?category=${genre.id}`} key={genre.id} className="group">
                 <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
                   <div className="relative h-40 overflow-hidden">
                     <img
-                      src={category.image || "/placeholder.svg"}
-                      alt={category.name}
+                      src={genre.url_image || "/placeholder.svg"}
+                      alt={genre.name}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                     />
                     <div
-                      className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
+                      className={`absolute inset-0 bg-gradient-to-t ${genre.color} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
                     ></div>
                     <div className="absolute inset-0 flex items-center justify-center p-4">
-                      <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{category.name}</h3>
+                      <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{genre.name}</h3>
                     </div>
                   </div>
                   <div className="p-3 text-center">
-                    <span className="text-sm text-gray-600">{category.count} sách</span>
+                    <span className="text-sm text-gray-600">{genre.count} sách</span>
                   </div>
                 </div>
               </Link>
@@ -645,25 +550,23 @@ const Home = () => {
                 <div className="relative">
                   <Link to={`/product-detail/${product.id}`} className="block">
                     <img
-                      src={product.image || "/placeholder.svg"}
+                      src={getProductImage(product) || "/placeholder.svg"}
                       alt={product.name}
                       className="w-full aspect-[3/4] object-cover"
                     />
-                    {product.isNew && (
+                    {product.is_new && (
                       <div className="absolute top-2 left-2 bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-medium">
                         Mới
                       </div>
                     )}
-                    {product.isBestseller && (
+                    {product.is_bestseller && (
                       <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-md text-xs font-medium">
                         Bán chạy
                       </div>
                     )}
                   </Link>
 
-                  {/* Các icon ở góc dưới bên phải */}
                   <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Icon yêu thích */}
                     <button
                       className="p-2 rounded-full bg-white/80 hover:bg-white shadow-md text-gray-400 hover:text-rose-500 transition-all duration-300 transform hover:scale-110"
                       onClick={(e) => e.preventDefault()}
@@ -681,8 +584,6 @@ const Home = () => {
                         />
                       </svg>
                     </button>
-
-                    {/* Icon giỏ hàng */}
                     <button
                       className="p-2 rounded-full bg-white/80 hover:bg-emerald-500 shadow-md text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110"
                       onClick={(e) => e.preventDefault()}
@@ -701,14 +602,16 @@ const Home = () => {
                 <Link to={`/product-detail/${product.id}`} className="block">
                   <div className="p-4">
                     <h3 className="font-medium text-gray-800 mb-1 line-clamp-2 h-12">{product.name}</h3>
-                    <p className="text-sm text-gray-500 mb-2">{product.author}</p>
+                    {product.authors && product.authors.length > 0 && (
+                      <p className="text-sm text-gray-500 mb-2">{product.authors[0].name}</p>
+                    )}
                     <div className="flex items-center mb-2">
                       <div className="flex text-amber-400">
                         {[...Array(5)].map((_, index) => (
                           <svg
                             key={index}
                             xmlns="http://www.w3.org/2000/svg"
-                            className={`h-4 w-4 ${index < Math.floor(product.rate) ? "fill-current" : "stroke-current fill-none"}`}
+                            className={`h-4 w-4 ${index < Math.floor(getAverageRating(product)) ? "fill-current" : "stroke-current fill-none"}`}
                             viewBox="0 0 24 24"
                           >
                             <path
@@ -720,15 +623,21 @@ const Home = () => {
                           </svg>
                         ))}
                       </div>
-                      <span className="text-xs text-gray-500 ml-1">({product.rate})</span>
+                      <span className="text-xs text-gray-500 ml-1">({getAverageRating(product)})</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-emerald-600 font-bold">{product.discountPrice.toLocaleString()}đ</span>
-                        {product.price > product.discountPrice && (
-                          <span className="text-gray-400 text-sm line-through ml-2">
-                            {product.price.toLocaleString()}đ
-                          </span>
+                        {product.promotions && product.promotions.length > 0 ? (
+                          <>
+                            <span className="text-emerald-600 font-bold">
+                              {calculateDiscountedPrice(product).toLocaleString()}đ
+                            </span>
+                            <span className="text-gray-400 text-sm line-through ml-2">
+                              {product.price.toLocaleString()}đ
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-emerald-600 font-bold">{product.price.toLocaleString()}đ</span>
                         )}
                       </div>
                     </div>
@@ -780,84 +689,15 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials - New Design */}
-      <section className="mb-12">
-        <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-3xl overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full opacity-10 -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500 rounded-full opacity-10 -ml-32 -mb-32"></div>
-
-            <div className="relative py-16 px-4 md:px-8">
-              <Swiper
-                modules={[Pagination, Autoplay]}
-                spaceBetween={30}
-                slidesPerView={1}
-                pagination={{ clickable: true, el: ".testimonial-pagination" }}
-                autoplay={{ delay: 5000 }}
-                loop={true}
-                className="testimonial-swiper max-w-5xl mx-auto"
-              >
-                {testimonials.map((testimonial) => (
-                  <SwiperSlide key={testimonial.id}>
-                    <div className="flex flex-col items-center text-center px-4 md:px-12">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white shadow-lg mb-6 overflow-hidden">
-                        <img
-                          src={testimonial.avatar || "/placeholder.svg"}
-                          alt={testimonial.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex text-amber-400 mb-6">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`h-6 w-6 ${i < testimonial.rating ? "fill-current" : "stroke-current fill-none"}`}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                            />
-                          </svg>
-                        ))}
-                      </div>
-
-                      <blockquote className="text-xl md:text-2xl font-light text-gray-700 italic mb-6 max-w-3xl">
-                        "{testimonial.text}"
-                      </blockquote>
-
-                      <div className="flex flex-col items-center">
-                        <h3 className="text-lg md:text-xl font-bold text-gray-800">{testimonial.name}</h3>
-                        <div className="w-12 h-1 bg-emerald-500 rounded-full mt-3 mb-2"></div>
-                        <p className="text-gray-600">Khách hàng thân thiết</p>
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-
-              <div className="testimonial-pagination flex justify-center mt-8"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Bộ sưu tập */}
+      {/* Tác giả nổi bật */}
       <section className="mb-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative">
-              Bộ sưu tập nổi bật
+              Tác giả nổi bật
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-            <Link
-              to="/collections"
-              className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group"
-            >
+            <Link to="/authors" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group">
               Xem tất cả
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -873,21 +713,72 @@ const Home = () => {
               </svg>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {collections.map((collection) => (
-              <Link to={`/collection/${collection.id}`} key={collection.id} className="group">
-                <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
-                  <img
-                    src={collection.image || "/placeholder.svg"}
-                    alt={collection.name}
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6">
-                    <h3 className="text-xl font-bold text-white mb-1">{collection.name}</h3>
-                    <p className="text-white/80 text-sm">{collection.count} cuốn sách</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {featuredAuthors.map((author) => (
+              <Link to={`/author/${author.id}`} key={author.id} className="group">
+                <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl text-center p-4">
+                  <div className="relative mx-auto w-24 h-24 mb-4">
+                    <img
+                      src={author.url_image || "/placeholder.svg"}
+                      alt={author.name}
+                      className="w-full h-full object-cover rounded-full border-2 border-emerald-100 transform group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
+                  <h3 className="font-medium text-gray-800 mb-1">{author.name}</h3>
+                  <p className="text-sm text-gray-500">{author.book_count} cuốn sách</p>
                 </div>
               </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="mb-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Khách hàng nói gì về chúng tôi</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Khám phá trải nghiệm mua sắm tuyệt vời từ những khách hàng đã tin tưởng và sử dụng dịch vụ của E-Com
+              Books.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <div
+                key={testimonial.id}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <div className="flex items-center mb-4">
+                  <img
+                    src={testimonial.avatar || "/placeholder.svg"}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{testimonial.name}</h3>
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <svg
+                          key={i}
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`h-4 w-4 ${i < testimonial.rating ? "fill-current" : "stroke-current fill-none"}`}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                          />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-600 italic">{testimonial.text}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -922,4 +813,3 @@ const Home = () => {
 }
 
 export default Home
-
