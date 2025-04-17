@@ -1,14 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
 import Pagination from "../admin/Pagination"
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 const OrdersSeller = () => {
   const navigate = useNavigate()
-  const [errorMessage, setErrorMessage] = useState(null)
-  const location = useLocation()
+ 
+ 
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "")
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -17,15 +18,16 @@ const OrdersSeller = () => {
   const [totalOrders, setTotalOrders] = useState(0)
   const [tabCounts, setTabCounts] = useState({})
   const [filters, setFilters] = useState({
-    userName: "",
-    startDate: "",
-    endDate: "",
+    userName: searchParams.get("userName") || "",
+    startDate: searchParams.get("startDate") || "",
+    endDate: searchParams.get("endDate") || "",
   })
+  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
   const [cancelReason, setCancelReason] = useState("")
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [orderToCancel, setOrderToCancel] = useState(null)
-  const [successMessage, setSuccessMessage] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
+ 
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page")) || 1)
   const [totalPages, setTotalPages] = useState(1)
   const pageSize = 10;
 
@@ -99,16 +101,7 @@ const OrdersSeller = () => {
     { id: "5", label: "Đã nhận" },
   ]
 
-  const getStatusIdFromName = (statusName) => {
-    switch (statusName) {
-      case "Chờ duyệt": return 1
-      case "Đã hủy": return 2
-      case "Đã duyệt": return 3
-      case "Đang giao": return 4
-      case "Đã nhận": return 5
-      default: return 0
-    }
-  }
+
 
   const getStatusNameFromId = (statusId) => {
     switch (statusId) {
@@ -121,27 +114,44 @@ const OrdersSeller = () => {
     }
   }
 
-  const showSuccessToast = (message) => {
-    setSuccessMessage(message)
-    setTimeout(() => {
-      setSuccessMessage(null)
-    }, 3000)
-  }
+  
 
-  const showErrorToast = (message) => {
-    setErrorMessage(message)
-    setTimeout(() => {
-      setErrorMessage(null)
-    }, 3000)
-  }
+  
+
+const handleSearch = (value) => {
+  setKeyword(value);
+  setCurrentPage(1);
+  const params = new URLSearchParams()
+  if(value) params.set("keyword", value)
+  if(activeTab) params.set("status", activeTab)
+  if(filters.userName) params.set("userName", filters.userName)
+  if(filters.startDate) params.set("startDate", filters.startDate)
+  if(filters.endDate) params.set("endDate", filters.endDate)
+    params.set("page" , 1)
+  setSearchParams(params)
+}
+
+const handlePageChange = (newPage) => {
+  setCurrentPage(newPage)
+  const params = new URLSearchParams();
+  if(keyword) params.set("keyword", keyword)
+  if(activeTab) params.set("status", activeTab)
+  if(filters.userName) params.set("userName", filters.userName)
+  if(filters.startDate) params.set("startDate", filters.startDate)
+  if(filters.endDate) params.set("endDate", filters.endDate)
+  params.set("page", newPage)
+  setSearchParams(params)
+}
+
 
   // Hàm lấy danh sách đơn hàng (hợp nhất getAllOrders và searchOrders)
   const fetchOrders = async (page = 1, statusOrder = activeTab) => {
     setIsLoading(true)
-    setErrorMessage(null)
+    showErrorToast(null)
     try {
-      const response = await axiosInstance.get("/seller/order", {
+      const response = await axiosInstance.get("/seller/order",{
         params: {
+          keyword: keyword || undefined,
           userName: filters.userName || undefined,
           startDate: filters.startDate || undefined,
           endDate: filters.endDate || undefined,
@@ -157,12 +167,12 @@ const OrdersSeller = () => {
         setTotalPages(Math.ceil(data.totalItems / pageSize))
       } else {
         console.error("Không thể tải đơn hàng:", response.data.message)
-        setErrorMessage(response.data.message || "Không thể tải danh sách đơn hàng.")
+        showErrorToast(response.data.message || "Không thể tải danh sách đơn hàng.")
         setOrders([])
       }
     } catch (error) {
       console.error("Error fetching orders:", error)
-      setErrorMessage("Đã xảy ra lỗi khi tải đơn hàng.")
+      showErrorToast("Đã xảy ra lỗi khi tải đơn hàng.")
       setOrders([])
     } finally {
       setIsLoading(false)
@@ -199,7 +209,7 @@ const OrdersSeller = () => {
       const { message, status } = response.data
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString())
-        showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`)
+        showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành: ${statusName}`)
         fetchOrders(currentPage, activeTab)
         fetchTabCounts()
       } else {
@@ -224,6 +234,21 @@ const OrdersSeller = () => {
     setOrderToCancel(null)
     setCancelReason("")
   }
+
+  useEffect(() =>{
+    const params = new URLSearchParams(searchParams)
+    const keyword = params.get("keyword") || ""
+    const page = parseInt(params.get("page")) || 1
+    setKeyword(keyword)
+    setCurrentPage(page)
+    setFilters({
+      userName: params.get("userName") || "",
+      startDate: params.get("startDate") || "",
+      endDate: params.get("endDate") || "",
+    })
+    fetchOrders(page, activeTab)
+    fetchTabCounts()
+  }, [searchParams, activeTab])
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
@@ -255,11 +280,15 @@ const OrdersSeller = () => {
     setIsTransitioning(true)
     setActiveTab(tabId)
     setCurrentPage(1)
-    if (tabId) {
-      setSearchParams({ status: tabId })
-    } else {
-      setSearchParams({})
-    }
+    const params = new URLSearchParams();
+    if(tabId) params.set("status", tabId)
+    if(keyword) params.set("keyword", keyword)
+    if(filters.userName) params.set("userName", filters.userName)
+    if(filters.startDate) params.set("startDate", filters.startDate)
+    if(filters.endDate) params.set("endDate", filters.endDate)
+      params.set("page", 1)
+    setSearchParams(params)
+    
     setTimeout(() => {
       setIsTransitioning(false)
     }, 300)
@@ -284,17 +313,26 @@ const OrdersSeller = () => {
   const handleFilterSubmit = (e) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchOrders(1, activeTab)
+    const params = new URLSearchParams()
+    if(keyword) params.set("keyword", keyword)
+    if(activeTab) params.set("status", activeTab)
+    if(filters.userName) params.set("userName", filters.userName)
+    if(filters.startDate) params.set("startDate", filters.startDate)
+    if(filters.endDate) params.set("endDate", filters.endDate)
+    if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
+      showErrorToast("Ngày bắt đầu không được lớn hơn ngày kết thúc")
+        return
+    }
+      params.set("page", 1)
+    setSearchParams(params)
+   
   }
 
   const handleViewDetails = (orderId) => {
     navigate(`/seller/order/${orderId}`)
   }
 
-  useEffect(() => {
-    fetchOrders(currentPage, activeTab)
-    fetchTabCounts()
-  }, [currentPage, activeTab])
+ 
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }
@@ -303,34 +341,6 @@ const OrdersSeller = () => {
 
   return (
     <div className="w-full mx-auto">
-      {/* Thông báo thành công */}
-      {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 shadow-md flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{successMessage}</span>
-        </div>
-      )}
-
-      {/* Thông báo lỗi */}
-      {errorMessage && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50 shadow-md flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
       <h2 className="text-xl font-bold text-gray-800 my-6">Danh sách đơn hàng</h2>
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Bộ lọc đơn hàng</h2>
@@ -498,7 +508,7 @@ const OrdersSeller = () => {
                       </span>
                     </div>
                     {order.orderStatusName === "Hủy" && (
-                      <div className="text-sm text-red-600 mt-1 "><p className="fw-bolder">Lý do hủy : {order?.noted}</p> </div>
+                      <div className="text-sm text-red-600 mt-1 "><p className="font-bold">Lý do hủy : {order?.noted}</p> </div>
                     )}
                   </div>
                 </div>
@@ -616,7 +626,7 @@ const OrdersSeller = () => {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
+          setCurrentPage={handlePageChange}
         />
       )}
 

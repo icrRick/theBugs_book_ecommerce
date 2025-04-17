@@ -50,7 +50,7 @@ public class OrderSellerManagerController {
         return ResponseEntity.status(status).body(responseData);
     }
 
-    @GetMapping()
+    @GetMapping("")
     public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(required = false) String startDate,
