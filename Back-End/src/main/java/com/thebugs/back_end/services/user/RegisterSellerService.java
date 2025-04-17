@@ -3,6 +3,7 @@ package com.thebugs.back_end.services.user;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,9 +16,13 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.web.reactive.function.BodyInserters;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +44,9 @@ import com.thebugs.back_end.utils.API_KEY;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.JwtUtil;
+import com.thebugs.back_end.utils.WebClientConfig;
+
+import reactor.core.publisher.Mono;
 
 @Service
 public class RegisterSellerService {
@@ -56,6 +64,8 @@ public class RegisterSellerService {
     @Autowired
     private JwtUtil g_JwtUtil;
 
+    @Autowired
+    private WebClientConfig g_WebClientConfig;
     @Autowired
     private ShopConverter g_ShopMapper;
 
@@ -87,11 +97,6 @@ public class RegisterSellerService {
         }
     }
 
-    public HashMap<String, Object> registerShopAddress(String authorizationHeader) {
-
-        return null;
-    }
-
     public HashMap<String, Object> createSeller(String authorizationHeader, ShopBean shopBean, MultipartFile logo) {
         HashMap<String, Object> result = new HashMap<>();
         String imageUrl = uploadImage(logo);
@@ -121,104 +126,63 @@ public class RegisterSellerService {
     }
 
     public GHN_Ward_DTO getWardInfor(int districtID) {
-        final String API_URL = "https://online-gateway.ghn.vn/shiip/public-api/master-data/ward?district_id";
-
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ObjectMapper mapper = new ObjectMapper();
-
-            // 1. Gửi dữ liệu JSON trong body
-            HttpPost post = new HttpPost(API_URL);
-            post.setHeader("token", API_KEY.GHN_API_KEY);
-            post.setHeader("Content-Type", "application/json");
-
-            StringEntity entity = new StringEntity("{\"district_id\":" + districtID + "}");
-            post.setEntity(entity);
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.BLUE, responseBody);
-
-                // 2. Parse toàn bộ JSON
-                GHN_Ward_DTO fullResult = mapper.readValue(responseBody, new TypeReference<GHN_Ward_DTO>() {
-                });
-
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.RED, fullResult.toString());
-
-                return fullResult;
-            }
-
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("district_id", districtID);
+            GHN_Ward_DTO result = g_WebClientConfig
+                    .ghnWebClient()
+                    .post()
+                    .uri("/ward")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(GHN_Ward_DTO.class)
+                    .block();
+            System.out.println("ResultDistrict: " + result.getMessage());
+            return result;
         } catch (Exception e) {
-            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
+            System.err.println("ERROR Get Code: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     public GHN_District_DTO getDistrictInfor(int provinceID) {
-        final String API_URL = "https://online-gateway.ghn.vn/shiip/public-api/master-data/district";
-
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ObjectMapper mapper = new ObjectMapper();
-
-            // 1. Gửi dữ liệu JSON trong body
-            HttpPost post = new HttpPost(API_URL);
-            post.setHeader("token", API_KEY.GHN_API_KEY);
-            post.setHeader("Content-Type", "application/json");
-
-            StringEntity entity = new StringEntity("{\"province_id\":" + provinceID + "}");
-            post.setEntity(entity);
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.BLUE, responseBody);
-
-                // 2. Parse toàn bộ JSON
-                GHN_District_DTO fullResult = mapper.readValue(responseBody, new TypeReference<GHN_District_DTO>() {
-                });
-
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.RED, fullResult.toString());
-
-                return fullResult;
-            }
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("province_id", provinceID);
+            GHN_District_DTO result = g_WebClientConfig
+                    .ghnWebClient()
+                    .post()
+                    .uri("/district")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(GHN_District_DTO.class)
+                    .block();
+            System.out.println("ResultDistrict: " + result.getMessage());
+            return result;
 
         } catch (Exception e) {
-            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
+            System.err.println("ERROR Get Code: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
-    public GHN_Province_DTO getProvinceInfor() {
-        final String API_URL = "https://online-gateway.ghn.vn/shiip/public-api/master-data/province";
+    public GHN_Province_DTO getProvinceInfo() {
+        try {
+            GHN_Province_DTO result = g_WebClientConfig
+                    .ghnWebClient()
+                    .get()
+                    .uri("/province")
+                    .retrieve()
+                    .bodyToMono(GHN_Province_DTO.class)
+                    .block(); // blocking để đơn giản
 
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ObjectMapper mapper = new ObjectMapper();
-            // 1. Gửi ảnh
-            HttpGet get = new HttpGet(API_URL);
-            get.setHeader("token", API_KEY.GHN_API_KEY);
-            get.setHeader("Content-Type", "application/json");
-            try (CloseableHttpResponse response = client.execute(get)) {
-                String responseBody = EntityUtils.toString(
-                        response.getEntity(), StandardCharsets.UTF_8);
-
-                // 2. Parse toàn bộ JSON
-                GHN_Province_DTO fullResult = mapper.readValue(
-                        responseBody,
-                        new TypeReference<GHN_Province_DTO>() {
-                        });
-
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.RED, fullResult.toString());
-
-                return fullResult;
-            }
+            System.out.println("Result: " + result);
+            return result;
 
         } catch (Exception e) {
-            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
+            System.err.println("ERROR Get Code: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     public HashMap<String, Object> idRecognition(List<MultipartFile> images) {

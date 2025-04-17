@@ -125,13 +125,14 @@ public class RegisterSellerController {
 
     @GetMapping("/get-province-infor")
     public ResponseEntity<GHN_Province_DTO> getProvinceInfor() {
-        GHN_Province_DTO result = g_RegisterSellerService.getProvinceInfor();
+        GHN_Province_DTO result = g_RegisterSellerService.getProvinceInfo();
         return ResponseEntity.status(HttpStatus.valueOf(result.getCode())).body(result);
     }
 
     @GetMapping("/get-district-infor")
     public ResponseEntity<GHN_District_DTO> getDistrictInfor(@RequestParam int provinceID) {
         GHN_District_DTO result = g_RegisterSellerService.getDistrictInfor(provinceID);
+        ColorUtil.print(ColorUtil.RED, "WEBCLIENTResponseOK: ");
         return ResponseEntity.status(HttpStatus.valueOf(result.getCode())).body(result);
     }
 
