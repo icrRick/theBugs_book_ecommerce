@@ -4,7 +4,9 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,21 +50,33 @@ public class OrderSellerManagerController {
         return ResponseEntity.status(status).body(responseData);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<ResponseData> getAllListOrder(@RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "9") int size,
-            @RequestHeader("Authorization") String authorizationHeader) {
+    @GetMapping("")
+    public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) Integer statusOrder,
+            @RequestParam(defaultValue = "1") int page) {
         try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date start = startDate != null ? new java.sql.Date(sdf.parse(startDate).getTime()) : null;
+            Date end = endDate != null ? new java.sql.Date(sdf.parse(endDate).getTime() + 86399999) : null;
+            Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
             ResponseDataPagination responseDataPagination = new ResponseDataPagination();
-            responseDataPagination.setObjects(orderSellerService.getAllOrders(page, size, authorizationHeader));
-            responseDataPagination.setTotalItems(orderSellerService.getTotalItems(authorizationHeader));
-            return createResponse(HttpStatus.OK, true, "Load danh sach thanh cong",
-                    responseDataPagination);
+            responseDataPagination.setObjects(
+                    orderSellerService.findOrders(authorizationHeader, start, end, statusOrder, userName,
+                            pageable));
+            responseDataPagination.setTotalItems(
+                    orderSellerService.countOrders(authorizationHeader, start, end, statusOrder, userName));
+            String message = (start == null && end == null && statusOrder == null
+                    && (userName == null || userName.isEmpty()))
+                            ? "Load danh sách thành công"
+                            : "Tìm kiếm thành công";
+            return createResponse(HttpStatus.OK, true, message, responseDataPagination);
         } catch (Exception e) {
-            return createResponse(HttpStatus.BAD_REQUEST, false, "Da xay ra loi" +
-                    e.getMessage(), null);
+            return createResponse(HttpStatus.BAD_REQUEST, false, "Đã xảy ra lỗi: " + e.getMessage(), null);
         }
-
     }
 
     @GetMapping("/{orderId}")
@@ -79,31 +93,6 @@ public class OrderSellerManagerController {
             responseData.setStatus(false);
             responseData.setMessage(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-        }
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(required = false) String startDate, // Đổi thành String
-            @RequestParam(required = false) String endDate, // Đổi thành String
-            @RequestParam(required = false) String userName,
-            @RequestParam(required = false) Integer statusOrder,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Date start = startDate != null ? new java.sql.Date(sdf.parse(startDate).getTime()) : null;
-            Date end = endDate != null ? new java.sql.Date(sdf.parse(endDate).getTime() + 86399999) : null;
-            ResponseDataPagination responseDataPagination = new ResponseDataPagination();
-            responseDataPagination.setObjects(
-                    orderSellerService.searchSellerOrder(authorizationHeader, start, end, statusOrder, userName,
-                            page, size));
-            responseDataPagination.setTotalItems(
-                    orderSellerService.getTotalItemsBySearch(authorizationHeader, start, end, statusOrder, userName));
-            return createResponse(HttpStatus.OK, true, "Tìm kiếm thành công", responseDataPagination);
-        } catch (Exception e) {
-            return createResponse(HttpStatus.BAD_REQUEST, false, "Đã xảy ra lỗi: " + e.getMessage(), null);
         }
     }
 

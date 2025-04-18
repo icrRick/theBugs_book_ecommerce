@@ -20,8 +20,8 @@ public class OrderMapper {
         OrderDTO orderDTO = new OrderDTO();
         orderDTO.setId(order.getId());
         orderDTO.setCustomerInfo(order.getCustomerInfo());
-        orderDTO.setPaymentMethod(order.getPaymentMethod());
-        orderDTO.setPaymentStatus(order.getPaymentStatus());
+        // orderDTO.setPaymentMethod(order.getPaymentMethod());
+        // orderDTO.setPaymentStatus(order.getPaymentStatus());
         orderDTO.setNoted(order.getNoted());
         orderDTO.setShippingFee(order.getShippingFee());
         orderDTO.setCreatedAt(order.getCreatedAt());
@@ -40,6 +40,8 @@ public class OrderMapper {
                                                                                                       // tiên
             productOrderDTO.setPriceProduct(orderItem.getPrice());
             productOrderDTO.setQuantityProduct(orderItem.getQuantity());
+            productOrderDTO.setShopId(orderItem.getProduct().getShop().getId());
+            productOrderDTO.setShopName(orderItem.getProduct().getShop().getName());
             productOrderDTOs.add(productOrderDTO);
         }
         return productOrderDTOs;

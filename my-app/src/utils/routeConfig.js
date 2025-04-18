@@ -72,6 +72,7 @@ const PlaceOrderAddress = lazy(() =>
 const Otp = lazy(() => import("../components/auth/OtpInput"));
 
 const AdminProducts = lazy(() => import("../components/admin/Products"));
+const AdminProductDetail = lazy(() => import("../components/admin/AdminProductDetail"));
 export const PUBLIC_ROUTES = [
       { path: "/", element: <Navigate to="/home" /> },
       { path: "home", element: <Home /> },
@@ -124,7 +125,7 @@ export const ADMIN_ROUTES = [
       { path: "reports/products", element: <ReportProducts /> },
       { path: "reports/stores", element: <ReportStores /> },
       { path: "authors", element: <Authors /> },
-      ,
+      { path: "product/:productId", element: <AdminProductDetail /> },
       { path: "seller/requests", element: <SellerRegistrationRequests /> },
       { path: "users", element: <UserManagement /> },
       { path: "statistics", element: <Statistics /> },

@@ -85,7 +85,15 @@ public class VoucherService {
                                 .collect(Collectors.toList());
         }
 
-        public VoucherDTO getVoucherDTO (Voucher voucher){
+        public List<VoucherDTO> findByShopIdNotInOrderByUser(Integer shopId, Integer userId) {
+                List<Voucher> vouchers = voucherJPA.findByShopIdNotInOrderByUser(shopId, userId);
+                return vouchers.stream()
+                                .map(voucherMapper::toDTO)
+                                .sorted((v1, v2) -> v2.getId().compareTo(v1.getId()))
+                                .collect(Collectors.toList());
+        }
+
+        public VoucherDTO getVoucherDTO(Voucher voucher) {
                 return voucherMapper.toDTO(voucher);
         }
 

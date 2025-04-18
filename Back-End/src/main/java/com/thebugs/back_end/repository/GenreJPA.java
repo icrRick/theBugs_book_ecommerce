@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.thebugs.back_end.dto.GenreDTO;
+import com.thebugs.back_end.dto.HomeGenreDTO;
 import com.thebugs.back_end.entities.Genre;
 
 public interface GenreJPA extends JpaRepository<Genre, Integer> {
@@ -25,4 +26,13 @@ public interface GenreJPA extends JpaRepository<Genre, Integer> {
                         "FROM Genre g JOIN ProductGenre pg ON g.id = pg.genre.id " +
                         "WHERE pg.product.id = ?1")
         List<GenreDTO> findGenresByProductId(Integer productId);
+
+        @Query("SELECT new com.thebugs.back_end.dto.HomeGenreDTO(" +
+                        "g.id, g.name, g.urlImage, " +
+                        "CAST(COUNT(pg.product.id) AS integer)) " +
+                        "FROM Genre g " +
+                        "LEFT JOIN ProductGenre pg ON g.id = pg.genre.id " +
+                        "GROUP BY g.id, g.name, g.urlImage " +
+                        "ORDER BY COUNT(pg.product.id) DESC")
+        List<HomeGenreDTO> findAllGenres();
 }

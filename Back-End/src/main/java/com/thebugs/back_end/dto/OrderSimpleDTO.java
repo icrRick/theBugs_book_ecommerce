@@ -17,4 +17,5 @@ public class OrderSimpleDTO {
         private String paymentMethod;
         private String paymentStatus;
         private Double totalPrice;
+        private String noted;
 }

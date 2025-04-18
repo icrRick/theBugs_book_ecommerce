@@ -10,9 +10,9 @@ public class ShopConverter {
     public Shop beanToEntity(ShopBean bean) {
         Shop shop = new Shop();
         shop.setName(bean.getName());
-        shop.setAccoutName(bean.getBankOwnerName());
-        shop.setAccoutNumber(bean.getBankOwnerNumber());
-        shop.setBankName(bean.getBankProvideName());
+        shop.setBankOwnerName(bean.getBankOwnerName());
+        shop.setBankOwnerNumber(bean.getBankOwnerNumber());
+        shop.setBankProvideName(bean.getBankProvideName());
         shop.setShop_slug(bean.getShop_slug());
         shop.setDescription(bean.getDescription());
         shop.setActive(true);

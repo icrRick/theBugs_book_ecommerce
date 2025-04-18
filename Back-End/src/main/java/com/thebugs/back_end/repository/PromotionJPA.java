@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-
 import com.thebugs.back_end.entities.Promotion;
 
 public interface PromotionJPA extends JpaRepository<Promotion, Integer> {
@@ -22,4 +21,5 @@ public interface PromotionJPA extends JpaRepository<Promotion, Integer> {
                      "(?2 IS NULL OR p.startDate >= ?2) AND " +
                      "(?3 IS NULL OR p.expireDate <= ?3)")
        int countByShopAndDateRange(Integer shopId, Date startDate, Date expireDate);
+
 }

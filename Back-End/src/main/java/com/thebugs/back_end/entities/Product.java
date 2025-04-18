@@ -1,6 +1,7 @@
 package com.thebugs.back_end.entities;
 
 import java.util.List;
+import java.util.Date; // Thêm import cho Date
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -9,10 +10,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -54,6 +56,10 @@ public class Product {
 
     @Column(nullable = false)
     private String product_code;
+
+    @Column(name = "created_at", nullable = false, updatable = false) // Thêm createdAt
+    @Temporal(TemporalType.DATE)
+    private Date createdAt;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;

@@ -26,15 +26,15 @@ public class OrderService {
                                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy order " + orderId));
         }
 
-        public boolean updatePaymentStatus(List<Integer> orderIdIntegers, String paymentStatus) {
-                for (Integer orderId : orderIdIntegers) {
-                        Order order = findById(orderId);
-                        if ("Thanh toán chuyển khoản ngân hàng".equals(order.getPaymentMethod()) &&
-                                        (order.getPaymentStatus() == null || order.getPaymentStatus().isEmpty())) {
-                                order.setPaymentStatus(paymentStatus);
-                        }
-                        saveOrder(order);
-                }
-                return true;
-        }
+        // public boolean updatePaymentStatus(List<Integer> orderIdIntegers, String paymentStatus) {
+        //         for (Integer orderId : orderIdIntegers) {
+        //                 Order order = findById(orderId);
+        //                 if ("Thanh toán chuyển khoản ngân hàng".equals(order.getPaymentMethod()) &&
+        //                                 (order.getPaymentStatus() == null || order.getPaymentStatus().isEmpty())) {
+        //                         order.setPaymentStatus(paymentStatus);
+        //                 }
+        //                 saveOrder(order);
+        //         }
+        //         return true;
+        // }
 }
