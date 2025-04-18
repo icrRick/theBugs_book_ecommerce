@@ -9,7 +9,7 @@ import Loading from "../../utils/Loading";
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login ,fetchUserInfo} = useAuth();
+  const { login, fetchUserInfo } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ const Login = () => {
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="flex">
               <div
-                className="hidden md:block w-1/2 h-auto md:h-[615px] bg-cover bg-center"
+                className="hidden md:block w-1/2 bg-cover bg-center"
                 style={{
                   backgroundImage:
                     "url('https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80')",
@@ -74,10 +74,10 @@ const Login = () => {
                   <p className="text-gray-600 text-sm">Chào mừng bạn quay trở lại</p>
                 </div>
 
-                <div className="w-full space-y-4">
+                <div className="w-full space-y-2">
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email <span className="text-red-800 font-bold">*</span>
+                      Email <span className=" font-semibold text-red-900">*</span>
                     </label>
                     <div className="relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,15 +106,17 @@ const Login = () => {
 
                         )}
                         className={`py-2 pl-10 block w-full border border-green-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
-                        placeholder="your-email@example.com"
+                        placeholder="Nhập email của bạn"
                       />
                     </div>
-                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+                    <div className="min-h-[1.25rem] mt-1">
+                      <p className="text-sm text-red-600 font-semibold">{errors.email?.message || '\u00A0'}</p>
+                    </div>
                   </div>
 
-                  <div>
+                  <div >
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Mật khẩu <span className="text-red-800 font-bold">*</span>
+                      Mật khẩu <span className="text-red-900 font-bold">*</span>
                     </label>
                     <div className="relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -148,7 +150,7 @@ const Login = () => {
                           // },
                         })}
                         className={`py-2 pl-10 pr-10 block w-full border $border-red-300 focus:ring-green-600 focus:border-green-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm`}
-                        placeholder="••••••••"
+                        placeholder="Nhập mật khẩu"
                       />
 
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -190,14 +192,12 @@ const Login = () => {
                       </div>
 
                     </div>
-                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+                    <div className="min-h-[1.25rem] mt-1">
+                      <p className="text-sm text-red-600 font-semibold">{errors.password?.message || '\u00A0'}</p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-end">
-                    <Link to={'/forgot-password'} className="font-medium text-emerald-600 hover:text-emerald-500">
-                      Quên mật khẩu
-                    </Link>
-                  </div>
+              
 
                   <div>
                     <button
@@ -210,8 +210,12 @@ const Login = () => {
                     </button>
                   </div>
                 </div>
-
-                <div className="mt-6">
+                <div className="flex items-center justify-start mt-2">
+                    <Link to={'/forgot-password'} className="text-md font-medium text-emerald-600 hover:text-emerald-500">
+                      Quên mật khẩu
+                    </Link>
+                  </div>
+                <div className="mt-2">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300"></div>
@@ -221,7 +225,7 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     <a
                       href="#"
                       className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -248,8 +252,8 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-gray-600">
+                <div className="mt-2 text-center">
+                  <p className="text-md text-gray-600">
                     Đã chưa có tài khoản?{" "}
                     <Link to="/register" className="font-medium text-emerald-600 hover:text-emerald-500">
                       Đăng ký ngay

@@ -507,38 +507,7 @@ const Home = () => {
               Sách nổi bật
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-            <div className="flex space-x-2 bg-gray-100 p-1 rounded-full">
-              <button
-                onClick={() => setActiveTab("popular")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-                  activeTab === "popular"
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-transparent text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Phổ biến
-              </button>
-              <button
-                onClick={() => setActiveTab("new")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-                  activeTab === "new"
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-transparent text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Mới nhất
-              </button>
-              <button
-                onClick={() => setActiveTab("sale")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-                  activeTab === "sale"
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-transparent text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Giảm giá
-              </button>
-            </div>
+           
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

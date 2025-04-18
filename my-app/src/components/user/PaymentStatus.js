@@ -31,7 +31,10 @@ const PaymentStatus = () => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const vnp_ResponseCode = urlParams.get("vnp_ResponseCode");
-
+        if (!vnp_ResponseCode) {
+            console.warn("⚠️ Không tìm thấy 'vnp_ResponseCode' trong URL.");
+            return; // don't proceed if it's missing
+        }
 
         const thanhtoan = async () => {
             if (isProcessing.current) return;
@@ -39,7 +42,7 @@ const PaymentStatus = () => {
 
 
             try {
-                const orderIdList = Array.isArray(getListOrderId()) ? getListOrderId() : [getListOrderId()]; 
+                const orderIdList = Array.isArray(getListOrderId()) ? getListOrderId() : [getListOrderId()];
                 const requestBody = {
                     orderIdIntegers: orderIdList,
                     vnp_ResponseCode: vnp_ResponseCode

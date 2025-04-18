@@ -1,7 +1,5 @@
 package com.thebugs.back_end.services.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.thebugs.back_end.dto.UserDTO;
@@ -12,26 +10,19 @@ import com.thebugs.back_end.utils.JwtUtil;
 
 @Service
 public class UserService {
-        @Autowired
-        private UserJPA userJPA;
+        private final UserJPA userJPA;
+        private final UserMapper userMapper;
+        private final BCryptPasswordEncoder passwordEncoder;
+        private final JwtUtil jwtUtil;
 
-        @Autowired
-        private UserMapper userMapper;
-
-        @Autowired
-        private BCryptPasswordEncoder passwordEncoder;
-
-        @Autowired
-        private JwtUtil jwtUtil;
-
-        // public UserService(UserJPA userJPA, UserMapper userMapper,
-        // BCryptPasswordEncoder passwordEncoder,
-        // JwtUtil jwtUtil) {
-        // this.userJPA = userJPA;
-        // this.userMapper = userMapper;
-        // this.passwordEncoder = new BCryptPasswordEncoder();
-        // this.jwtUtil = jwtUtil;
-        // }
+        public UserService(UserJPA userJPA, UserMapper userMapper,
+                        BCryptPasswordEncoder passwordEncoder,
+                        JwtUtil jwtUtil) {
+                this.userJPA = userJPA;
+                this.userMapper = userMapper;
+                this.passwordEncoder = new BCryptPasswordEncoder();
+                this.jwtUtil = jwtUtil;
+        }
 
         public User getUserToken(String authorizationHeader) {
                 String token = authorizationHeader.startsWith("Bearer ")
@@ -42,6 +33,7 @@ public class UserService {
         }
 
         public UserDTO getUserDTO(String token) {
+                System.out.println("token "+token);
                 return userMapper.toDTO(getUserToken(token));
         }
 
@@ -51,6 +43,10 @@ public class UserService {
                                                 "Email không tồn tại"));
 
         }
+
+
+
+
 
         public User getUserByEmailLogin(String email) {
                 return userJPA.findByEmail(email)
@@ -79,8 +75,18 @@ public class UserService {
         public boolean updatePassword(String authorizationHeader, String passOld, String newPass, String confirmPass) {
                 User user = getUserToken(authorizationHeader);
                 if (!passwordEncoder.matches(passOld, user.getPassword())) {
-                        throw new BadCredentialsException("Tài khoản hoặc mật khẩu không đúng");
+                        throw new IllegalArgumentException("Tài khoản hoặc mật khẩu không đúng");
                 }
+                if (!newPass.equals(confirmPass)) {
+                        throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+                }
+                String hashedPassword = passwordEncoder.encode(newPass);
+                user.setPassword(hashedPassword);
+                userJPA.save(user);
+                return true;
+        }
+        public boolean resetPassword(Integer userId, String newPass, String confirmPass) {
+                User user = getUserById(userId);
                 if (!newPass.equals(confirmPass)) {
                         throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
                 }

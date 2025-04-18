@@ -68,14 +68,14 @@ public class SecurityConfig {
                                 }))
                                 .authorizeHttpRequests(requests -> requests
                                                 .requestMatchers("/login", "/comment/**", "/logout", "/register",
-                                                                "/home", "/home/**", "/",
+                                                                "/home", "/",
                                                                 "/products",
                                                                 "/genre/list",
                                                                 "/productdetail/**", "/images/**", "/forgotpassword",
                                                                 "/updatepassword/**",
                                                                 "/shopdetail/**",
                                                                 "/payment-online/**",
-                                                                "/reviews/**")
+                                                                "/reviews/**", "/forgot/**", "/api-ghn/**")
                                                 .permitAll()
                                                 .requestMatchers("/admin/**").hasAuthority("admin")
                                                 .requestMatchers("/user/**").hasAnyAuthority("user", "seller")

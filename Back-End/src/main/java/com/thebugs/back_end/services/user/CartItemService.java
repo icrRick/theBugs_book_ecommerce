@@ -37,7 +37,6 @@ public class CartItemService {
     @Autowired
     private VoucherService voucherService;
 
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getCartItems(String authorizationHeader) {
         User user = userService.getUserToken(authorizationHeader);
         Map<Integer, Map<String, Object>> shopMap = new LinkedHashMap<>();
@@ -82,36 +81,33 @@ public class CartItemService {
         if (quantity > productService.getProductById(productId).getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
-        for (CartItem cartItem : user.getCartItems()) {
-            if (cartItem.getProduct().getId() == productId) {
-                cartItem.setQuantity(quantity);
-                cartItemJPA.save(cartItem);
-                return true;
-            }
+        CartItem cartItem=findProductByUser(productId, user.getId());
+        if (cartItem != null) {
+            cartItem.setQuantity(quantity);
+            cartItemJPA.save(cartItem);
+            return true;
+        }else{
+            CartItem cartItemAdd = new CartItem();
+            cartItemAdd.setProduct(productService.getProductById(productId));
+            cartItemAdd.setQuantity(quantity);
+            cartItemAdd.setUser(user);
+            cartItemJPA.save(cartItemAdd);
+            return true;
         }
-        CartItem cartItem = new CartItem();
-        cartItem.setProduct(productService.getProductById(productId));
-        cartItem.setQuantity(quantity);
-        cartItem.setUser(user);
-        user.getCartItems().add(cartItem);
-        cartItemJPA.save(cartItem);
-        return true;
     }
 
     public boolean deleteCartItem(String authorizationHeader, Integer productId) {
         User user = userService.getUserToken(authorizationHeader);
-        for (CartItem cartItem : user.getCartItems()) {
-            if (cartItem.getProduct().getId() == productId) {
-                cartItemJPA.delete(cartItem);
-                return true;
-            }
+        CartItem cartItem=findProductByUser(productId, user.getId());
+        if (cartItem !=null) {
+            cartItemJPA.delete(cartItem);
+            return true;
         }
         return false;
     }
 
 
-    public CartItem findProductByUser(Integer productId,String authorizationHeader){
-        Integer userId=userService.getUserToken(authorizationHeader).getId();
-        return cartItemJPA.findProductByUserId(productId, userId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có id " + productId+" trong giỏ hàng của bạn"));
+    public CartItem findProductByUser(Integer productId,Integer userId){
+        return cartItemJPA.findProductByUserId(productId, userId).orElse(null);
     }
 }
