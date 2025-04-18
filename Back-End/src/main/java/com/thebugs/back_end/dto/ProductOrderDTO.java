@@ -14,5 +14,6 @@ public class ProductOrderDTO {
     private Double priceProduct;
     private Integer quantityProduct;
     private Double totalPriceProduct;
-
+    private Integer shopId;
+    private String shopName;
 }

@@ -113,7 +113,6 @@ const IdRecognitionStep = ({
             }
       };
       const handleSubmitStep2 = async () => {
-            setIsLoading(true);
             if (!idRecognition?.idFrontImage || !idRecognition?.idBackImage) {
                   showErrorToast(
                         "Vui lòng tải lên ảnh mặt trước và sau của cmnd"
@@ -124,110 +123,95 @@ const IdRecognitionStep = ({
                   showErrorToast(
                         "Vui lòng xác minh khuôn mặt trước khi qua bước kế tiếp"
                   );
+                  return;
             }
-            try {
-                  const formDataToSend = new FormData();
-                  formDataToSend.append("image", idRecognition.idFrontImage);
-                  formDataToSend.append("video", videoFile);
-                  const response = await axiosInstance.post(
-                        "api/users/face-match",
-                        formDataToSend,
-                        {
-                              headers: {
-                                    "Content-Type": "multipart/form-data",
-                              },
+            setIsLoading(true);
+            const formDataToSend = new FormData();
+            formDataToSend.append("image", idRecognition.idFrontImage);
+            formDataToSend.append("video", videoFile);
+            axiosInstance
+                  .post("api/users/face-match", formDataToSend, {
+                        headers: {
+                              "Content-Type": "multipart/form-data",
+                        },
+                  })
+                  .then((response) => {
+                        if (response.data.data.code === "200") {
+                              showSuccessToast(
+                                    "Nhận diện khuôn mặt thành công"
+                              );
+                              handleNext();
+                        } else {
+                              setVideoFile(null);
+                              showErrorToast(response.data.data.message);
+                              showErrorToast(
+                                    "Nhận diện khuôn mặt thất bại vui lòng kiểm tra lại video"
+                              );
                         }
-                  );
-                  // Xử lý kết quả từ API
-                  if (response.data.data.code === "200") {
-                        // Cập nhật dữ liệu form
-                        showSuccessToast("Nhận diện khuôn mặt thành công");
-
-                        handleNext();
-                  } else {
-                        setVideoFile(null);
-                        showErrorToast(response.data.data.message);
+                  })
+                  .catch((error) => {
                         showErrorToast(
                               "Nhận diện khuôn mặt thất bại vui lòng kiểm tra lại video"
                         );
-                  }
-                  console.log("Response: ");
-                  console.log(response);
-                  console.log("ResponseData: ");
-                  console.log(response.data);
-                  // response.data.data;
-            } catch (error) {
-                  console.error("Error recognizing ID:", error);
-                  showErrorToast(
-                        "Nhận diện khuôn mặt thất bại vui lòng kiểm tra lại video"
-                  );
-            } finally {
-                  setIsLoading(false);
-            }
+                  })
+                  .finally(() => {
+                        setIsLoading(false);
+                  });
       };
 
       // Xử lý nhận diện CCCD/CMND
       const handleRecognizeId = async () => {
-            setIsLoading(true);
+            //validate
             if (!idRecognition?.idFrontImage || !idRecognition?.idBackImage) {
                   setRecognitionStatus("error");
                   setRecognitionMessage(
                         "Vui lòng tải lên đầy đủ ảnh mặt trước và mặt sau CCCD/CMND"
                   );
-                  setIsLoading(false);
-
                   return;
             }
 
+            setIsLoading(true);
             setIsProcessingId(true);
             setRecognitionStatus("processing");
             setRecognitionMessage("Đang xử lý nhận diện giấy tờ...");
-            console.log("idRecognition: ");
-            console.log(idRecognition.idFrontImage);
-            console.log(idRecognition.idBackImage);
-
-            try {
-                  const formDataToSend = new FormData();
-                  formDataToSend.append("images", idRecognition.idFrontImage);
-                  formDataToSend.append("images", idRecognition.idBackImage);
-                  const response = await axiosInstance.post(
-                        "api/users/id-recognition",
-                        formDataToSend,
-                        {
-                              headers: {
-                                    "Content-Type": "multipart/form-data",
-                              },
+            //set up formdata
+            const formDataToSend = new FormData();
+            formDataToSend.append("images", idRecognition.idFrontImage);
+            formDataToSend.append("images", idRecognition.idBackImage);
+            //request api
+            axiosInstance
+                  .post("/api/users/id-recognition", formDataToSend, {
+                        headers: { "Content-Type": "multipart/form-data" },
+                  })
+                  .then((response) => {
+                        if (response.data.status) {
+                              // Cập nhật dữ liệu form
+                              handleIdRecognitionData(
+                                    response.data.data.data[0]
+                              );
+                              setRecognitionStatus("success");
+                              setRecognitionMessage(
+                                    "Nhận diện thành công! Thông tin đã được cập nhật tự động."
+                              );
+                        } else {
+                              setRecognitionStatus("error");
+                              setRecognitionMessage(
+                                    response.errorMessage ||
+                                          "Không thể nhận diện giấy tờ. Vui lòng kiểm tra lại ảnh và thử lại."
+                              );
                         }
-                  );
-                  // Xử lý kết quả từ API
-                  if (response.status === 200) {
-                        // Cập nhật dữ liệu form
-                        handleIdRecognitionData(response.data.data.data[0]);
-                        setRecognitionStatus("success");
-                        setRecognitionMessage(
-                              "Nhận diện thành công! Thông tin đã được cập nhật tự động."
-                        );
-                  } else {
+                  })
+                  .catch((error) => {
+                        console.error("Error recognizing ID:", error);
                         setRecognitionStatus("error");
                         setRecognitionMessage(
-                              response.errorMessage ||
-                                    "Không thể nhận diện giấy tờ. Vui lòng kiểm tra lại ảnh và thử lại."
+                              "Đã xảy ra lỗi khi nhận diện. Vui lòng thử lại sau."
                         );
-                  }
-                  console.log("Response: ");
-                  console.log(response);
-                  console.log("ResponseData: ");
-                  console.log(response.data);
-            } catch (error) {
-                  console.error("Error recognizing ID:", error);
-                  setRecognitionStatus("error");
-                  setRecognitionMessage(
-                        "Đã xảy ra lỗi khi nhận diện. Vui lòng thử lại sau."
-                  );
-            } finally {
-                  setIsLoading(false);
-                  setIsProcessingId(false);
-            }
+                  })
+                  .finally(() => {
+                        setIsLoading(false);
+                        setIsProcessingId(false);
+                  });
       };
 
       return (
@@ -948,7 +932,7 @@ const IdRecognitionStep = ({
                         </div>
                         <button
                               onClick={handleSubmitStep2}
-                              className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                         >
                               Tiếp tục bước tiếp theo
                         </button>

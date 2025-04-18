@@ -9,8 +9,8 @@ const ShopAddressStep = ({
       shopAddress,
       handleChange,
       handleAddressChange,
+      handleSubmitAll,
       errors,
-      shopInfo,
 }) => {
       const [provinces, setProvinces] = useState([]);
       const [districts, setDistricts] = useState([]);
@@ -340,8 +340,8 @@ const ShopAddressStep = ({
                         </label>
                         <input
                               type="text"
-                              name="address"
-                              value={shopAddress?.address || ""}
+                              name="street"
+                              value={shopAddress?.street || ""}
                               onChange={(e) =>
                                     handleChange(e.target.name, e.target.value)
                               }
@@ -357,24 +357,6 @@ const ShopAddressStep = ({
                                     {errors.address}
                               </p>
                         )}
-                  </div>
-
-                  {/* Địa chỉ trụ sở chính */}
-                  <div className="flex items-center mt-4">
-                        <input
-                              type="checkbox"
-                              id="isHeadquarter"
-                              name="isHeadquarter"
-                              checked={shopAddress?.isHeadquarter || false}
-                              onChange={handleChange}
-                              className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <label
-                              htmlFor="isHeadquarter"
-                              className="ml-2 text-gray-700"
-                        >
-                              Đây là địa chỉ trụ sở chính của cửa hàng
-                        </label>
                   </div>
 
                   <div className="border-t border-gray-200 pt-6 mt-6">
@@ -405,13 +387,13 @@ const ShopAddressStep = ({
                         {shopAddress?.provinceId &&
                               shopAddress?.districtId &&
                               shopAddress?.wardId &&
-                              shopAddress?.address && (
+                              shopAddress?.street && (
                                     <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                                           <h4 className="font-medium text-gray-800 mb-2">
                                                 Địa chỉ đã nhập:
                                           </h4>
                                           <p className="text-gray-700">
-                                                {shopAddress?.address || ""},{" "}
+                                                {shopAddress?.street || ""},{" "}
                                                 {shopAddress?.wardName || ""},{" "}
                                                 {shopAddress?.districtName ||
                                                       ""}
@@ -425,28 +407,16 @@ const ShopAddressStep = ({
                   <div className="mt-6">
                         <button
                               type="button"
-                              onClick={onSubmit}
-                              className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
+                              onClick={handleSubmitAll}
+                              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                               disabled={
                                     !shopAddress?.provinceId ||
                                     !shopAddress?.districtId ||
                                     !shopAddress?.wardId ||
-                                    !shopAddress?.address
+                                    !shopAddress?.street
                               }
                         >
-                              <span>Tiếp tục</span>
-                              <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 ml-2"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                              >
-                                    <path
-                                          fillRule="evenodd"
-                                          d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                                          clipRule="evenodd"
-                                    />
-                              </svg>
+                              <span>Xác nhận và gửi thông tin</span>
                         </button>
                   </div>
             </div>

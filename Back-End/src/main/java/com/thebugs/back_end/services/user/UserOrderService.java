@@ -3,6 +3,7 @@ package com.thebugs.back_end.services.user;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.OrderDTO;
@@ -22,6 +24,7 @@ import com.thebugs.back_end.entities.OrderStatus;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
+import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
 
 @Service
@@ -38,9 +41,10 @@ public class UserOrderService {
     public ArrayList<OrderSimpleDTO> getAll(String token, int page, int size) {
         int userId = userService.getUserToken(token).getId();
         Pageable pageable2 = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-        Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
-        return order.stream()
-                .collect(Collectors.toCollection(ArrayList::new));
+        // Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
+        // return order.stream()
+        // .collect(Collectors.toCollection(ArrayList::new));
+        return null;
     }
 
     public int getTotalItemsOrderByUserId(String token) {
@@ -48,24 +52,40 @@ public class UserOrderService {
         return orderJPA.countOrderByUserId(userId);
     }
 
-    public ArrayList<OrderSimpleDTO> searchOrderUser(String token, Date startDate, Date endDate,
+    public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
             Integer orderStatusName, // Đảm bảo là Integer
-            String nameUser, int page, int size) {
+            String nameUser, Pageable pageable) {
         int userId = userService.getUserToken(token).getId();
-
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-        Page<OrderSimpleDTO> page2 = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate, endDate,
-                orderStatusName,
-                nameUser, pageable);
-        return page2.stream()
-                .collect(Collectors.toCollection(ArrayList::new));
+        Page<OrderSimpleDTO> page;
+        // if (startDate == null && endDate == null && orderStatusName == null
+        // && (nameUser == null || nameUser.trim().isEmpty())) {
+        // ColorUtil.print(ColorUtil.RED, "ServiceOrder");
+        // page = orderJPA.findOrderByUserId(userId, pageable);
+        // ColorUtil.print(ColorUtil.RED, page.toString());
+        // } else {
+        // page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate,
+        // endDate,
+        // orderStatusName,
+        // nameUser, pageable);
+        // }
+        // return page.stream()
+        // .collect(Collectors.toCollection(ArrayList::new));
+        return null;
     }
 
-    public int getTotalItemsBySearch(String token, Date startDate, Date endDate, Integer orderStatusName,
+    public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName,
             String nameUser) {
         int userId = userService.getUserToken(token).getId();
+        if (startDate == null && endDate == null && orderStatusName == null
+                && (nameUser == null || nameUser.trim().isEmpty())) {
+            System.out.println("USER ID");
+            System.out.println(userId);
+            return orderJPA.countOrderByUserId(userId);
+        }
 
-        return orderJPA.countBySearchOrderUser(userId, startDate, endDate, orderStatusName, nameUser);
+        // return orderJPA.countBySearchOrderUser(userId, startDate, endDate,
+        // orderStatusName, nameUser);
+        return 0;
     }
 
     public OrderDTO updateStatusOrder(String token, int orderId, int orderStatusId, String cancelReason) {
@@ -84,12 +104,37 @@ public class UserOrderService {
                     "Không thể cập nhật trạng thái từ " + currentStatus + " sang " + orderStatusId);
         }
         if (orderStatusId == 2 && (cancelReason == null || cancelReason.trim().isEmpty())) {
-            checkShopId.setNoted(cancelReason);
             throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
+        } else {
+            checkShopId.setNoted(cancelReason);
+        }
+        if (orderStatusId == 4) {
+            checkShopId.setDeliveredAt(new Date());
         }
 
         checkShopId.setOrderStatus(getByStatusToOrder(orderStatusId));
         return orderMapper.toDTO(orderJPA.save(checkShopId));
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void autoConfirmReceived() {
+        Date now = new Date();
+        List<Order> orders = orderJPA.findDeliveredOrdersByStatus(4);
+
+        for (Order order : orders) {
+            if (order.getDeliveredAt() == null) {
+                long formatSecond = (now.getTime() - order.getDeliveredAt().getTime());
+                long checkDay = formatSecond / (1000 * 60 * 60 * 24);
+                if (checkDay >= 7) {
+                    OrderStatus status = orderStatusJPA.findById(5)
+                            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy trạng thái 'Đã nhận'"));
+                    order.setOrderStatus(status);
+                    orderJPA.save(order);
+                    System.out.println(" Order ID " + order.getId() + " tự chuyển sang 'Đã nhận'");
+                }
+            }
+
+        }
     }
 
     public Order getById(int id) {
@@ -99,9 +144,9 @@ public class UserOrderService {
     }
 
     public Order getByUserId(int orderId, int userId) {
-        Order order = orderJPA.getOrderByUserId(orderId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
-        return order;
+        // Order order = orderJPA.getOrderByUserId(orderId, userId)
+        // .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
+        return null;
     }
 
     public OrderStatus getByStatusToOrder(int id) {
@@ -120,14 +165,12 @@ public class UserOrderService {
                 return true;
 
             }
-        } else if (currentStatus == 3) {
-            if (newOrderStatusId == 4) {
-                return false;
-            }
         } else if (currentStatus == 4) {
             if (newOrderStatusId == 5) {
-                return false;
+                return true;
             }
+        } else {
+            return false;
         }
 
         return false;
@@ -141,11 +184,14 @@ public class UserOrderService {
         map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
         map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
         map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-        map.put("paymentMethod", order.getPaymentMethod());
-        map.put("paymentStatus", order.getPaymentStatus());
+        // map.put("paymentMethod", order.getPaymentMethod());
+        // map.put("paymentStatus", order.getPaymentStatus());
         map.put("shippingFee", order.getShippingFee());
         map.put("createdAt", order.getCreatedAt());
         map.put("orderStatusName", order.getOrderStatus().getName());
+        map.put("noted", order.getNoted());
+        // map.put("shopId", order.getShop().getId());
+        // map.put("shopName", order.getShop().getName());
         map.put("orderItems", order.getOrderItems().stream()
                 .map(item -> {
                     ProductOrderDTO productOrderDTO = new ProductOrderDTO();
@@ -158,6 +204,8 @@ public class UserOrderService {
                     productOrderDTO.setPriceProduct(item.getPrice());
                     productOrderDTO.setQuantityProduct(item.getQuantity());
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
+                    productOrderDTO.setShopId(item.getProduct().getShop().getId());
+                    productOrderDTO.setShopName(item.getProduct().getShop().getName());
                     return productOrderDTO;
                 })
                 .collect(Collectors.toList()));

@@ -68,7 +68,8 @@ public class SecurityConfig {
                                 }))
                                 .authorizeHttpRequests(requests -> requests
                                                 .requestMatchers("/login", "/comment/**", "/logout", "/register",
-                                                                "/home", "/",
+                                                                "/api/users/**",
+                                                                "/home", "/home/**", "/",
                                                                 "/products",
                                                                 "/genre/list",
                                                                 "/productdetail/**", "/images/**", "/forgotpassword",

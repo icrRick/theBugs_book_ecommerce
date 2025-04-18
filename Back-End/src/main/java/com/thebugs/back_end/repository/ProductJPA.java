@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.dto.ProductDetailDTO;
-import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.entities.Product;
 
 public interface ProductJPA extends JpaRepository<Product, Integer> {
@@ -41,11 +40,6 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.description")
         Optional<ProductDetailDTO> getProductDetail(Integer productId);
 
-        @Query("SELECT g FROM Genre g WHERE ?1 IS NULL OR g.name LIKE %?1%")
-        Page<Genre> findProductByName(String keyword, Pageable pageable);
-
-        @Query("SELECT COUNT(g) FROM Genre g WHERE ?1 IS NULL OR ?1 = '' OR g.name LIKE %?1%")
-        int countfindProductByName(String keyword);
 
         @Query("SELECT new com.thebugs.back_end.dto.ProItemDTO(p.id, p.name, p.price, " +
                         "COALESCE(i.imageName, 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'), "
@@ -69,5 +63,11 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
         @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.id = :productId")
         Product findProductByShopId(@Param("shopId") Integer shopId,
                         @Param("productId") Integer productId);
+
+
+
+
+        @Query("SELECT p FROM Product p WHERE p.product_code = ?1 ")
+        Optional<Product> findProductByProductCode(String productCode);               
 
 }

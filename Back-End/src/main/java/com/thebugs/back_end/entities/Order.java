@@ -32,11 +32,6 @@ public class Order {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String customerInfo;
 
-    @Column(length = 50)
-    private String paymentMethod;
-
-    @Column(length = 50)
-    private String paymentStatus;
 
     @Column(name = "noted", columnDefinition = "TEXT")
     private String noted;
@@ -44,16 +39,21 @@ public class Order {
     @Column(nullable = false)
     private double shippingFee;
 
-    @Column(length = 50)
-    private String shippingMethod;
 
     @Temporal(TemporalType.DATE)
     @Column(nullable = false)
     private Date createdAt;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deliveredAt;
+
     @ManyToOne
     @JoinColumn(name = "order_status_id", nullable = false)
     private OrderStatus orderStatus;
+
+    @ManyToOne
+    @JoinColumn(name = "order_payment_id", nullable = false)
+    private OrderPayment orderPayment;
 
     @OneToMany(mappedBy = "order")
     private List<OrderItem> orderItems;
@@ -63,7 +63,7 @@ public class Order {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "voucher_id", nullable = true)
+    @JoinColumn(name = "voucher_id")
     private Voucher voucher;
 
     @ManyToOne

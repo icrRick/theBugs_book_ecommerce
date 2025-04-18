@@ -1,6 +1,7 @@
 package com.thebugs.back_end.services.seller;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,16 +39,6 @@ public class Seller_ProductCRUDService {
                 .collect(Collectors.joining("")) + "%";
         Page<Product> products = g_ProductJPA.findAllByShopIdAndKeyword(shopId, keywordPattern, pageable);
         ColorUtil.print(ColorUtil.RED, "End JPA GetProduct");
-
-        for (Product product : products) {
-            System.out.println("Product Image: ");
-            if (!product.getImages().isEmpty()) {
-                System.out.println("ImageID: ");
-                System.out.println(product.getImages().getFirst().getId());
-                System.out.println("ImageID: ");
-                System.out.println(product.getImages().getFirst().getImageName());
-            }
-        }
         return products.map(g_ProductConverter::fromEntityToDTO);
     }
 
@@ -76,6 +67,7 @@ public class Seller_ProductCRUDService {
         String code = generateNextProductCode(product.getShop().getShop_slug(), maxProductId);
 
         product.setProduct_code(code);
+        product.setCreatedAt(new Date());
         try {
             Product savedProduct = g_ProductJPA.save(product);
             if (savedProduct != null && savedProduct.getId() != null) {

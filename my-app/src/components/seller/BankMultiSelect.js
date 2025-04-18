@@ -34,7 +34,7 @@ const BankSearchSelect = ({ formData, handleBankChange, errors, isLoadingBanks }
   const handleSelectBank = (bank) => {
     handleBankChange({
       target: {
-        name: "bankName",
+        name: "bankProvideName",
         value: bank.shortName
       }
     })
@@ -49,7 +49,7 @@ const BankSearchSelect = ({ formData, handleBankChange, errors, isLoadingBanks }
           type="text"
           placeholder="Tìm kiếm ngân hàng..."
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            errors.bankCode ? "border-red-500" : "border-gray-300"
+            errors?.bankProvideName ? "border-red-500" : "border-gray-300"
           } ${isLoadingBanks ? "bg-gray-100" : ""}`}
           value={searchTerm}
           onChange={(e) => {
@@ -70,8 +70,8 @@ const BankSearchSelect = ({ formData, handleBankChange, errors, isLoadingBanks }
                   onClick={() => handleSelectBank(bank)}
                 >
                   {/* Hiển thị shortName kèm tên đầy đủ trong tooltip */}
-                  <span title={bank.name}>{bank.shortName}</span>
-                  <span className="text-xs text-gray-500">({bank.bin})</span>
+                  <span title={bank?.name || ""}>{bank?.shortName || ""}</span>
+                  <span className="text-xs text-gray-500">({bank?.bin || ""})</span>
                 </div>
               ))
             ) : (
@@ -84,14 +84,10 @@ const BankSearchSelect = ({ formData, handleBankChange, errors, isLoadingBanks }
 
         <input
           type="hidden"
-          name="bankCode"
-          value={formData?.bankCode || ""}
+          name="bankProvideName"
+          value={formData?.bankProvideName || ""}
         />
       </div>
-
-      {errors.bankCode && (
-        <p className="text-red-500 text-sm mt-1">{errors.bankCode}</p>
-      )}
     </div>
   )
 }
