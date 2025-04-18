@@ -35,25 +35,26 @@ public class User {
     private String password;
     @Column(nullable = false)
     private String email;
-    @Column(name = "phone", nullable = true, length = 10)
+    @Column(name = "phone", length = 10)
     private String phone;
-    @Column(nullable = false)
+    @Column
     private String avatar;
     @Column(nullable = false)
+
     private String fullName;
     @Column(name = "gender")
     private Boolean gender;
-    @Column(name = "cccd", nullable = true)
+    @Column(name = "cccd")
     private String cccd;
-    @Column(name = "verify", nullable = true)
+    @Column(name = "verify")
     private boolean verify;
-    @Column(name = "dob", nullable = true)
+    @Column(name = "dob")
     @Temporal(TemporalType.DATE)
     private Date dob;
     @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(nullable = true, name = "address")
+    @Column(name = "address")
     private String address;
 
     @OneToMany(mappedBy = "user")

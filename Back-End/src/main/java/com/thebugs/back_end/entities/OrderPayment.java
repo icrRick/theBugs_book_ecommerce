@@ -17,15 +17,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "order_status")
-public class OrderStatus {
+@Table(name = "order_paymets")
+public class OrderPayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, length = 60)
-    private String name; 
+    private String paymentMethob;
+    @Column(length = 60)
+    private String paymentStatus;
 
-    @OneToMany(mappedBy = "orderStatus")
+     @OneToMany(mappedBy = "orderPayment")
     private List<Order> orders;
 }

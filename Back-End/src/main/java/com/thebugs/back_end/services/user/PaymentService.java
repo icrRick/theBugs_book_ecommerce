@@ -69,7 +69,7 @@ public class PaymentService {
             order.setUser(user);
             order.setShop(shopService.getShopById(cartBean2.getShopId()));
 
-            order.setPaymentMethod(cartBean2.getPaymentMethod());
+         //   order.setPaymentMethod(cartBean2.getPaymentMethod());
 
             order.setCustomerInfo(cartBean2.getCustomerInfo());
             if (cartBean2.getVoucherId() != null) {
@@ -83,7 +83,7 @@ public class PaymentService {
             order.setOrderStatus(orderStatusService.getOrderStatusById(1));
             
             if (cartBean2.getPaymentMethod().equals("Thanh toán tiền mặt khi nhận hàng")) {
-                order.setPaymentStatus("Chưa thanh toán");
+               // order.setPaymentStatus("Chưa thanh toán");
             }
             Order savedOrder = orderService.saveOrder(order);
             orderIdIntegers.add(savedOrder.getId());

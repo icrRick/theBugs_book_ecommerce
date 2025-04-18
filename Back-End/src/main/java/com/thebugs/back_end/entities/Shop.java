@@ -35,17 +35,19 @@ public class Shop {
     @Column(nullable = false, length = 100)
     private String name;
 
+    
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "account_number", nullable = false, length = 100)
-    private String accoutNumber;
+    @Column(name = "bank_owner_number", nullable = false, length = 100)
+    private String bankOwnerNumber;
 
-    @Column(name = "account_name", nullable = false, length = 100)
-    private String accoutName;
+    @Column(name = "bank_owner_name", nullable = false, length = 100)
+    private String bankOwnerName;
 
-    @Column(name = "bank_name", nullable = false, length = 100)
-    private String bankName;
+    @Column(name = "bank_provide_name", nullable = false, length = 100)
+    private String bankProvideName;
 
     @Column(name = "total_payout", nullable = false)
     private Double totalPayout;
@@ -53,6 +55,9 @@ public class Shop {
     @Column(length = 100)
     private String image;
     
+    @Column(length = 100)
+    private String baner;
+
     // Còn hoạt động hay không
     @Column(nullable = false)
     private boolean active;
@@ -60,8 +65,8 @@ public class Shop {
     @Column(nullable = false)
     private boolean approve;
 
-    @Column(nullable = false)
-    private boolean status;
+    @Column(nullable = true)
+    private Boolean status;
 
     @OneToMany(mappedBy = "shop")
     private List<Product> products;
@@ -79,18 +84,5 @@ public class Shop {
     private User user;
 
 
-    public Shop(String shop_slug, String name, String description, String accoutNumber, String accoutName, String bankName, String image, Double totalPayout,boolean active, boolean approve, boolean status) {
-        this.shop_slug = shop_slug;
-        this.name = name;
-        this.description = description;
-        this.accoutNumber = accoutNumber;
-        this.accoutName = accoutName;
-        this.bankName = bankName;
-        this.image = image;
-        this.active = active;
-        this.approve = approve;
-        this.status = status;
-        this.totalPayout = totalPayout;
-    }
 
 }

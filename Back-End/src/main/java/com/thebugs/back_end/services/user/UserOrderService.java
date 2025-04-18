@@ -41,9 +41,10 @@ public class UserOrderService {
     public ArrayList<OrderSimpleDTO> getAll(String token, int page, int size) {
         int userId = userService.getUserToken(token).getId();
         Pageable pageable2 = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-        Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
-        return order.stream()
-                .collect(Collectors.toCollection(ArrayList::new));
+        // Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
+        // return order.stream()
+        // .collect(Collectors.toCollection(ArrayList::new));
+        return null;
     }
 
     public int getTotalItemsOrderByUserId(String token) {
@@ -56,18 +57,20 @@ public class UserOrderService {
             String nameUser, Pageable pageable) {
         int userId = userService.getUserToken(token).getId();
         Page<OrderSimpleDTO> page;
-        if (startDate == null && endDate == null && orderStatusName == null
-                && (nameUser == null || nameUser.trim().isEmpty())) {
-            ColorUtil.print(ColorUtil.RED, "ServiceOrder");
-            page = orderJPA.findOrderByUserId(userId, pageable);
-            ColorUtil.print(ColorUtil.RED, page.toString());
-        } else {
-            page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate, endDate,
-                    orderStatusName,
-                    nameUser, pageable);
-        }
-        return page.stream()
-                .collect(Collectors.toCollection(ArrayList::new));
+        // if (startDate == null && endDate == null && orderStatusName == null
+        // && (nameUser == null || nameUser.trim().isEmpty())) {
+        // ColorUtil.print(ColorUtil.RED, "ServiceOrder");
+        // page = orderJPA.findOrderByUserId(userId, pageable);
+        // ColorUtil.print(ColorUtil.RED, page.toString());
+        // } else {
+        // page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate,
+        // endDate,
+        // orderStatusName,
+        // nameUser, pageable);
+        // }
+        // return page.stream()
+        // .collect(Collectors.toCollection(ArrayList::new));
+        return null;
     }
 
     public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName,
@@ -75,12 +78,14 @@ public class UserOrderService {
         int userId = userService.getUserToken(token).getId();
         if (startDate == null && endDate == null && orderStatusName == null
                 && (nameUser == null || nameUser.trim().isEmpty())) {
-                    System.out.println("USER ID");
-                    System.out.println(userId);
+            System.out.println("USER ID");
+            System.out.println(userId);
             return orderJPA.countOrderByUserId(userId);
         }
 
-        return orderJPA.countBySearchOrderUser(userId, startDate, endDate, orderStatusName, nameUser);
+        // return orderJPA.countBySearchOrderUser(userId, startDate, endDate,
+        // orderStatusName, nameUser);
+        return 0;
     }
 
     public OrderDTO updateStatusOrder(String token, int orderId, int orderStatusId, String cancelReason) {
@@ -139,9 +144,9 @@ public class UserOrderService {
     }
 
     public Order getByUserId(int orderId, int userId) {
-        Order order = orderJPA.getOrderByUserId(orderId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
-        return order;
+        // Order order = orderJPA.getOrderByUserId(orderId, userId)
+        // .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
+        return null;
     }
 
     public OrderStatus getByStatusToOrder(int id) {
@@ -179,8 +184,8 @@ public class UserOrderService {
         map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
         map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
         map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-        map.put("paymentMethod", order.getPaymentMethod());
-        map.put("paymentStatus", order.getPaymentStatus());
+        // map.put("paymentMethod", order.getPaymentMethod());
+        // map.put("paymentStatus", order.getPaymentStatus());
         map.put("shippingFee", order.getShippingFee());
         map.put("createdAt", order.getCreatedAt());
         map.put("orderStatusName", order.getOrderStatus().getName());
@@ -195,7 +200,7 @@ public class UserOrderService {
                     productOrderDTO.setProductImage(
                             item.getProduct().getImages().get(0).getImageName());// lấy ảnh
                                                                                  // đầu
-                                                                                   // tiên
+                                                                                 // tiên
                     productOrderDTO.setPriceProduct(item.getPrice());
                     productOrderDTO.setQuantityProduct(item.getQuantity());
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());

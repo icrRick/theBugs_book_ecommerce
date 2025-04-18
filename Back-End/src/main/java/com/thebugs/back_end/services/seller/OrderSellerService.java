@@ -55,9 +55,10 @@ public class OrderSellerService {
         private PromotionProductJPA promotionProductJPA;
 
         public ArrayList<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable) {
-                Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
-                return order.stream()
-                                .collect(Collectors.toCollection(ArrayList::new));
+                // Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
+                // return order.stream()
+                //                 .collect(Collectors.toCollection(ArrayList::new));
+                return null;
         }
 
         public Integer getTotalOrder() {
@@ -70,19 +71,21 @@ public class OrderSellerService {
                         String nameUser, Pageable pageable) {
                 User user = userService.getUserToken(token);
                 int shopId = user.getShop().getId();
-                Page<OrderSimpleDTO> orderPage;
-                if (startDate == null && endDate == null && orderStatusName == null
-                                && (nameUser == null || nameUser.trim().isEmpty())) {
+                Page<OrderSimpleDTO> orderPage =null;
+                // if (startDate == null && endDate == null && orderStatusName == null
+                //                 && (nameUser == null || nameUser.trim().isEmpty())) {
 
-                        orderPage = orderJPA.findOrderByShopId(shopId, pageable);
-                } else {
+                //        // orderPage = orderJPA.findOrderByShopId(shopId, pageable);
+                // } else {
 
-                        orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
-                                        nameUser, pageable);
-                }
-                return orderPage.stream()
-                                .collect(Collectors.toCollection(ArrayList::new));
+                //       //  orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
+                //       //                  nameUser, pageable);
+                // }
+                // return orderPage.stream()
+                //                 .collect(Collectors.toCollection(ArrayList::new));
+                return null;
         }
+        
 
         public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName, String nameUser) {
                 User user = userService.getUserToken(token);
@@ -104,8 +107,8 @@ public class OrderSellerService {
                 map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
                 map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
                 map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-                map.put("paymentMethod", order.getPaymentMethod());
-                map.put("paymentStatus", order.getPaymentStatus());
+                // map.put("paymentMethod", order.getPaymentMethod());
+                // map.put("paymentStatus", order.getPaymentStatus());
                 map.put("shippingFee", order.getShippingFee());
                 map.put("createdAt", order.getCreatedAt());
                 map.put("orderStatusName", order.getOrderStatus().getName());

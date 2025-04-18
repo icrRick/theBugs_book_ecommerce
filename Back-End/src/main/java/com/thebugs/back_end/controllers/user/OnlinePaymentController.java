@@ -107,14 +107,14 @@ public class OnlinePaymentController {
     
             String paymentStatus = "00".equals(paymentOnlineBean.getVnp_ResponseCode()) ? "Đã thanh toán" : "";
     
-            boolean check = orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
+            // boolean check = orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
     
-            if (check) {
-                return ResponseEntityUtil.OK("Thanh toán thành công", null);
-            } else {
-                return ResponseEntityUtil.badRequest("Thanh toán thất bại");
-            }
-    
+            // if (check) {
+            //     return ResponseEntityUtil.OK("Thanh toán thành công", null);
+            // } else {
+            //     return ResponseEntityUtil.badRequest("Thanh toán thất bại");
+            // }
+    return null;
         }catch (Exception e) {
             return ResponseEntityUtil.badRequest("Thanh toán thất bại: " + e.getMessage());
         }

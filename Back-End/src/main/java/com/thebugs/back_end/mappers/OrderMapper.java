@@ -20,8 +20,8 @@ public class OrderMapper {
         OrderDTO orderDTO = new OrderDTO();
         orderDTO.setId(order.getId());
         orderDTO.setCustomerInfo(order.getCustomerInfo());
-        orderDTO.setPaymentMethod(order.getPaymentMethod());
-        orderDTO.setPaymentStatus(order.getPaymentStatus());
+        // orderDTO.setPaymentMethod(order.getPaymentMethod());
+        // orderDTO.setPaymentStatus(order.getPaymentStatus());
         orderDTO.setNoted(order.getNoted());
         orderDTO.setShippingFee(order.getShippingFee());
         orderDTO.setCreatedAt(order.getCreatedAt());
