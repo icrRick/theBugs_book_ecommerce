@@ -1,31 +1,19 @@
 package com.thebugs.back_end.services.user;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thebugs.back_end.beans.AddressBean;
 import com.thebugs.back_end.beans.ShopBean;
 import com.thebugs.back_end.beans.UserRegisterBean;
 import com.thebugs.back_end.dto.UserDTO;
@@ -34,19 +22,18 @@ import com.thebugs.back_end.dto.FPT_API_DTO.LiveNessDTO.FPT_LiveFace_DTO;
 import com.thebugs.back_end.dto.GHN_API_DTO.GHN_District_DTO;
 import com.thebugs.back_end.dto.GHN_API_DTO.GHN_Province_DTO;
 import com.thebugs.back_end.dto.GHN_API_DTO.GHN_Ward_DTO;
+import com.thebugs.back_end.entities.Address;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.entities.User;
-import com.thebugs.back_end.mappers.ShopConverter;
+import com.thebugs.back_end.repository.AddressJPA;
 import com.thebugs.back_end.repository.RoleJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 import com.thebugs.back_end.repository.UserJPA;
-import com.thebugs.back_end.utils.API_KEY;
+import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.JwtUtil;
 import com.thebugs.back_end.utils.WebClientConfig;
-
-import reactor.core.publisher.Mono;
 
 @Service
 public class RegisterSellerService {
@@ -59,21 +46,18 @@ public class RegisterSellerService {
     @Autowired
     private UserJPA g_UserJPA;
     @Autowired
+    private AddressJPA g_AddressJPA;
+    @Autowired
     private BCryptPasswordEncoder g_passwordEncoder;
 
     @Autowired
-    private JwtUtil g_JwtUtil;
-
-    @Autowired
     private WebClientConfig g_WebClientConfig;
-    @Autowired
-    private ShopConverter g_ShopMapper;
 
     public UserDTO getUserByToken(String authorizationHeader) {
         return g_UserService.getUserDTO(authorizationHeader);
     }
 
-    public String registerAndLoginUser(UserRegisterBean bean) {
+    public User registerUser(UserRegisterBean bean) {
         User user = new User();
         user.setFullName(bean.getFullName());
         user.setEmail(bean.getEmail());
@@ -81,48 +65,53 @@ public class RegisterSellerService {
         user.setActive(true);
         user.setRole(g_RoleJPA.findById(1).get());
         user.setVerify(false);
+        user.setDob(bean.getDob());
+        user.setCccd(bean.getCccd());
         ColorUtil.print(ColorUtil.RED, "USERID: " + user.getId());
 
         user.setPassword(g_passwordEncoder.encode(bean.getPassword()));
         User userRegistered = g_UserJPA.save(user);
         if (userRegistered != null && userRegistered.getId() != null) {
-            String jwt = g_JwtUtil.generateToken(userRegistered.getId(), userRegistered.getRole().getId(), "login");
-            if (jwt.isBlank()) {
-                return null;
-            } else {
-                return jwt;
-            }
+            return userRegistered;
         } else {
             return null;
         }
     }
 
-    public HashMap<String, Object> createSeller(String authorizationHeader, ShopBean shopBean, MultipartFile logo) {
-        HashMap<String, Object> result = new HashMap<>();
-        String imageUrl = uploadImage(logo);
-        if (imageUrl.isBlank()) {
-            result.put("status", false);
-            result.put("statusCode", 401);
-            result.put("message", "Lỗi không thể lưu ảnh");
-            return result;
+    public ResponseData createSeller(ShopBean shopBean, AddressBean addressBean,
+            UserRegisterBean registerBean, MultipartFile logo, MultipartFile banner) {
+        User user = registerUser(registerBean);
+        if (user == null || user.getId() == null) {
+            return new ResponseData(false, "Không thể đăng ký người dùng, lỗi hệ thông", null, 500);
         }
-        User user = g_UserService.getUserToken(authorizationHeader);
-        System.out.println("ABC");
-        Shop shop = g_ShopMapper.beanToEntity(shopBean);
+        String imageUrl = "";
+        String bannerUrl = "";
+        if (logo != null && !logo.isEmpty()) {
+            imageUrl = uploadImage(logo);
+        }
+        if (banner != null && !banner.isEmpty()) {
+            bannerUrl = uploadImage(banner);
+        }
+
+        Shop shop = shopBeanToEntity(shopBean);
         shop.setImage(imageUrl);
+        shop.setBaner(bannerUrl);
         shop.setTotalPayout(0.0);
         shop.setUser(user);
+
         Shop savedShop = g_ShopJPA.save(shop);
-        if (savedShop != null && savedShop.getId() != null) {
-            result.put("status", true);
-            result.put("statusCode", 201);
-            result.put("message", "Đăng ký bán hàng thành công");
-        } else {
-            result.put("status", false);
-            result.put("statusCode", 500);
-            result.put("message", "Lỗi hệ thống, không thể đăng ký bán hàng");
+        if (savedShop.getId() == null) {
+            return new ResponseData(false, "Không thể đăng ký shop, lỗi hệ thông", null,
+                    500);
         }
-        return result;
+        Address address = addressBeanToEntity(addressBean, user);
+        Address savedAddress = g_AddressJPA.save(address);
+        if (savedAddress.getId() == null) {
+            return new ResponseData(false, "Không thể đăng ký địa chỉ, lỗi hệ thông", null,
+                    500);
+        }
+        return new ResponseData(true, "Đăng ký thành công", null, 201);
+
     }
 
     public GHN_Ward_DTO getWardInfor(int districtID) {
@@ -185,125 +174,83 @@ public class RegisterSellerService {
         }
     }
 
-    public HashMap<String, Object> idRecognition(List<MultipartFile> images) {
-        final String API_URL = "https://api.fpt.ai/vision/idr/vnm";
-
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ObjectMapper mapper = new ObjectMapper();
-            FPT_Id_DTO frontImage = new FPT_Id_DTO();
-            FPT_Id_DTO backImage = new FPT_Id_DTO();
-            StringBuffer message = new StringBuffer();
-
-            for (MultipartFile file : images) {
-                // 1. Gửi ảnh
-                HttpPost post = new HttpPost(API_URL);
-                post.setHeader("api-key", API_KEY.FPT_API_KEY);
-                HttpEntity entity = MultipartEntityBuilder.create()
-                        .addBinaryBody("image",
-                                file.getInputStream(),
-                                ContentType.IMAGE_JPEG,
-                                file.getOriginalFilename())
-                        .build();
-                post.setEntity(entity);
-
-                try (CloseableHttpResponse response = client.execute(post)) {
-                    String responseBody = EntityUtils.toString(
-                            response.getEntity(), StandardCharsets.UTF_8);
-                    ColorUtil.print(ColorUtil.RED, responseBody);
-
-                    if (images.get(0).equals(file)) {
-                        frontImage = mapper.readValue(
-                                responseBody,
-                                new TypeReference<FPT_Id_DTO>() {
-                                });
-                    } else {
-                        backImage = mapper.readValue(
-                                responseBody,
-                                new TypeReference<FPT_Id_DTO>() {
-                                });
-                    }
-
+    private FPT_Id_DTO idRecognitionImage(MultipartFile image) {
+        try {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("image", new ByteArrayResource(image.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return image.getOriginalFilename(); // quan trọng để server hiểu đây là file
                 }
-            }
-            message.append("FrontMessage: " + getErrorMessage(frontImage.getErrorCode()) + "\n");
-            message.append("BackMessage: " + getErrorMessage(backImage.getErrorCode()));
-
-            frontImage.getData().get(0).setIssue_date(backImage.getData().get(0).getIssue_date());
-            frontImage.getData().get(0).setIssue_loc(backImage.getData().get(0).getIssue_loc());
-            ColorUtil.print(ColorUtil.RED, "DATA_CMND");
-            ColorUtil.print(ColorUtil.RED, frontImage.toString());
-            // Bắt lỗi chỉ tách message
-
-            // 10. Build response chung
-            HashMap<String, Object> responseData = new HashMap<>();
-            responseData.put("statusCode", 200);
-            responseData.put("data", frontImage); // Gộp vào chung với resultFinal
-            responseData.put("message", message.toString());
-            return responseData;
-
-        } catch (
-
-        Exception e) {
-            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
-            // Bắt mọi lỗi
-            HashMap<String, Object> errorData = new HashMap<>();
-            errorData.put("statusCode", 422);
-            errorData.put("message", "Nhận diện thất bại: " + e.getMessage());
-            return errorData;
+            }).contentType(MediaType.IMAGE_JPEG);
+            FPT_Id_DTO result = g_WebClientConfig
+                    .fptWebClient()
+                    .post()
+                    .uri("/vision/idr/vnm")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(FPT_Id_DTO.class)
+                    .block();
+            return result;
+        } catch (Exception e) {
+            System.err.println("ERROR Get Code: " + e.getMessage());
+            return null;
         }
     }
 
-    public HashMap<String, Object> faceMatch(MultipartFile cmnd, MultipartFile video) {
-        final String API_URL = "https://api.fpt.ai/dmp/liveness/v3";
+    public ResponseData idRecognition(List<MultipartFile> images) {
+        FPT_Id_DTO frontImage = idRecognitionImage(images.getFirst());
+        FPT_Id_DTO backImage = idRecognitionImage(images.getLast());
+        ColorUtil.print(ColorUtil.BLUE, "ERROR ID");
+        if (frontImage == null || backImage == null) {
+            ResponseData responseData = new ResponseData(false, "Nhận diện thất bại lỗi server", null, 422);
+            return responseData;
+        }
 
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ObjectMapper mapper = new ObjectMapper();
-            StringBuffer message = new StringBuffer();
+        StringBuffer message = new StringBuffer();
+        message.append("FrontMessage: " + getErrorMessage(frontImage.getErrorCode()) + "\n");
+        message.append("BackMessage: " + getErrorMessage(backImage.getErrorCode()));
 
-            // 1. Gửi ảnh
-            HttpPost post = new HttpPost(API_URL);
-            post.setHeader("api-key", API_KEY.FPT_API_KEY);
-            MultipartEntityBuilder multipartEntity = MultipartEntityBuilder.create()
-                    .addBinaryBody("cmnd",
-                            cmnd.getInputStream(),
-                            ContentType.IMAGE_JPEG,
-                            cmnd.getOriginalFilename());
+        frontImage.getData().get(0).setIssue_date(backImage.getData().get(0).getIssue_date());
+        frontImage.getData().get(0).setIssue_loc(backImage.getData().get(0).getIssue_loc());
+        // 10. Build response chung
+        return new ResponseData(true, message.toString(), frontImage, 201);
+    }
 
-            multipartEntity.addBinaryBody("video", video.getInputStream(), ContentType.MULTIPART_FORM_DATA,
-                    video.getOriginalFilename());
+    public ResponseData faceMatch(MultipartFile cmnd, MultipartFile video) {
+        try {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("cmnd", new ByteArrayResource(cmnd.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return cmnd.getOriginalFilename();
+                }
+            }).contentType(MediaType.IMAGE_JPEG);
+            builder.part("video", new ByteArrayResource(video.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return video.getOriginalFilename();
+                }
+            }).contentType(MediaType.MULTIPART_FORM_DATA);
 
-            HttpEntity entity = multipartEntity.build();
-            post.setEntity(entity);
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                String responseBody = EntityUtils.toString(
-                        response.getEntity(), StandardCharsets.UTF_8);
-
-                // 2. Parse toàn bộ JSON
-                FPT_LiveFace_DTO fullResult = mapper.readValue(
-                        responseBody,
-                        new TypeReference<FPT_LiveFace_DTO>() {
-                        });
-
-                ColorUtil.print(ColorUtil.BLUE, "Result: ");
-                ColorUtil.print(ColorUtil.BLUE, fullResult.toString());
-
-                HashMap<String, Object> responseData = new HashMap<>();
-                responseData.put("statusCode", 200);
-                responseData.put("status", true);
-                responseData.put("data", fullResult); // Gộp vào chung với resultFinal
-                responseData.put("message", message.toString());
-                return responseData;
+            FPT_LiveFace_DTO result = g_WebClientConfig
+                    .fptWebClient()
+                    .post()
+                    .uri("/dmp/liveness/v3")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(FPT_LiveFace_DTO.class)
+                    .block();
+            if (result == null) {
+                return new ResponseData(false, "Nhận diện thất bại lỗi server", null, 422);
+            } else {
+                return new ResponseData(true, "Xác minh khuôn mặt thành công", result, 201);
             }
-
         } catch (Exception e) {
-            ColorUtil.print(ColorUtil.RED, "ERROR Get Code: " + e);
-            // Bắt mọi lỗi
-            HashMap<String, Object> errorData = new HashMap<>();
-            errorData.put("status", false);
-            errorData.put("statusCode", 422);
-            errorData.put("message", "Nhận diện thất bại: " + e.getMessage());
-            return errorData;
+            System.err.println("ERROR Get Code: " + e.getMessage());
+            return new ResponseData(false, "Nhận diện thất bại lỗi server", null, 422);
         }
     }
 
@@ -316,7 +263,34 @@ public class RegisterSellerService {
         }
     }
 
-    public String getErrorMessage(int value) {
+    private Shop shopBeanToEntity(ShopBean bean) {
+        Shop shop = new Shop();
+        shop.setName(bean.getName());
+        shop.setBankOwnerName(bean.getBankOwnerName());
+        shop.setBankOwnerNumber(bean.getBankOwnerNumber());
+        shop.setBankProvideName(bean.getBankProvideName());
+        shop.setShop_slug(bean.getShop_slug());
+        shop.setDescription(bean.getDescription());
+        shop.setActive(true);
+        shop.setApprove(false);
+        shop.setStatus(true);
+        return shop;
+    }
+
+    private Address addressBeanToEntity(AddressBean bean, User user) {
+        Address address = new Address();
+        address.setDistrictId(bean.getDistrictId());
+        address.setProvinceId(bean.getProvinceId());
+        address.setWardId(bean.getWardId());
+        address.setStreet(bean.getStreet());
+        address.setIsShop("Yes");
+        address.setFullName(user.getFullName());
+        address.setPhone(user.getPhone());
+        address.setUser(user);
+        return address;
+    }
+
+    private String getErrorMessage(int value) {
         StringBuilder result = new StringBuilder();
 
         switch (value) {

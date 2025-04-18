@@ -11,6 +11,9 @@ import com.thebugs.back_end.dto.ShopDetailDTO;
 import com.thebugs.back_end.entities.Shop;
 
 public interface ShopJPA extends JpaRepository<Shop, Integer> {
+        @Query("SELECT CASE WHEN EXISTS (SELECT 1 FROM Shop s WHERE s.shop_slug = ?1) THEN TRUE ELSE FALSE END")
+        Boolean existsByShopSlug(String shop_slug);
+
         @Query("SELECT new com.thebugs.back_end.dto.ShopDetailDTO(" +
                         "s.id, s.image, s.name, u.verify) " +
                         "FROM Shop s " +

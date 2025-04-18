@@ -41,10 +41,12 @@ const SellerRegistration = () => {
       });
 
       const [shopInfo, setShopInfo] = useState({
-            shopName: "",
-            shopDescription: "",
-            shopLogo: null,
-            shopBanner: null,
+            shop_slug: "",
+            name: "",
+            description: "",
+            bankOwnerName: "",
+            bankOwnerNumber: "",
+            bankProvideName: "",
       });
 
       const [shopAddress, setShopAddress] = useState({
@@ -65,41 +67,55 @@ const SellerRegistration = () => {
 
       useEffect(() => {
             const fetchUserData = async () => {
-                  try {
-                        const { data } = await axiosInstance.get(
-                              "api/users/me"
-                        );
-                        if (data?.status) {
-                              const userData = data.data;
-                              console.log("UserData: ");
-                              console.log(userData);
-                              setAccountInfo(userData);
+                  axiosInstance
+                        .get("api/users/me")
+                        .then((response) => {
+                              setAccountInfo(response.data);
                               setCurrentStep(2);
-                        } else {
+                        })
+                        .catch(() => {
                               setCurrentStep(1);
-                        }
-                  } catch (error) {
-                        console.error("Error fetching data:", error);
-                  }
+                        });
             };
             fetchUserData();
       }, []);
-      useEffect(() => {
-            console.log("AccountInfor: ");
-            console.log(accountInfo);
-      }, [accountInfo]);
-      useEffect(() => {
-            console.log("shopInfo: ");
+      const handleSubmitAll = async () => {
+            const formDataToSend = new FormData();
+            console.log("DATA: ");
             console.log(shopInfo);
-      }, [shopInfo]);
-      useEffect(() => {
-            console.log("shopAddress: ");
             console.log(shopAddress);
-      }, [shopAddress]);
-      const handleErrorAPI = (error) => {
-            console.log("ERROR API: ");
-            console.log(error);
-            setErrors(error);
+            console.log(accountInfo);
+            
+            formDataToSend.append(
+                  "shopInfor",
+                  new Blob([JSON.stringify(shopInfo)], {
+                        type: "application/json",
+                  })
+            );
+            formDataToSend.append(
+                  "addressInfor",
+                  new Blob([JSON.stringify(shopAddress)], {
+                        type: "application/json",
+                  })
+            );
+            formDataToSend.append(
+                  "accountInfor",
+                  new Blob([JSON.stringify(accountInfo)], {
+                        type: "application/json",
+                  })
+            );
+            axiosInstance
+                  .post("api/users/register-seller", formDataToSend, {
+                        headers: {
+                              "Content-Type": "multipart/form-data",
+                        },
+                  })
+                  .then((response) => {
+                        console.log(response);
+                  })
+                  .catch((error) => {
+                        console.log(error);
+                  });
       };
       const handleAccountInfoChange = (e) => {
             const { name, value, type, checked } = e.target;
@@ -210,6 +226,12 @@ const SellerRegistration = () => {
                         nationality: data.nationality || prev.nationality, // Thêm trường "nationality"
                         name: data.name || prev.name, // Thêm trường "name"
                   }));
+                  setAccountInfo((prev) => ({
+                        ...prev,
+                        dob: convertToDate(data.dob),
+                        cccd: data.id,
+                  }));
+                  console.log(accountInfo);
             }
       };
       function convertToDate(dateString) {
@@ -270,6 +292,7 @@ const SellerRegistration = () => {
                                     shopAddress={shopAddress}
                                     handleChange={handleShopAddressChange}
                                     handleAddressChange={handleAddressChange}
+                                    handleSubmitAll={handleSubmitAll}
                                     errors={errors}
                               />
                         );

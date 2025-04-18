@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import BankSearchSelect from "./BankMultiSelect";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
-import axios from "axios";
-import { getToken } from "../../utils/cookie";
 import Loading from "../../utils/Loading";
+import axiosInstance from "../../utils/axiosInstance";
 
-const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
+const ShopInfoStep = ({ shopInfo, handleChange, handleNext }) => {
       const [logoPreview, setLogoPreview] = useState(
             shopInfo?.shopLogo ? URL.createObjectURL(shopInfo.shopLogo) : null
       );
@@ -20,46 +19,35 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
       const [banks, setBanks] = useState([]);
       const [isLoadingBanks, setIsLoadingBanks] = useState(false);
       const [bankError, setBankError] = useState("");
+      const [errors, setErrors] = useState({});
+
       const handleSubmit = (e) => {
             e.preventDefault();
             setIsLoading(true);
-            const shopInforData = {
-                  shop_slug: shopInfo.shopSlug,
-                  name: shopInfo.shopName,
-                  description: shopInfo.shopDescription,
-                  bankOwnerName: shopInfo.accountName,
-                  bankOwnerNumber: shopInfo.accountNumber,
-                  bankProvideName: shopInfo.bankName,
-            };
             const formDataToSend = new FormData();
             formDataToSend.append(
                   "shopInfor",
-                  new Blob([JSON.stringify(shopInforData)], {
+                  new Blob([JSON.stringify(shopInfo)], {
                         type: "application/json",
                   })
             );
-            formDataToSend.append("logo", shopInfo.shopLogo);
-            axios.post(
-                  "http://localhost:8080/api/users/register-seller",
-                  formDataToSend,
-                  {
+            axiosInstance
+                  .post("/api/users/validate-register-seller", formDataToSend, {
                         headers: {
-                              Authorization: `Bearer ${getToken()}`,
+                              "Content-Type": "multipart/form-data",
                         },
-                  }
-            )
+                  })
                   .then((response) => {
-                        const data = response.data;
-                        console.log("RESPONSE: ");
-                        console.log(response);
-                        if (data.status) {
-                              showSuccessToast("Đăng ký shop thành công");
+                        if (response.status) {
                               handleNext();
                         } else {
                               showErrorToast("Lỗi trong quá trình tạo shop");
                         }
                   })
                   .catch((error) => {
+                        console.log(error);
+
+                        setErrors(error.response.data.data);
                         showErrorToast("Lỗi trong quá trình tạo shop");
                   })
                   .finally(() => {
@@ -159,19 +147,19 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                     </label>
                                     <input
                                           type="text"
-                                          name="shopName"
-                                          value={shopInfo?.shopName}
+                                          name="name"
+                                          value={shopInfo?.name || ""}
                                           onChange={handleChange}
                                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                errors.shopName
+                                                errors?.name
                                                       ? "border-red-500"
                                                       : "border-gray-300"
                                           }`}
                                           placeholder="Nhập tên cửa hàng"
                                     />
-                                    {errors.shopName && (
+                                    {errors?.name && (
                                           <p className="text-red-500 text-sm mt-1">
-                                                {errors.shopName}
+                                                {errors.name}
                                           </p>
                                     )}
                               </div>
@@ -186,24 +174,26 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                     </label>
                                     <div className="flex items-center">
                                           <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg text-gray-500">
-                                                shop.example.com/
+                                                thebugs.com/
                                           </span>
                                           <input
                                                 type="text"
-                                                name="shopSlug"
-                                                value={shopInfo?.shopSlug || ""}
+                                                name="shop_slug"
+                                                value={
+                                                      shopInfo?.shop_slug || ""
+                                                }
                                                 onChange={handleChange}
                                                 className={`flex-1 px-4 py-2 border rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                      errors.shopSlug
+                                                      errors?.shop_slug
                                                             ? "border-red-500"
                                                             : "border-gray-300"
                                                 }`}
                                                 placeholder="ten-cua-hang-cua-ban"
                                           />
                                     </div>
-                                    {errors.shopSlug && (
+                                    {errors?.shop_slug && (
                                           <p className="text-red-500 text-sm mt-1">
-                                                {errors.shopSlug}
+                                                {errors.shop_slug}
                                           </p>
                                     )}
                                     <p className="text-gray-500 text-xs mt-1">
@@ -221,20 +211,20 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                     <span className="text-red-500">*</span>
                               </label>
                               <textarea
-                                    name="shopDescription"
-                                    value={shopInfo?.shopDescription}
+                                    name="description"
+                                    value={shopInfo?.description || ""}
                                     onChange={handleChange}
                                     rows="4"
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                          errors.shopDescription
+                                          errors?.description
                                                 ? "border-red-500"
                                                 : "border-gray-300"
                                     }`}
                                     placeholder="Mô tả ngắn gọn về cửa hàng của bạn, các sản phẩm bạn bán và điểm nổi bật của cửa hàng..."
                               ></textarea>
-                              {errors.shopDescription && (
+                              {errors?.description && (
                                     <p className="text-red-500 text-sm mt-1">
-                                          {errors.shopDescription}
+                                          {errors.description}
                                     </p>
                               )}
                         </div>
@@ -292,9 +282,9 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                                       {bankError}
                                                 </p>
                                           )}
-                                          {errors.bankName && (
+                                          {errors?.bankProvideName && (
                                                 <p className="text-red-500 text-sm mt-1">
-                                                      {errors.bankName}
+                                                      {errors.bankProvideName}
                                                 </p>
                                           )}
                                     </div>
@@ -309,22 +299,22 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                           </label>
                                           <input
                                                 type="text"
-                                                name="accountName"
+                                                name="bankOwnerName"
                                                 value={
-                                                      shopInfo?.accountName ||
+                                                      shopInfo?.bankOwnerName ||
                                                       ""
                                                 }
                                                 onChange={handleChange}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                      errors.accountName
+                                                      errors?.bankOwnerName
                                                             ? "border-red-500"
                                                             : "border-gray-300"
                                                 }`}
                                                 placeholder="Nhập tên chủ tài khoản"
                                           />
-                                          {errors.accountName && (
+                                          {errors?.bankOwnerName && (
                                                 <p className="text-red-500 text-sm mt-1">
-                                                      {errors.accountName}
+                                                      {errors.bankOwnerName}
                                                 </p>
                                           )}
                                     </div>
@@ -339,22 +329,22 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                           </label>
                                           <input
                                                 type="text"
-                                                name="accountNumber"
+                                                name="bankOwnerNumber"
                                                 value={
-                                                      shopInfo?.accountNumber ||
+                                                      shopInfo?.bankOwnerNumber ||
                                                       ""
                                                 }
                                                 onChange={handleChange}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                      errors.accountNumber
+                                                      errors?.bankOwnerNumber
                                                             ? "border-red-500"
                                                             : "border-gray-300"
                                                 }`}
                                                 placeholder="Nhập số tài khoản"
                                           />
-                                          {errors.accountNumber && (
+                                          {errors?.bankOwnerNumber && (
                                                 <p className="text-red-500 text-sm mt-1">
-                                                      {errors.accountNumber}
+                                                      {errors.bankOwnerNumber}
                                                 </p>
                                           )}
                                     </div>
@@ -467,7 +457,7 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                                       300x300px)
                                                 </p>
                                           </div>
-                                          {errors.shopLogo && (
+                                          {errors?.shopLogo && (
                                                 <p className="text-red-500 text-sm mt-1">
                                                       {errors.shopLogo}
                                                 </p>
@@ -582,7 +572,7 @@ const ShopInfoStep = ({ shopInfo, handleChange, errors, handleNext }) => {
                                     type="submit"
                                     className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               >
-                                    Lưu thông tin
+                                    Tiếp tục bước tiếp theo
                               </button>
                         </div>
                   </div>
