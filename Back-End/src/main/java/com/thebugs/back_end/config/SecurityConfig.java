@@ -59,7 +59,7 @@ public class SecurityConfig {
                 http.csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(request -> {
                                         CorsConfiguration configuration = new CorsConfiguration();
-                                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3002"));
+                                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
                                         configuration.setAllowedMethods(
                                                         Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                                         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -76,7 +76,7 @@ public class SecurityConfig {
                                                                 "/updatepassword/**",
                                                                 "/shopdetail/**",
                                                                 "/payment-online/**",
-                                                                "/reviews/**","/forgot/**","/api-ghn/**")
+                                                                "/reviews/**", "/forgot/**", "/api-ghn/**")
                                                 .permitAll()
                                                 .requestMatchers("/admin/**").hasAuthority("admin")
                                                 .requestMatchers("/user/**").hasAnyAuthority("user", "seller")

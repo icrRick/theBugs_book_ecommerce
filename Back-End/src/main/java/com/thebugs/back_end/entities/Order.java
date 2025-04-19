@@ -32,20 +32,11 @@ public class Order {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String customerInfo;
 
-    @Column(length = 50)
-    private String paymentMethod;
-
-    @Column(length = 50)
-    private String paymentStatus;
-
     @Column(name = "noted", columnDefinition = "TEXT")
     private String noted;
 
     @Column(nullable = false)
     private double shippingFee;
-
-    @Column(length = 50)
-    private String shippingMethod;
 
     @Temporal(TemporalType.DATE)
     @Column(nullable = false)

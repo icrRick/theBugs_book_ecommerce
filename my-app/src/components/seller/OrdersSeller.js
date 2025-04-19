@@ -1,10 +1,12 @@
 "use client"
-
-import { useEffect, useState } from "react"
+import { debounce } from "lodash";
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
 import Pagination from "../admin/Pagination"
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
+import { formatCurrency } from "../../utils/Format";
+
 
 const OrdersSeller = () => {
   const navigate = useNavigate()
@@ -114,22 +116,24 @@ const OrdersSeller = () => {
     }
   }
 
+  const debouncedUpdateParams = useCallback(
+    debounce((nextKeyword, nextUserName) => {
+      const params = new URLSearchParams();
+      if (nextKeyword) params.set("keyword", nextKeyword);
+      if (activeTab) params.set("status", activeTab);
+      if (nextUserName) params.set("userName", nextUserName);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
+      params.set("page", 1); // reset về trang 1 khi search
+      setSearchParams(params);
+    }, 400),
+    [activeTab, filters.startDate, filters.endDate]
+  );
   
 
   
 
-const handleSearch = (value) => {
-  setKeyword(value);
-  setCurrentPage(1);
-  const params = new URLSearchParams()
-  if(value) params.set("keyword", value)
-  if(activeTab) params.set("status", activeTab)
-  if(filters.userName) params.set("userName", filters.userName)
-  if(filters.startDate) params.set("startDate", filters.startDate)
-  if(filters.endDate) params.set("endDate", filters.endDate)
-    params.set("page" , 1)
-  setSearchParams(params)
-}
+
 
 const handlePageChange = (newPage) => {
   setCurrentPage(newPage)
@@ -142,6 +146,8 @@ const handlePageChange = (newPage) => {
   params.set("page", newPage)
   setSearchParams(params)
 }
+
+
 
 
   // Hàm lấy danh sách đơn hàng (hợp nhất getAllOrders và searchOrders)
@@ -187,16 +193,26 @@ const handlePageChange = (newPage) => {
         const response = await axiosInstance.get("/seller/order", {
           params: {
             statusOrder: tab.id || undefined,
+            keyword: keyword || undefined,
+            userName: filters.userName || undefined,
+            startDate: filters.startDate || undefined,
+            endDate: filters.endDate || undefined,
             page: 1,
             size: 1, // Chỉ cần tổng số
           },
         })
-        counts[tab.id] = response.data.data.totalItems || 0
+        if(response.data.status){
+          counts[tab.id] = response.data.data.totalItems || 0
+        }else{
+          counts[tab.id] = 0;
+          showErrorToast(`Lỗi khi lấy số lượng cho tab ${tab.label}:`, response.data.message);
+        }  
       }
       setTabCounts(counts)
     } catch (error) {
-      console.error("Error fetching tab counts:", error)
-      setTabCounts({})
+      console.error("Lỗi khi lấy số lượng tab:", error);
+      showErrorToast("Không thể hiển thị số lượng trên tab");
+      setTabCounts({});
     }
   }
 
@@ -220,6 +236,8 @@ const handlePageChange = (newPage) => {
       console.error("Error updating order status:", error)
       showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!")
       closeCancelModal()
+      fetchOrders(currentPage, activeTab)
+      fetchTabCounts()
     }
   }
 
@@ -304,10 +322,13 @@ const handlePageChange = (newPage) => {
     } else if (id === "end-date") {
       fieldName = "endDate"
     }
-    setFilters((prev) => ({
-      ...prev,
-      [fieldName]: value,
-    }))
+    setFilters((prev) => {
+      const newFilters = { ...prev, [fieldName]: value };
+    if (fieldName === "userName") {
+      debouncedUpdateParams(keyword, value); // debounce khi gõ tên khách
+    }
+    return newFilters;
+    });
   }
 
   const handleFilterSubmit = (e) => {
@@ -510,6 +531,9 @@ const handlePageChange = (newPage) => {
                     {order.orderStatusName === "Hủy" && (
                       <div className="text-sm text-red-600 mt-1 "><p className="font-bold">Lý do hủy : {order?.noted}</p> </div>
                     )}
+                    {order.orderStatusName === "Đã duyệt" && order.noted && order.noted != null && (
+                      <div className="text-sm text-green-600 mt-1 "><p className="font-bold">Thông báo : Đã thay đổi số lượng trong đơn hàng</p> </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -570,6 +594,7 @@ const handlePageChange = (newPage) => {
                     </>
                   )}
                   {order.orderStatusName === "Đã duyệt" && (
+                   <>
                     <button
                       onClick={() => updateOrderStatus(order.id, 4)}
                       className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1.5"
@@ -585,6 +610,25 @@ const handlePageChange = (newPage) => {
                       </svg>
                       <span>Đang giao</span>
                     </button>
+                    <button
+                    onClick={() => openCancelModal(order.id)}
+                    className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Hủy đơn</span>
+                  </button>
+                   </>
                   )}
                 </div>
               </div>
