@@ -5,7 +5,7 @@
 ---
 
 ## 🧾 Overview
-
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=icrRick.theBugsBook&left_color=slateblue&right_color=darkslateblue&left_text=%F0%9F%A7%BF%20Visitors)
 **theBugs** is a specialized e-commerce platform designed for **book trading**, where users can easily search, order, and sellers can list their products after undergoing identity verification (face + ID card). 
 
 This project simulates a real-world system with features like verification, role-based access control, order management, and revenue reporting.
