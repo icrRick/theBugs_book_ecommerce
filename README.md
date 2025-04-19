@@ -111,12 +111,6 @@ The frontend will be accessible at `http://localhost:3000`.
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
 ## ✨ Acknowledgments
 
 - **[FPT.AI](https://fpt.ai/)** for providing the eKYC API
