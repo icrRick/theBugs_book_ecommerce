@@ -1,75 +1,123 @@
 # 📚 theBugs - Book E-Commerce Platform
 
-> 🎓 Dự án tốt nghiệp - Sàn thương mại điện tử mua bán sách trực tuyến, có xác minh danh tính người bán (eKYC), quản lý đơn hàng và sản phẩm thông minh.
+> 🎓 **Graduation Project** - A specialized e-commerce platform for buying and selling books with seller identity verification (eKYC), intelligent product, and order management.
 
 ---
 
-## 🧾 Giới thiệu
+## 🧾 Overview
 
-**theBugs** là một nền tảng thương mại điện tử chuyên biệt dành cho việc **mua bán sách**, nơi người dùng có thể dễ dàng tìm kiếm, đặt mua và người bán có thể đăng bán sản phẩm sau khi được xác minh danh tính (khuôn mặt + CCCD).
+**theBugs** is a specialized e-commerce platform designed for **book trading**, where users can easily search, order, and sellers can list their products after undergoing identity verification (face + ID card). 
 
-Dự án giúp mô phỏng một hệ thống thực tế với quy trình xác minh, phân quyền, quản lý đơn hàng và báo cáo doanh thu.
-
----
-
-## ⚙️ Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-|-----------|-----------|
-| Backend   | Spring Boot, Spring Security, Hibernate (JPA), MySQL |
-| Frontend  | ReactJS / TailwindCSS |
-| Xác minh eKYC | [FPT.AI eKYC API](https://fpt.ai/vision/ekyc) |
-| Khác      | Lombok, Git, Docker, GitHub Actions |
+This project simulates a real-world system with features like verification, role-based access control, order management, and revenue reporting.
 
 ---
 
-## 🔑 Chức năng nổi bật
+## ⚙️ Technology Stack
 
-### 👥 Người dùng
-- Đăng ký / Đăng nhập
-- Duyệt sách, tìm kiếm theo danh mục
-- Thêm vào giỏ hàng và đặt mua
-- Theo dõi đơn hàng
-- ..........
-
-### 🛍️ Người bán
-- Đăng ký 4 bước:
-  1. Tạo tài khoản
-  2. Xác minh khuôn mặt + CCCD (qua FPT.AI eKYC)
-  3. Thêm thông tin cửa hàng
-  4. Cập nhật địa chỉ + tài khoản ngân hàng
-- Quản lý sách
-  + CRUD
-  + Xem sách bị báo cáo.
-  + Xem đánh giá và phản hồi
-- Quản lý đơn hàng
-  + Xem đơn hàng
-  + Xác nhận đơn hàng
-- Quản lý cửa hàng
-  + Xem/ sửa thông tin cửa hàng
-  + Xem báo cáo bị tố cáo
-- Quản lý khuyến mãi
-  + Quản lý voucher: CRUD
-  + Quản lý khuyến mãi sản phẩm: CRUD
-- Xem thống kê doanh thu, sản phẩm
-
-### 🔧 Quản trị viên
-- Quản lý người dùng và người bán
-- Duyệt yêu cầu xác minh người bán
-- Quản lý danh mục, sách, đơn hàng toàn hệ thống
+| Component       | Technology                          |
+|------------------|-------------------------------------|
+| **Backend**      | Spring Boot, Spring Security, Hibernate (JPA), MySQL |
+| **Frontend**     | ReactJS, TailwindCSS               |
+| **eKYC**         | [FPT.AI eKYC API](https://fpt.ai/vision/ekyc) |
+| **Others**       | Lombok, Git, Docker, GitHub Actions |
 
 ---
 
-## 🚀 Hướng dẫn chạy dự án
+## 🔑 Key Features
 
-### 1. Clone và cấu hình
+### 👥 **For Users**
+- Register / Login
+- Browse books and search by categories
+- Add books to cart and place orders
+- Track order status
+- Write reviews and rate books
 
+### 🛍️ **For Sellers**
+- **4-Step Registration Process**:
+  1. Create an account
+  2. Verify identity (face + ID card) via FPT.AI eKYC
+  3. Add store information
+  4. Update address and bank account details
+- **Manage Books**
+- **Manage Orders**
+- **Manage Store**
+- **Promotions Management**
+- **Analytics**
+  - View sales reports
+  - Track best-selling products
+
+### 🔧 **For Admins**
+- Manage users and sellers
+- Approve seller verification requests
+- Oversee categories, books, and orders across the platform
+- Generate system-wide reports
+
+---
+
+## 🚀 Getting Started
+
+Follow these steps to set up and run the project locally:
+
+### 1. Prerequisites
+Ensure the following are installed on your system:
+- **Java 11+**
+- **Maven**
+- **MySQL**
+- **Node.js** (for the frontend)
+
+### 2. Clone the Repository
+Clone the project to your local machine:
 ```bash
 git clone https://github.com/icrRick/theBugs_book_ecommerce.git
 cd theBugs_book_ecommerce
+```
 
-# Build project
+### 3. Configure the Database
+Set up a MySQL database and update the connection details in the `application.properties` file:
+```properties
+# src/main/resources/application.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/thebugs_db
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+```
+
+### 4. Build and Run the Backend
+Build and start the backend server:
+```bash
 ./mvnw clean install
-
-# Run application
 ./mvnw spring-boot:run
+```
+
+The backend will be accessible at `http://localhost:8080`.
+
+### 5. Run the Frontend
+Navigate to the frontend directory, install dependencies, and start the development server:
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The frontend will be accessible at `http://localhost:3000`.
+
+---
+
+## 📊 Roadmap
+
+- [ ] Add more payment gateway options
+- [ ] Enhance seller analytics with real-time data
+- [ ] Integrate AI-based book recommendations
+- [ ] Improve mobile responsiveness for frontend
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## ✨ Acknowledgments
+
+- **[FPT.AI](https://fpt.ai/)** for providing the eKYC API
+- Special thanks to our mentors, teammates, and the open-source community for their support.
