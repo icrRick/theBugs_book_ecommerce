@@ -121,7 +121,7 @@ const Payment = () => {
 
         const productIdsStr = getListProductIds();
         const voucherIdsStr = getListVoucherIds();
-        
+
         if (!productIdsStr || !voucherIdsStr) {
             navigate('/cart');
             return;
@@ -130,7 +130,7 @@ const Payment = () => {
         const productIds = JSON.parse(productIdsStr);
         const voucherIds = JSON.parse(voucherIdsStr);
 
-        if(productIds.length === 0 && voucherIds.length === 0){
+        if (productIds.length === 0 && voucherIds.length === 0) {
             navigate('/cart');
             return;
         }
@@ -254,7 +254,7 @@ const Payment = () => {
 
     const handleVnpayError = (error) => {
         let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
-        
+
         if (error?.code === 76) {
             errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
         } else if (error?.code === 3) {
@@ -262,7 +262,7 @@ const Payment = () => {
         } else if (error?.message) {
             errorMessage = error.message;
         }
-        
+
         showErrorToast(errorMessage);
         return errorMessage;
     };
@@ -299,7 +299,7 @@ const Payment = () => {
                     })),
                 };
             });
-            
+
             // if(!validatePaymentData()){
             //     return;
             // }
@@ -311,51 +311,46 @@ const Payment = () => {
             console.log("Gửi yêu cầu thanh toán với dữ liệu:", responseData);
             const responseCreateOrder = await axiosInstance.post("/user/payment/payment-ordered", responseData);
             if (responseCreateOrder.status === 200) {
-                console.log("responseCreateOrder.data.data",responseCreateOrder.data.data);
-             
-                if (Array.isArray(responseCreateOrder.data.data)) {
-                    setListOrderId(responseCreateOrder.data.data); 
-                } else {
-                    setListOrderId([responseCreateOrder.data.data]); 
-                }
-                
+                console.log("responseCreateOrder.data.data", responseCreateOrder.data.data);
 
+                const arrayOrderIds = responseCreateOrder.data.data; // Ví dụ: [25, 26]
+                setListOrderId(JSON.stringify(arrayOrderIds));
                 if (paymentMethod === "Thanh toán chuyển khoản ngân hàng") {
                     try {
                         const orderId = Math.floor(new Date().getTime() / 1000) + 10;
                         const total = calculateFinalTotal();
-        
+
                         if (!total || isNaN(total) || total <= 0) {
                             showErrorToast("Số tiền thanh toán không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
                             setIsLoading(false);
                             return;
                         }
-        
+
                         if (!customerInfo?.fullName || !customerInfo?.phone || !customerInfo?.address) {
                             showErrorToast("Vui lòng kiểm tra lại thông tin giao hàng.");
                             setIsLoading(false);
                             return;
                         }
-        
+
                         const paymentData = {
                             orderId: Number(orderId),
                             orderInfor: "Thanh toan don hang " + orderId,
                             total: Number(total),
                         };
-        
+
                         console.log("Gửi yêu cầu thanh toán với dữ liệu:", paymentData);
-        
+
                         const responseVnpay = await axiosInstance.get("/user/payment-online/create-payment", {
                             params: paymentData
                         });
-        
+
                         console.log("Kết quả từ API VNPAY:", responseVnpay.data);
-        
-                        if (responseVnpay.status===200 && responseVnpay.data?.status === true) {
+
+                        if (responseVnpay.status === 200 && responseVnpay.data?.status === true) {
                             window.location.href = responseVnpay.data.data;
                         } else {
                             let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
-        
+
                             if (responseVnpay.data?.code === 76) {
                                 errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
                                 showErrorToast(errorMessage);
@@ -365,14 +360,14 @@ const Payment = () => {
                             } else if (responseVnpay.data?.message) {
                                 errorMessage = responseVnpay.data.message;
                             }
-        
+
                             showErrorToast(errorMessage);
                             setPaymentMethod("Thanh toán tiền mặt khi nhận hàng");
                         }
                     } catch (error) {
                         console.error("Lỗi khi gọi API VNPay:", error);
                         let errorMessage = "Đã có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
-        
+
                         if (error.responseVnpay?.data?.code === 3) {
                             errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
                         } else if (error.responseVnpay?.data?.message) {
@@ -380,7 +375,7 @@ const Payment = () => {
                         } else if (error.message) {
                             errorMessage = error.message;
                         }
-        
+
                         showErrorToast(errorMessage);
                     } finally {
                         setIsLoading(false);
@@ -400,8 +395,8 @@ const Payment = () => {
             setIsLoading(false);
         }
     };
-    
-    
+
+
 
     const handleBack = () => {
         removeListProductIds();
@@ -444,16 +439,16 @@ const Payment = () => {
                                                         {product.productName}
                                                         <p className="text-xs sm:text-sm text-gray-600">
                                                             {product.productQuantity} x    {
-                                                                    product.productPromotionValue > 0 ? (
-                                                                        <>
-                                                                          <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
-                                                                            <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
-  
-                                                                        </>
-                                                                    ) : (
-                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
-                                                                    )
-                                                                }
+                                                                product.productPromotionValue > 0 ? (
+                                                                    <>
+                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
+                                                                        <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
+
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+                                                                )
+                                                            }
                                                         </p>
                                                     </h4>
 
