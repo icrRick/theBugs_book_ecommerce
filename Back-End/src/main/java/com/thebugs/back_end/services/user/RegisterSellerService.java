@@ -102,7 +102,7 @@ public class RegisterSellerService {
 
             Shop shop = shopBeanToEntity(shopBean);
             shop.setImage(imageUrl);
-            shop.setBaner(bannerUrl);
+            shop.setBanner(bannerUrl);
             shop.setTotalPayout(0.0);
             shop.setUser(user);
 
