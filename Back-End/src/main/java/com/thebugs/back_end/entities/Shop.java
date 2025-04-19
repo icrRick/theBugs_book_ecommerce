@@ -56,7 +56,7 @@ public class Shop {
     private String image;
     
     @Column(length = 100)
-    private String baner;
+    private String banner;
 
     // Còn hoạt động hay không
     @Column(nullable = false)

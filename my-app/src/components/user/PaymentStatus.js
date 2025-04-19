@@ -42,9 +42,10 @@ const PaymentStatus = () => {
 
 
             try {
-                const orderIdList = Array.isArray(getListOrderId()) ? getListOrderId() : [getListOrderId()];
+                const orderIdsStr = getListOrderId();
+                const orderIds = JSON.parse(orderIdsStr);
                 const requestBody = {
-                    orderIdIntegers: orderIdList,
+                    orderIdIntegers: orderIds,
                     vnp_ResponseCode: vnp_ResponseCode
                 }
                 console.log("requestBody", requestBody);

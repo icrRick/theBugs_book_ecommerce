@@ -105,16 +105,15 @@ public class OnlinePaymentController {
                 return ResponseEntityUtil.badRequest("Thông tin thanh toán không đầy đủ.");
             }
     
-            String paymentStatus = "00".equals(paymentOnlineBean.getVnp_ResponseCode()) ? "Đã thanh toán" : "";
+            System.out.println("PAYMENT "+paymentOnlineBean.getVnp_ResponseCode());
+            boolean check = orderService.updatePaymentStatus(paymentOnlineBean);
     
-            // boolean check = orderService.updatePaymentStatus(paymentOnlineBean.getOrderIdIntegers(), paymentStatus);
-    
-            // if (check) {
-            //     return ResponseEntityUtil.OK("Thanh toán thành công", null);
-            // } else {
-            //     return ResponseEntityUtil.badRequest("Thanh toán thất bại");
-            // }
-    return null;
+            if (check) {
+                return ResponseEntityUtil.OK("Thanh toán thành công", null);
+            } else {
+                return ResponseEntityUtil.badRequest("Thanh toán thất bại");
+            }
+  
         }catch (Exception e) {
             return ResponseEntityUtil.badRequest("Thanh toán thất bại: " + e.getMessage());
         }
