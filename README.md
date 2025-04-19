@@ -17,9 +17,9 @@ Dự án giúp mô phỏng một hệ thống thực tế với quy trình xác 
 | Thành phần | Công nghệ |
 |-----------|-----------|
 | Backend   | Spring Boot, Spring Security, Hibernate (JPA), MySQL |
-| Frontend  | AngularJS / Thymeleaf |
+| Frontend  | ReactJS / TailwindCSS |
 | Xác minh eKYC | [FPT.AI eKYC API](https://fpt.ai/vision/ekyc) |
-| Khác      | Lombok, Git, Docker (tùy chọn), GitHub Actions |
+| Khác      | Lombok, Git, Docker, GitHub Actions |
 
 ---
 
