@@ -1,11 +1,12 @@
 "use client"
-
-import { useEffect, useState } from "react"
+import { debounce } from "lodash";
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
 import Pagination from "../admin/Pagination"
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
+
 
 const OrdersSeller = () => {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ const OrdersSeller = () => {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [orders, setOrders] = useState([])
-  const [allOrders, setAllOrders] = useState([])
+
   const [totalOrders, setTotalOrders] = useState(0)
   const [tabCounts, setTabCounts] = useState({})
   const [filters, setFilters] = useState({
@@ -102,22 +103,7 @@ const OrdersSeller = () => {
     { id: "5", label: "Đã nhận" },
   ]
 
-  const getStatusIdFromName = (statusName) => {
-    switch (statusName) {
-      case "Chờ duyệt":
-        return 1
-      case "Hủy":
-        return 2
-      case "Đã duyệt":
-        return 3
-      case "Đã giao":
-        return 4
-      case "Đã nhận":
-        return 5
-      default:
-        return 0
-    }
-  }
+
 
   const getStatusNameFromId = (statusId) => {
     switch (statusId) {
@@ -136,92 +122,94 @@ const OrdersSeller = () => {
     }
   }
 
-  const calculateTabCounts = (ordersList) => {
-    const counts = {}
-    tabs.forEach((tab) => {
-      if (tab.id === "") {
-        counts[tab.id] = ordersList.length
-      } else {
-        counts[tab.id] = ordersList.filter(
-          (order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(tab.id),
-        ).length
-      }
-    })
-    return counts
-  }
-
-  
+    const debouncedUpdateParams = useCallback (
+      debounce((nextKeyword, nextUserName) => {
+        const params = new URLSearchParams();
+        if (nextKeyword) params.set("keyword", nextKeyword);
+        if (activeTab) params.set("status", activeTab);
+        if (nextUserName) params.set("userName", nextUserName);
+        if (filters.startDate) params.set("startDate", filters.startDate);
+        if (filters.endDate) params.set("endDate", filters.endDate);
+        params.set("page", 1); // reset về trang 1 khi search
+        setSearchParams(params);
+      }, 400),
+      [activeTab, filters.startDate, filters.endDate]
+    );
 
 
-
-  const fetchAllOrders = async (keyword = "", page = 1) => {
-    setIsLoading(true)
-    showErrorToast(null)
+  const fetchOrders = async (page = 1, statusOrder = activeTab) => {
+    setIsLoading(true);
+    showErrorToast(null);
     try {
       const response = await axiosInstance.get("/user/order", {
         params: {
           keyword: keyword || undefined,
+          userName: filters.userName || undefined,
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+          statusOrder: statusOrder || undefined,
           page: page,
           size: pageSize,
         },
-      })
-      console.log("RESPONSE");
-      console.log(response);
-      const { data, message } = response.data
-      if (response.status === 200) {
-        const ordersList = data.objects || []
-        setAllOrders(ordersList)
-        setOrders(ordersList)
-        setTotalOrders(data.totalItems || 0)
-        setTotalPages(Math.ceil(data.totalItems / pageSize))
-        setTabCounts(calculateTabCounts(ordersList))
+      });
+      if (response.status === 200 && response.data.status) {
+        const { data } = response.data;
+        setOrders(data.objects || []);
+        setTotalOrders(data.totalItems || 0);
+        setTotalPages(Math.ceil(data.totalItems / pageSize) || 1);
       } else {
-        console.error("Không thể tải đơn hàng:", message)
-        showErrorToast(message || "Không thể tải danh sách đơn hàng.")
-        setAllOrders([])
-        setOrders([])
-        setTabCounts({})
+        console.error("Không thể tải danh sách đơn hàng:", response.data.message);
+        showErrorToast(response.data.message || "Không thể tải danh sách đơn hàng");
+        setOrders([]);
+        setTotalOrders(0);
+        setTotalPages(1);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error)
-      setAllOrders([])
-      setOrders([])
-      setTabCounts({})
+      console.error("Lỗi khi tải đơn hàng:", error);
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi tải đơn hàng");
+      setOrders([]);
+      setTotalOrders(0);
+      setTotalPages(1);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const searchOrders = async (keyword = "", page = 1) => {
-    setIsLoading(true)
+  const fetchTabCounts = async () => {
+    const counts = {};
     try {
-      const params = {
-        keyword: keyword || undefined,
-        userName: filters.userName || undefined,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
-        statusOrder: activeTab || undefined,
-        page: page,
-        size: pageSize,
+      for (const tab of tabs) {
+        const response = await axiosInstance.get("/user/order", {
+          params: {
+            statusOrder: tab.id || undefined,
+            keyword: keyword || undefined,
+            userName: filters.userName || undefined,
+            startDate: filters.startDate || undefined,
+            endDate: filters.endDate || undefined,
+            page: 1,
+            size: 1,
+          },
+        });
+        // Kiểm tra trạng thái phản hồi
+        if (response.data.status) {
+          counts[tab.id] = response.data.data.totalItems || 0;
+        } else {
+          counts[tab.id] = 0;
+          showErrorToast(`Lỗi khi lấy số lượng cho tab ${tab.label}:`, response.data.message);
+        }
       }
-      const response = await axiosInstance.get("/user/order", { params })
-      const { data, message } = response.data
-      if (response.status === 200) {
-        const ordersList = data.objects || []
-        setOrders(ordersList)
-        setTotalOrders(data.totalItems || 0)
-        setTotalPages(Math.ceil(data.totalItems / pageSize))
-      } else {
-        console.error("Failed to search orders:", message)
-        setOrders([])
-      }
+      setTabCounts(counts);
     } catch (error) {
-      console.error("Error searching orders:", error)
-      setOrders([])
-    } finally {
-      setIsLoading(false)
+      console.error("Lỗi khi lấy số lượng tab:", error);
+      showErrorToast("Không thể hiển thị số lượng trên tab");
+      setTabCounts({});
     }
-  }
+  };
+  
+
+
+
+  
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -233,17 +221,18 @@ const OrdersSeller = () => {
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString())
         showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`)
-        fetchAllOrders(keyword, currentPage)
+        fetchOrders(currentPage, activeTab)
+        fetchTabCounts()
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`)
+        closeCancelModal()
       }
     } catch (error) {
       console.error("Error updating order status:", error)
-      if (error.response && error.response.data && error.response.data.message) {
-        showErrorToast(error.response.data.message)
-      } else {
-        showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái")
-      }
+      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!")
+      closeCancelModal()
+      fetchOrders(currentPage, activeTab)
+      fetchTabCounts()
     }
   }
 
@@ -261,7 +250,7 @@ const OrdersSeller = () => {
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
-      alert("Lý do hủy không được để trống!")
+      showErrorToast("Lý do hủy không được để trống!")
       return
     }
     try {
@@ -273,7 +262,8 @@ const OrdersSeller = () => {
       if (status) {
         showSuccessToast("Đơn hàng đã được hủy thành công!")
         closeCancelModal()
-        fetchAllOrders(keyword, currentPage)
+        fetchOrders(currentPage, activeTab)
+        fetchTabCounts()
       } else {
         showErrorToast(`Hủy đơn hàng thất bại: ${message}`)
         closeCancelModal()
@@ -306,18 +296,7 @@ const OrdersSeller = () => {
     }, 300)
   }
 
-  const handleSearch = (value) => {
-    setKeyword(value)
-    setCurrentPage(1)
-    const params = new URLSearchParams()
-    if (value) params.set("keyword", value)
-    if (activeTab) params.set("status", activeTab)
-    if (filters.userName) params.set("userName", filters.userName)
-    if (filters.startDate) params.set("startDate", filters.startDate)
-    if (filters.endDate) params.set("endDate", filters.endDate)
-    params.set("page", 1)
-    setSearchParams(params)
-  }
+  
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage)
@@ -332,20 +311,24 @@ const OrdersSeller = () => {
   }
 
   const handleFilterChange = (e) => {
-    const { id, value } = e.target
-    let fieldName
+    const { id, value } = e.target;
+    let fieldName;
     if (id === "name-filter") {
-      fieldName = "userName"
+      fieldName = "userName";
     } else if (id === "start-date") {
-      fieldName = "startDate"
+      fieldName = "startDate";
     } else if (id === "end-date") {
-      fieldName = "endDate"
+      fieldName = "endDate";
     }
-    setFilters((prev) => ({
-      ...prev,
-      [fieldName]: value,
-    }))
-  }
+  
+    setFilters((prev) => {
+      const newFilters = { ...prev, [fieldName]: value };
+      if (fieldName === "userName") {
+        debouncedUpdateParams(keyword, value); // debounce khi gõ tên khách
+      }
+      return newFilters;
+    });
+  };
 
   const handleFilterSubmit = (e) => {
     e.preventDefault()
@@ -379,21 +362,16 @@ const OrdersSeller = () => {
       startDate: params.get("startDate") || "",
       endDate: params.get("endDate") || "",
     })
-    if (keyword || filters.userName || filters.startDate || filters.endDate || activeTab) {
-      searchOrders(keyword, page)
-    } else {
-      fetchAllOrders(keyword, page)
-    }
-  }, [searchParams])
+    fetchOrders(page, activeTab)
+    fetchTabCounts()
+  }, [searchParams, activeTab])
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }
     return new Date(dateString).toLocaleDateString("vi-VN", options)
   }
 
-  const filteredOrders = activeTab
-    ? orders.filter((order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab))
-    : orders
+
 
   return (
     <div className="w-full mx-auto">
@@ -460,32 +438,28 @@ const OrdersSeller = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm mb-6 overflow-x-auto">
-        <div className="flex space-x-1 p-1 min-w-max">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className={`
-                px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-                ${
-                  activeTab === tab.id
-                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }
-              `}
-            >
-              {tab.label}
-              {tab.id === "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
-              )}
-              {tab.id !== "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
+  <div className="flex space-x-1 p-1 min-w-max">
+    {tabs.map((tab) => (
+      <button
+        key={tab.id}
+        onClick={() => handleTabClick(tab.id)}
+        className={`
+          px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
+          ${
+            activeTab === tab.id
+              ? "bg-emerald-50 text-emerald-700 shadow-sm"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          }
+        `}
+      >
+        {tab.label}
+        <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">
+          {tabCounts[tab.id] || 0}
+        </span>
+      </button>
+    ))}
+  </div>
+</div>
       <div className={`space-y-6 transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
         {isLoading ? (
           Array(3)
@@ -510,8 +484,8 @@ const OrdersSeller = () => {
                 </div>
               </div>
             ))
-        ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
+        ) : orders.length > 0 ? (
+          orders.map((order) => (
             <div
               key={order.id}
               className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
@@ -561,12 +535,14 @@ const OrdersSeller = () => {
                       <span className="text-gray-600 mr-2">Tổng tiền:</span>
                       <span className="text-lg font-bold text-emerald-600">
                        {formatCurrency(order?.totalPrice)} 
-                        
                       </span>
                     </div>
                     {order.orderStatusName === "Hủy" && (
                       <div className="text-sm text-red-600 mt-1"><p className="font-bold">Lý do hủy: {order?.noted}</p></div>
                     )}
+                     {order.orderStatusName === "Đã duyệt" && order.noted && order.noted != null &&(
+                      <div className="text-sm text-green-600 mt-1 "><p className="font-bold">Thông báo: Đã thay đổi số lượng đặt hàng </p></div>
+                     )}
                   </div>
                 </div>
               </div>

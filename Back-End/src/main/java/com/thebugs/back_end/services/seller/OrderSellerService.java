@@ -29,8 +29,8 @@ import com.thebugs.back_end.repository.OrderStatusJPA;
 import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.PromotionProductJPA;
 import com.thebugs.back_end.services.user.UserService;
+import com.thebugs.back_end.utils.EmailUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
-
 
 @Service
 public class OrderSellerService {
@@ -45,14 +45,14 @@ public class OrderSellerService {
         @Autowired
         private OrderStatusJPA orderStatusJPA;
 
-
-
         @Autowired
         private OrderItemJPA orderItemJPA;
         @Autowired
         private ProductJPA productJPA;
         @Autowired
         private PromotionProductJPA promotionProductJPA;
+        @Autowired
+        private EmailUtil emailUtil;
 
         public ArrayList<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable) {
                 // Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
@@ -84,6 +84,14 @@ public class OrderSellerService {
                 // return orderPage.stream()
                 //                 .collect(Collectors.toCollection(ArrayList::new));
                 return null;
+                        orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
+                                        nameUser, pageable);
+                        System.out.printf(
+                                        "==============================================================================="
+                                                        + orderPage);
+                }
+                return orderPage.stream()
+                                .collect(Collectors.toCollection(ArrayList::new));
         }
         
 
@@ -165,14 +173,16 @@ public class OrderSellerService {
                         throw new IllegalArgumentException(
                                         "Không thể cập nhật trạng thái từ " + currentStatus + " sang " + orderStatusId);
                 }
-                if (orderStatusId == 2 && (cancelReason == null || cancelReason.trim().isEmpty())) {
+                if ((orderStatusId == 2)
+                                && (cancelReason == null || cancelReason.trim().isEmpty())) {
                         throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
                 }
                 if (orderStatusId == 2) {
 
-                        if (!getUserEmail(orderId, cancelReason)) {
+                        if (!getUserEmailCancelReason(orderId, cancelReason)) {
                                 throw new IllegalArgumentException("Không tìm thấy email user");
-                        } else if (orderStatusId == 2 && (cancelReason == null || cancelReason.trim().isEmpty())) {
+                        } else if ((orderStatusId == 2)
+                                        && (cancelReason == null || cancelReason.trim().isEmpty())) {
                                 throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
                         } else {
                                 checkShopId.setNoted(cancelReason);
@@ -214,7 +224,7 @@ public class OrderSellerService {
 
                         }
                 } else if (currentStatus == 3) {
-                        if (newOrderStatusId == 4) {
+                        if (newOrderStatusId == 2 || newOrderStatusId == 4) {
                                 return true;
                         }
                 } else if (currentStatus == 4) {
@@ -226,58 +236,21 @@ public class OrderSellerService {
                 return false;
         }
 
-        public boolean getUserEmail(Integer orderId, String cancelReason) {
-                // Order order = getById(orderId);
-                // String mail = order.getUser().getEmail();
-                // sendMail(mail, cancelReason);
+        public boolean getUserEmailCancelReason(Integer orderId, String cancelReason) {
+                Order order = getById(orderId);
+                String mail = order.getUser().getEmail();
+                String setSubject = ("Đơn hàng #" + "" + order.getId() + " " + "của bạn đã bị hủy");
+                emailUtil.sendMailCancelReason(mail, setSubject, cancelReason);
                 return true;
         }
 
-        // public void sendMail(String setTo, String cancelReason) {
-        //         MimeMessage message = mailSender.createMimeMessage();
-        //         try {
-        //                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        //                 helper.setTo(setTo);
-        //                 helper.setSubject("Hủy Đơn Hàng");
-
-        //                 String htmlContent = "<!DOCTYPE html>" +
-        //                                 "<html>" +
-        //                                 "<body>" +
-        //                                 "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">" +
-        //                                 "  <tr>" +
-        //                                 "    <td align=\"center\" style=\"background: #f0f0f0;\">" +
-        //                                 "      <div style=\"max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
-        //                                 +
-        //                                 "        <h1 style=\"color: #d9534f; text-align: center;\">Hủy Đơn Hàng</h1>" +
-        //                                 "        <p style=\"color: #333; text-align: center;\">Kính gửi quý khách,</p>"
-        //                                 +
-        //                                 "        <p style=\"color: #333; text-align: center;\">Chúng tôi rất tiếc phải thông báo rằng đơn hàng của quý khách đã bị hủy. Dưới đây là chi tiết:</p>"
-        //                                 +
-        //                                 "        <div style=\"background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;\">"
-        //                                 +
-        //                                 "          <p style=\"color: #333;\">Lý do hủy: " + cancelReason + "</p>" +
-        //                                 "        </div>" +
-        //                                 "        <p style=\"color: #333; text-align: center;\">Nếu quý khách có bất kỳ câu hỏi nào, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>"
-        //                                 +
-        //                                 "        <div style=\"text-align: center; margin-top: 20px;\">" +
-        //                                 "          <a href=\"https://yourwebsite.com/order-details\" style=\"background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Xem Chi Tiết</a>"
-        //                                 +
-        //                                 "        </div>" +
-        //                                 "        <p style=\"color: #666; text-align: center; margin-top: 30px;\">Trân trọng,<br>Đội ngũ My Company</p>"
-        //                                 +
-        //                                 "      </div>" +
-        //                                 "    </td>" +
-        //                                 "  </tr>" +
-        //                                 "</table>" +
-        //                                 "</body>" +
-        //                                 "</html>";
-
-        //                 helper.setText(htmlContent, true); // Gắn nội dung HTML vào email
-        //                 mailSender.send(message);
-        //         } catch (MessagingException e) {
-        //                 e.printStackTrace();
-        //         }
-        // }
+        public boolean getUserEmailToast(Integer orderId, String cancelReason) {
+                Order order = getById(orderId);
+                String mail = order.getUser().getEmail();
+                String setSubject = ("Đơn hàng #" + "" + order.getId() + " " + "của bạn đã được cập nhật lại");
+                emailUtil.sendMailCancelReason(mail, setSubject, cancelReason);
+                return true;
+        }
 
         private void updateProductQuantities(String token, int orderId) {
                 // tim order theo id
@@ -292,74 +265,16 @@ public class OrderSellerService {
                         Product product = productJPA.findProductByShopId(shopId, orderItem.getProduct().getId());
                         if (orderItem.getProduct().getId() == product.getId()) {
                                 if (orderItem.getQuantity() > product.getQuantity()) {
-                                        throw new IllegalArgumentException("Số lượng sản phẩm trong kho không đủ");
+                                        String cancelReason = ("Số lượng sản phẩm trong kho không đủ - đã chuyển trạng thái đơn hàng sang hủy");
+                                        updateStatusOrder(token, orderId, 2, cancelReason);
+                                        throw new IllegalArgumentException(cancelReason);
                                 }
                                 int quantityProduct = product.getQuantity() - orderItem.getQuantity();
 
                                 product.setQuantity(quantityProduct);
                                 productJPA.save(product);
 
-                                Optional<PromotionProduct> promotionProductOptional = promotionProductJPA
-                                                .findByPromotionProductByProductId(product.getId());
-
-                                if (promotionProductOptional.isPresent()) {
-                                        PromotionProduct promotionProduct = promotionProductOptional.get();
-                                        if (promotionProduct == null) {
-                                                throw new IllegalArgumentException(
-                                                                "Không tìm thấy sản phẩm khuyến mãi với id: "
-                                                                                + product.getId());
-                                        }
-                                        if (promotionProduct.getQuantity() < orderItem.getQuantity()) {
-                                                int promotionAvailable = promotionProduct.getQuantity();
-                                                int quantityOrder = orderItem.getQuantity();
-
-                                                // Tính lại tiền product nếu vượt quá số lượng khuyến mãi
-                                                int quantityProductWithDiscount = Math.max(quantityOrder,
-                                                                promotionAvailable);
-                                                int quantityProductWithoutDiscount = quantityOrder
-                                                                - quantityProductWithDiscount;
-                                                // tính giá khuyến mãi
-                                                double discountedPrice = promotionProduct.getPromotion()
-                                                                .getPromotionValue();
-                                                double totalPriceProductWithDiscount = quantityProductWithDiscount
-                                                                * discountedPrice;
-
-                                                // Tinh giá gốc của sản phẩm
-                                                double regularPrice = orderItem.getPrice();
-                                                double totalPriceWithoutDiscount = quantityProductWithoutDiscount
-                                                                * regularPrice;
-
-                                                double totalOrderItemPrice = totalPriceProductWithDiscount
-                                                                + totalPriceWithoutDiscount;
-                                                ProductOrderDTO productOrderDTO = new ProductOrderDTO();
-                                                productOrderDTO.setTotalPriceProduct(totalOrderItemPrice);
-                                                System.out.println(
-                                                                "Tổng tiền là:========================================= "
-                                                                                + totalOrderItemPrice);
-                                                // set lại số lương promostion và sold promostion
-                                                int quantityPromotionProduct = promotionProduct.getQuantity()
-                                                                - orderItem.getQuantity();
-                                                promotionProduct.setQuantity(quantityPromotionProduct);
-
-                                                int soldQuantity = promotionProduct.getSoldQuantity()
-                                                                + orderItem.getQuantity();
-
-                                                promotionProduct.setSoldQuantity(soldQuantity);
-                                        }
-
-                                        int quantityPromotionProduct = promotionProduct.getQuantity()
-                                                        - orderItem.getQuantity();
-                                        promotionProduct.setQuantity(quantityPromotionProduct);
-
-                                        int soldQuantity = promotionProduct.getSoldQuantity()
-                                                        + orderItem.getQuantity();
-
-                                        promotionProduct.setSoldQuantity(soldQuantity);
-
-                                        promotionProductJPA.save(promotionProduct);
-                                        if (!checkQuantityPromotionProduct(token, orderId)) {
-                                                promotionProductJPA.delete(promotionProduct);
-                                        }
+                                if (checkQuantityPromotionProduct(token, orderId)) {
                                 }
 
                         }
@@ -371,15 +286,51 @@ public class OrderSellerService {
                 List<OrderItem> listOrderItems = orderItemJPA.findByOrderId(orderId);
 
                 for (OrderItem orderItem : listOrderItems) {
-                        PromotionProduct promotionProduct = promotionProductJPA
-                                        .findByPromotionProductByProductId(orderItem.getProduct().getId()).get();
+                        Optional<PromotionProduct> promotionProductOptional = promotionProductJPA
+                                        .findByPromotionProductByProductId(orderItem.getProduct().getId());
+                        if (promotionProductOptional.isPresent()) {
+                                PromotionProduct promotionProduct = promotionProductOptional.get();
+                                if (promotionProduct.getQuantity() < orderItem.getQuantity()) {
+                                        int tam = promotionProduct.getQuantity();
+                                        orderItem.setQuantity(tam);
+                                        orderItemJPA.save(orderItem);
+                                        String note = ("Số lượng sản phẩm " + promotionProduct.getProduct().getName()
+                                                        + " trong Flash Sale không đủ " + promotionProduct.getQuantity()
+                                                        + " đã cập nhật số lượng trong đơn hàng thành "
+                                                        + orderItem.getQuantity());
+                                        orderItem.getOrder().setNoted(note);
+                                        getUserEmailToast(orderId, note);
 
-                        if (promotionProduct.getQuantity() <= 0) {
+                                        int quantityPromotionProduct = orderItem.getQuantity()
+                                                        - orderItem.getQuantity();
 
-                                return false;
+                                        promotionProduct.setQuantity(quantityPromotionProduct);
+
+                                        int soldQuantity = promotionProduct.getSoldQuantity()
+                                                        + tam;
+
+                                        promotionProduct.setSoldQuantity(soldQuantity);
+                                        promotionProductJPA.save(promotionProduct);
+                                        if (promotionProduct.getQuantity() <= 0) {
+                                                promotionProductJPA.delete(promotionProduct);
+                                        }
+
+                                }
+                                int quantityPromotionProduct = promotionProduct.getQuantity()
+                                                - orderItem.getQuantity();
+                                promotionProduct.setQuantity(quantityPromotionProduct);
+
+                                int soldQuantity = promotionProduct.getSoldQuantity()
+                                                + orderItem.getQuantity();
+
+                                promotionProduct.setSoldQuantity(soldQuantity);
+
+                                promotionProductJPA.save(promotionProduct);
                         }
+                        return true;
+
                 }
-                return true;
+                return false;
         }
 
 }
