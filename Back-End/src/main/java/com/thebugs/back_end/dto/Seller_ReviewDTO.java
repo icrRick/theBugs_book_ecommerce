@@ -21,10 +21,10 @@ public class Seller_ReviewDTO {
     private Date reply_at;
     private Date updated_at;
 
-    private String userFullName;
-    private String userAvatar;
-    private String username;
+    private String customerFullName;
+    private String customerAvatar;
 
+    private String productCode;
     private String productName;
     private String productImage;
 
