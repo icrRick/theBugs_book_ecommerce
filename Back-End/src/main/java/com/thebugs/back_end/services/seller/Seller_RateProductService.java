@@ -38,9 +38,10 @@ public class Seller_RateProductService {
         if (review.isPresent()) {
             review.get().setReply(reviewBean.getReply());
             review.get().setReplyAt(new Date());
+            g_ReviewJPA.save(review.get());
+            return new ResponseData(true, "Phản hồi đánh giá thành công", null, 201);
         } else {
             return new ResponseData(false, "Không tìm thấy đánh giá", null, 400);
         }
-        return new ResponseData(true, "Phản hồi đánh giá thành công", null, 201);
     }
 }

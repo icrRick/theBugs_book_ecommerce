@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
@@ -40,12 +42,17 @@ public class Seller_RateProductController {
             @RequestParam(required = false, defaultValue = "rate") String sortBy) {
         // prepare for search
         keyword = keyword == null ? "" : keyword;
+        System.out.println("SORT");
+        System.out.println(sort);
+        System.out.println(sortBy);
         String cleaned = keyword.replaceAll("\\s+", "");
         String keywordPattern = Arrays.stream(cleaned.split(""))
                 .map(ch -> "%" + ch)
                 .collect(Collectors.joining("")) + "%";
         Sort finalSort = sort.equalsIgnoreCase("DESC") ? Sort.by(Sort.Order.desc(sortBy))
                 : Sort.by(Sort.Order.asc(sortBy));
+                System.out.println("KEYWORD: ");
+                System.out.println(keywordPattern);
         // prepare for page
         int pageNumber = (page == null || page < 1) ? 1 : page;
         Pageable pageable = PageRequest.of(pageNumber - 1, 10, finalSort);
@@ -58,10 +65,11 @@ public class Seller_RateProductController {
         return ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode())).body(responseData);
     }
 
-    @GetMapping("/reply")
+    @PostMapping("/reply")
     public ResponseEntity<ResponseData> replyReview(@RequestHeader("Authorization") String authorizationHeader,
-            Seller_ReviewBean reviewBean,
+           @RequestBody Seller_ReviewBean reviewBean,
             BindingResult bindingResult) {
+                System.out.println("REPLYNE");
         ResponseData responseData;
         if (bindingResult.hasFieldErrors()) {
             Map<String, String> errorMap = new HashMap<>();

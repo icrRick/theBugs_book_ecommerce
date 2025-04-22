@@ -28,9 +28,9 @@ const Reviews = () => {
 
       // State for filters and sorting
       const [searchTerm, setSearchTerm] = useState("");
-      const [filterRating, setFilterRating] = useState(0);
-      const [filterResponded, setFilterResponded] = useState("all");
-      const [sortBy, setSortBy] = useState("date");
+      const [filterRating, setFilterRating] = useState();
+      const [filterResponded, setFilterResponded] = useState(null);
+      const [sortBy, setSortBy] = useState("createdAt");
       const [sortOrder, setSortOrder] = useState("desc");
 
       // State for pagination
@@ -40,25 +40,44 @@ const Reviews = () => {
       // State for reply functionality
       const [replyingTo, setReplyingTo] = useState(null);
       const [replyText, setReplyText] = useState("");
-
+      const onChangeReply = (e) => {
+            if (e === "all") {
+                  setFilterResponded(null);
+            } else if (e === "true") {
+                  setFilterResponded(true);
+            } else if (e === "false") {
+                  setFilterResponded(false);
+            }
+      };
       // Mock data - replace with actual API call
       useEffect(() => {
+            console.log(filterResponded);
+
             // Simulate API call
             setTimeout(() => {
                   axiosInstance
-                        .get("/api/seller/reviews")
+                        .get("/api/seller/reviews", {
+                              params: {
+                                    keyword: searchTerm,
+                                    page: currentPage,
+                                    byRate: filterRating,
+                                    isReply: filterResponded,
+                                    sortBy: sortBy,
+                                    sort: sortOrder,
+                              },
+                        })
                         .then((response) => {
                               console.log("Review: ");
                               console.log(response.data.data);
                               setReviews(response.data.data);
                         })
                         .catch((error) => {
-                              showErrorToast(error.data.message);
+                              showErrorToast(error.response.data.message);
                         });
 
                   setLoading(false);
-            }, 1000);
-      }, []);
+            }, 500);
+      }, [searchTerm, filterRating, filterResponded, sortBy, sortOrder]);
       useEffect(() => {
             const total = reviews.length;
             setFilteredReviews(reviews);
@@ -77,102 +96,24 @@ const Reviews = () => {
                   distribution,
             });
       }, [reviews]);
-      // Filter and sort reviews
-      useEffect(() => {
-            let result = [...reviews];
-
-            // Apply search filter
-            if (searchTerm) {
-                  result = result.filter(
-                        (review) =>
-                              review.productName
-                                    .toLowerCase()
-                                    .includes(searchTerm.toLowerCase()) ||
-                              review.customerFullName
-                                    .toLowerCase()
-                                    .includes(searchTerm.toLowerCase()) ||
-                              review.content
-                                    .toLowerCase()
-                                    .includes(searchTerm.toLowerCase())
-                  );
-            }
-
-            // Apply rating filter
-            if (filterRating > 0) {
-                  result = result.filter(
-                        (review) => review.rating === filterRating
-                  );
-            }
-
-            // Apply responded filter
-            if (filterResponded === "responded") {
-                  result = result.filter((review) => review.reply);
-            } else if (filterResponded === "unresponded") {
-                  result = result.filter((review) => !review.reply);
-            }
-
-            // Apply sorting
-            result.sort((a, b) => {
-                  if (sortBy === "date") {
-                        return sortOrder === "asc"
-                              ? new Date(a.date) - new Date(b.date)
-                              : new Date(b.date) - new Date(a.date);
-                  } else if (sortBy === "rating") {
-                        return sortOrder === "asc"
-                              ? a.rating - b.rating
-                              : b.rating - a.rating;
-                  }
-                  return 0;
-            });
-
-            setFilteredReviews(result);
-            setCurrentPage(1);
-      }, [
-            searchTerm,
-            filterRating,
-            filterResponded,
-            sortBy,
-            sortOrder,
-            reviews,
-      ]);
 
       // Handle reply submission
       const handleReplySubmit = (reviewId) => {
             if (!replyText.trim()) return;
+            console.log(reviewId);
+            console.log(replyText);
+            
+            const dataToSend = {
+                  id: reviewId,
+                  reply: replyText,
+            };
+            axiosInstance
+                  .post("api/seller/reviews/reply", dataToSend)
+                  .then((response) => {
+                        console.log(response);
 
-            // In a real app, you would send this to an API
-            const updatedReviews = reviews.map((review) => {
-                  if (review.id === reviewId) {
-                        return {
-                              ...review,
-                              reply: {
-                                    text: replyText,
-                                    date: new Date().toISOString(),
-                              },
-                        };
-                  }
-                  return review;
-            });
-
-            setReviews(updatedReviews);
-            setReplyingTo(null);
-            setReplyText("");
-      };
-
-      // Handle report review
-      const handleReportReview = (reviewId) => {
-            // In a real app, you would send this to an API
-            const updatedReviews = reviews.map((review) => {
-                  if (review.id === reviewId) {
-                        return {
-                              ...review,
-                              reported: true,
-                        };
-                  }
-                  return review;
-            });
-
-            setReviews(updatedReviews);
+                        showSuccessToast(response.data);
+                  });
       };
 
       // Pagination logic
@@ -324,23 +265,21 @@ const Reviews = () => {
                                     className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={filterResponded}
                                     onChange={(e) =>
-                                          setFilterResponded(e.target.value)
+                                          onChangeReply(e.target.value)
                                     }
                               >
-                                    <option value="all">Tất cả phản hồi</option>
-                                    <option value="responded">
-                                          Đã phản hồi
+                                    <option value={"all"}>
+                                          Tất cả phản hồi
                                     </option>
-                                    <option value="unresponded">
-                                          Chưa phản hồi
-                                    </option>
+                                    <option value={true}>Đã phản hồi</option>
+                                    <option value={false}>Chưa phản hồi</option>
                               </select>
 
                               <div className="flex items-center gap-2">
                                     <button
                                           className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                                           onClick={() => {
-                                                setSortBy("date");
+                                                setSortBy("createdAt");
                                                 setSortOrder(
                                                       sortOrder === "desc"
                                                             ? "asc"
@@ -349,7 +288,7 @@ const Reviews = () => {
                                           }}
                                     >
                                           <span>Ngày</span>
-                                          {sortBy === "date" &&
+                                          {sortBy === "createdAt" &&
                                                 (sortOrder === "desc" ? (
                                                       <FaSortAmountDown />
                                                 ) : (
@@ -360,7 +299,7 @@ const Reviews = () => {
                                     <button
                                           className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                                           onClick={() => {
-                                                setSortBy("rating");
+                                                setSortBy("rate");
                                                 setSortOrder(
                                                       sortOrder === "desc"
                                                             ? "asc"
@@ -369,7 +308,7 @@ const Reviews = () => {
                                           }}
                                     >
                                           <span>Đánh giá</span>
-                                          {sortBy === "rating" &&
+                                          {sortBy === "rate" &&
                                                 (sortOrder === "desc" ? (
                                                       <FaSortAmountDown />
                                                 ) : (
@@ -382,8 +321,8 @@ const Reviews = () => {
                                           onClick={() => {
                                                 setSearchTerm("");
                                                 setFilterRating(0);
-                                                setFilterResponded("all");
-                                                setSortBy("date");
+                                                onChangeReply("all");
+                                                setSortBy("createdAt");
                                                 setSortOrder("desc");
                                           }}
                                     >
@@ -450,24 +389,8 @@ const Reviews = () => {
                                                                                     hồi
                                                                               </button>
                                                                         )}
-
-                                                                  {!review.reported && (
-                                                                        <button
-                                                                              className="text-gray-500 hover:text-red-500 flex items-center"
-                                                                              onClick={() =>
-                                                                                    handleReportReview(
-                                                                                          review.id
-                                                                                    )
-                                                                              }
-                                                                        >
-                                                                              <FaFlag className="mr-1" />{" "}
-                                                                              Báo
-                                                                              cáo
-                                                                        </button>
-                                                                  )}
                                                             </div>
                                                       </div>
-
                                                       <div className="flex items-start mt-3">
                                                             <div className="w-12 h-12 rounded overflow-hidden mr-3 flex-shrink-0">
                                                                   <img
