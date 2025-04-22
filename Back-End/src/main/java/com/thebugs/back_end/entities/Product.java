@@ -92,4 +92,11 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    public String getFirstImageName() {
+        if (images != null && !images.isEmpty()) {
+            return images.get(0).getImageName(); 
+        }
+        return null;
+    }
 }
