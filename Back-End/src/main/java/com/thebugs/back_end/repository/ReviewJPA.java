@@ -1,5 +1,7 @@
 package com.thebugs.back_end.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +34,11 @@ public interface ReviewJPA extends JpaRepository<Review, Integer> {
         Page<Seller_ReviewDTO> getFullReviewByShopId(Integer shopId, Integer rate, String keyword, Boolean isReply,
                         Pageable pageable);
 
+        @Query("SELECT " + "r.rate " +
+                        "FROM Review r " +
+                        "JOIN r.orderItem oi " +
+                        "JOIN oi.product p " +
+                        "JOIN p.shop s " +
+                        "WHERE s.id = ?1")
+        List<Integer> getAllReviewByShopId(Integer shopId);
 }

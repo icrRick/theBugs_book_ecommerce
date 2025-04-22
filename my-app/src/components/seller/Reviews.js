@@ -29,7 +29,7 @@ const Reviews = () => {
       // State for filters and sorting
       const [searchTerm, setSearchTerm] = useState("");
       const [filterRating, setFilterRating] = useState();
-      const [filterResponded, setFilterResponded] = useState(null);
+      const [filterResponded, setFilterResponded] = useState();
       const [sortBy, setSortBy] = useState("createdAt");
       const [sortOrder, setSortOrder] = useState("desc");
 
@@ -49,11 +49,8 @@ const Reviews = () => {
                   setFilterResponded(false);
             }
       };
-      // Mock data - replace with actual API call
-      useEffect(() => {
-            console.log(filterResponded);
-
-            // Simulate API call
+      const fetchReviewsData = () => {
+            setLoading(true);
             setTimeout(() => {
                   axiosInstance
                         .get("/api/seller/reviews", {
@@ -67,42 +64,52 @@ const Reviews = () => {
                               },
                         })
                         .then((response) => {
-                              console.log("Review: ");
                               console.log(response.data.data);
+                              
                               setReviews(response.data.data);
                         })
                         .catch((error) => {
                               showErrorToast(error.response.data.message);
+                        })
+                        .finally(() => {
+                              setLoading(false);
                         });
-
-                  setLoading(false);
             }, 500);
-      }, [searchTerm, filterRating, filterResponded, sortBy, sortOrder]);
+      };
       useEffect(() => {
-            const total = reviews.length;
-            setFilteredReviews(reviews);
-            const sum = reviews.reduce((acc, review) => acc + review.rate, 0);
+            axiosInstance.get("/api/seller/reviews/all").then((response) => {
+                  calculateStats(response.data.data);
+            });
+      }, []);
+      useEffect(() => {
+            fetchReviewsData();
+            // Simulate API call
+      }, [searchTerm, filterRating, filterResponded, sortBy, sortOrder]);
+      const calculateStats = (data) => {
+            const total = data.length;
+            setFilteredReviews(data);
+            const sum = data.reduce((acc, review) => acc + review, 0);
             console.log("sum" + sum);
 
             const average = sum / total;
             // Calculate stats
             const distribution = [0, 0, 0, 0, 0];
-            reviews.forEach((review) => {
-                  distribution[5 - review.rate]++;
+            data.forEach((review) => {
+                  distribution[5 - review]++;
             });
             setStats({
                   average,
                   total,
                   distribution,
             });
-      }, [reviews]);
-
+      };
       // Handle reply submission
       const handleReplySubmit = (reviewId) => {
             if (!replyText.trim()) return;
+            setLoading(true);
             console.log(reviewId);
             console.log(replyText);
-            
+
             const dataToSend = {
                   id: reviewId,
                   reply: replyText,
@@ -110,9 +117,14 @@ const Reviews = () => {
             axiosInstance
                   .post("api/seller/reviews/reply", dataToSend)
                   .then((response) => {
-                        console.log(response);
-
-                        showSuccessToast(response.data);
+                        fetchReviewsData();
+                        showSuccessToast(response.data.message);
+                  })
+                  .catch((error) => {
+                        showErrorToast(error.response.data.message);
+                  })
+                  .finally(() => {
+                        setLoading(false);
                   });
       };
 
@@ -334,7 +346,7 @@ const Reviews = () => {
 
                   {/* Reviews List */}
                   <div className="space-y-6">
-                        {currentItems.length === 0 ? (
+                        {reviews.length === 0 ? (
                               <div className="text-center py-10">
                                     <p className="text-gray-500">
                                           Không tìm thấy đánh giá nào phù hợp
@@ -342,7 +354,7 @@ const Reviews = () => {
                                     </p>
                               </div>
                         ) : (
-                              currentItems.map((review) => (
+                              reviews.map((review) => (
                                     <div
                                           key={review.id}
                                           className={`border ${
@@ -440,16 +452,12 @@ const Reviews = () => {
                                                                   </p>
                                                                   <p className="mt-1 text-sm text-gray-600">
                                                                         {
-                                                                              review
-                                                                                    .reply
-                                                                                    .text
+                                                                              review.reply
                                                                         }
                                                                   </p>
                                                                   <p className="mt-1 text-xs text-gray-400">
                                                                         {formatDate(
-                                                                              review
-                                                                                    .reply
-                                                                                    .date
+                                                                              review.reply_at
                                                                         )}
                                                                   </p>
                                                             </div>

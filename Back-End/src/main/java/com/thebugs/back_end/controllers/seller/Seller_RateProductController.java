@@ -32,6 +32,12 @@ public class Seller_RateProductController {
     @Autowired
     Seller_RateProductService g_RateProductService;
 
+    @GetMapping("/all")
+    public ResponseEntity<ResponseData> getAllReviews(@RequestHeader("Authorization") String authorizationHeader) {
+        ResponseData responseData = g_RateProductService.getAllReview(authorizationHeader);
+        return ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode())).body(responseData);
+    }
+
     @GetMapping()
     public ResponseEntity<ResponseData> getReviewProduct(@RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(required = false) String keyword,
@@ -51,8 +57,8 @@ public class Seller_RateProductController {
                 .collect(Collectors.joining("")) + "%";
         Sort finalSort = sort.equalsIgnoreCase("DESC") ? Sort.by(Sort.Order.desc(sortBy))
                 : Sort.by(Sort.Order.asc(sortBy));
-                System.out.println("KEYWORD: ");
-                System.out.println(keywordPattern);
+        System.out.println("KEYWORD: ");
+        System.out.println(keywordPattern);
         // prepare for page
         int pageNumber = (page == null || page < 1) ? 1 : page;
         Pageable pageable = PageRequest.of(pageNumber - 1, 10, finalSort);
@@ -67,9 +73,9 @@ public class Seller_RateProductController {
 
     @PostMapping("/reply")
     public ResponseEntity<ResponseData> replyReview(@RequestHeader("Authorization") String authorizationHeader,
-           @RequestBody Seller_ReviewBean reviewBean,
+            @RequestBody Seller_ReviewBean reviewBean,
             BindingResult bindingResult) {
-                System.out.println("REPLYNE");
+        System.out.println("REPLYNE");
         ResponseData responseData;
         if (bindingResult.hasFieldErrors()) {
             Map<String, String> errorMap = new HashMap<>();

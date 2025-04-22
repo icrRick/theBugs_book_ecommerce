@@ -1,6 +1,7 @@
 package com.thebugs.back_end.services.seller;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,16 @@ public class Seller_RateProductService {
             int shopId = g_UserService.getUserToken(jwt).getShop().getId();
             Page<Seller_ReviewDTO> review = g_ReviewJPA.getFullReviewByShopId(shopId, rate, keyword, isReply, pageable);
             return new ResponseData(true, "Lấy thông tin đánh giá thành công", review.getContent(), 200);
+        } catch (Exception e) {
+            return new ResponseData(false, "Lấy thông tin thất bại", null, 400);
+        }
+    }
+
+    public ResponseData getAllReview(String jwt) {
+        try {
+            int shopId = g_UserService.getUserToken(jwt).getShop().getId();
+            List<Integer> review = g_ReviewJPA.getAllReviewByShopId(shopId);
+            return new ResponseData(true, "Lấy thông tin đánh giá thành công", review, 200);
         } catch (Exception e) {
             return new ResponseData(false, "Lấy thông tin thất bại", null, 400);
         }
