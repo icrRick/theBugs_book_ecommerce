@@ -147,4 +147,4 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
   )
 }
 
-export default Navbar
+export default Navbar;

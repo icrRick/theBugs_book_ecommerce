@@ -37,7 +37,6 @@ public class AdminReportProductService {
 
     public ArrayList<Object> findReportProductsByActive(String activeStr, Pageable pageable) {
         Page<ReportProduct> page;
-
         switch (activeStr.toLowerCase()) {
             case "all":
                 page = reportProductJPA.findAll(pageable);
@@ -124,13 +123,11 @@ public class AdminReportProductService {
     }
 
     public List<ReportProduct> findReportProductsByProductAndActive(ReportProduct reportProduct, Boolean active) {
-        return reportProductJPA.findReportProductsByProductAndActive(
-                reportProduct.getProduct().getId(), active);
+        return reportProductJPA.findReportProductsByProductAndActive(reportProduct.getProduct().getId(), active);
     }
 
     public boolean updateActiveAll(ReportProduct reportProduct, Boolean active) {
         List<ReportProduct> reportProducts = findReportProductsByProductAndActive(reportProduct, null);
-
         boolean updated = false;
         for (ReportProduct rp : reportProducts) {
             updated |= updateActive(rp, active);
@@ -138,7 +135,6 @@ public class AdminReportProductService {
         Product product= reportProduct.getProduct();
         product.setApprove(true);
         productJPA.save(product);
-
         return updated;
     }
 
