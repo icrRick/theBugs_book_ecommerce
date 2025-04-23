@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.dto.FlashSaleShopDTO;
 import com.thebugs.back_end.dto.ShopDetailDTO;
-import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.Shop;
 
 public interface ShopJPA extends JpaRepository<Shop, Integer> {

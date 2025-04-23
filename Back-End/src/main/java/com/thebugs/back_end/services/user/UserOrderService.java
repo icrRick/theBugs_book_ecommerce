@@ -24,7 +24,6 @@ import com.thebugs.back_end.entities.OrderStatus;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
-import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
 
 @Service
