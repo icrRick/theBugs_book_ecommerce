@@ -68,6 +68,7 @@ public class Seller_ProductCRUDService {
 
         product.setProduct_code(code);
         product.setCreatedAt(new Date());
+        product.setApprove(false);
         try {
             Product savedProduct = g_ProductJPA.save(product);
             if (savedProduct != null && savedProduct.getId() != null) {
