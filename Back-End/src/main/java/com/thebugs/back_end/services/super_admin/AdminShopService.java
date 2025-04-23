@@ -10,8 +10,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.entities.Shop;
+import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.AdminShopMapper;
+import com.thebugs.back_end.repository.RoleJPA;
 import com.thebugs.back_end.repository.ShopJPA;
+import com.thebugs.back_end.repository.UserJPA;
+import com.thebugs.back_end.services.user.UserService;
 import com.thebugs.back_end.utils.EmailUtil;
 
 @Service
@@ -26,6 +30,10 @@ public class AdminShopService {
     @Autowired
     private AdminShopMapper adminShopMapper;
 
+    @Autowired 
+    private RoleJPA roleJPA;
+    @Autowired
+    private UserJPA userJPA;
     public ArrayList<Object> getProductByKeywordWithPagination(String keyword, Pageable pageable) {
         Page<Shop> page;
         if (keyword == null || keyword.isEmpty()) {
@@ -58,6 +66,9 @@ public class AdminShopService {
         String emailShop = shop.getUser().getEmail();
         boolean checksendEmail = emailUtil.sendEmailApprove(emailShop,"Cửa hàng", shopSlug);
         boolean checkUpdateApprove = updateApprove(shop, true);
+        User u=shop.getUser();
+        u.setRole(roleJPA.findById(2).get());
+        userJPA.save(u);
         return checksendEmail && checkUpdateApprove;
     }
 
