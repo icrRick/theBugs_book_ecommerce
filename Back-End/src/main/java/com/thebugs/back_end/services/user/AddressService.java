@@ -81,8 +81,7 @@ public class AddressService {
 
         public Address getAddressShopId(Integer shopId) {
                 Address address = addressJPA.getAddressShopId(shopId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Không tìm thấy địa chỉ có id = " + shopId));
+                                .orElse(null);
                 return address;
         }
 
