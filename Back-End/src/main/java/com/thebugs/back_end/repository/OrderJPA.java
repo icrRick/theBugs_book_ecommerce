@@ -43,10 +43,11 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "FROM Order o " +
                         "LEFT JOIN o.orderPayment op " +
                         "LEFT JOIN o.orderItems oi " +
+                        "LEFT JOIN o.voucher v " + // 👈 Thêm dòng này để rõ ràng
                         "WHERE o.user.id = ?1 " +
                         "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +
-                        "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
+                        "o.shippingFee, v.discountPercentage, v.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderByUserId(Integer userId, Pageable pageable);
 
         @Query("SELECT COUNT(o) FROM Order o WHERE o.user.id = ?1")
