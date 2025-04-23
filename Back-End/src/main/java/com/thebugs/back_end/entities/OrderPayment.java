@@ -24,10 +24,10 @@ public class OrderPayment {
     private Integer id;
 
     @Column(nullable = false, length = 60)
-    private String paymentMethob;
+    private String paymentMethod;
     @Column(length = 60)
     private String paymentStatus;
 
-     @OneToMany(mappedBy = "orderPayment")
+    @OneToMany(mappedBy = "orderPayment")
     private List<Order> orders;
 }

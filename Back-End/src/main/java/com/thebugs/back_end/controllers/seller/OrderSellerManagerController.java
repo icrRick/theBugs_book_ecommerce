@@ -21,12 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.thebugs.back_end.beans.OrderStatusBean;
 import com.thebugs.back_end.dto.OrderDTO;
 
-import com.thebugs.back_end.mappers.AuthorMapper;
-import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.resp.ResponseDataPagination;
 import com.thebugs.back_end.services.seller.OrderSellerService;
-import com.thebugs.back_end.services.user.UserService;
 
 @RestController
 @RequestMapping("/seller/order")
@@ -34,14 +31,6 @@ public class OrderSellerManagerController {
 
     @Autowired
     OrderSellerService orderSellerService;
-    @Autowired
-    OrderSellerService orderSellerService1;
-    @Autowired
-    UserService userService;
-    @Autowired
-    OrderMapper orderMapper;
-    @Autowired
-    AuthorMapper authorMapper;
 
     private ResponseEntity<ResponseData> createResponse(HttpStatus status,
             boolean success, String message,

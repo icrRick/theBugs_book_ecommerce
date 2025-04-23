@@ -21,10 +21,12 @@ import com.thebugs.back_end.dto.OrderSimpleDTO;
 import com.thebugs.back_end.dto.ProductOrderDTO;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderStatus;
+import com.thebugs.back_end.entities.Review;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
 import com.thebugs.back_end.utils.ColorUtil;
+import com.thebugs.back_end.utils.EmailUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
 
 @Service
@@ -37,14 +39,17 @@ public class UserOrderService {
     OrderStatusJPA orderStatusJPA;
     @Autowired
     OrderMapper orderMapper;
+    @Autowired
+    private EmailUtil emailUtil;
+    @Autowired
+    private ReviewService reviewService;
 
     public ArrayList<OrderSimpleDTO> getAll(String token, int page, int size) {
         int userId = userService.getUserToken(token).getId();
         Pageable pageable2 = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
-        // Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
-        // return order.stream()
-        // .collect(Collectors.toCollection(ArrayList::new));
-        return null;
+        Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
+        return order.stream()
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public int getTotalItemsOrderByUserId(String token) {
@@ -57,20 +62,18 @@ public class UserOrderService {
             String nameUser, Pageable pageable) {
         int userId = userService.getUserToken(token).getId();
         Page<OrderSimpleDTO> page;
-        // if (startDate == null && endDate == null && orderStatusName == null
-        // && (nameUser == null || nameUser.trim().isEmpty())) {
-        // ColorUtil.print(ColorUtil.RED, "ServiceOrder");
-        // page = orderJPA.findOrderByUserId(userId, pageable);
-        // ColorUtil.print(ColorUtil.RED, page.toString());
-        // } else {
-        // page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate,
-        // endDate,
-        // orderStatusName,
-        // nameUser, pageable);
-        // }
-        // return page.stream()
-        // .collect(Collectors.toCollection(ArrayList::new));
-        return null;
+        if (startDate == null && endDate == null && orderStatusName == null
+                && (nameUser == null || nameUser.trim().isEmpty())) {
+            ColorUtil.print(ColorUtil.RED, "ServiceOrder");
+            page = orderJPA.findOrderByUserId(userId, pageable);
+            ColorUtil.print(ColorUtil.RED, page.toString());
+        } else {
+            page = orderJPA.findOrderUserByDateAndKeyWordAndStatus(userId, startDate, endDate,
+                    orderStatusName,
+                    nameUser, pageable);
+        }
+        return page.stream()
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName,
@@ -83,9 +86,7 @@ public class UserOrderService {
             return orderJPA.countOrderByUserId(userId);
         }
 
-        // return orderJPA.countBySearchOrderUser(userId, startDate, endDate,
-        // orderStatusName, nameUser);
-        return 0;
+        return orderJPA.countBySearchOrderUser(userId, startDate, endDate, orderStatusName, nameUser);
     }
 
     public OrderDTO updateStatusOrder(String token, int orderId, int orderStatusId, String cancelReason) {
@@ -107,6 +108,11 @@ public class UserOrderService {
             throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
         } else {
             checkShopId.setNoted(cancelReason);
+            if (checkShopId.getOrderPayment().getId() == 3) {
+                String setSubject = "Đơn hàng đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
+                        + checkShopId.getShop().getUser().getEmail();
+                getUserEmailCancelReason(orderId, setSubject);
+            }
         }
         if (orderStatusId == 4) {
             checkShopId.setDeliveredAt(new Date());
@@ -114,6 +120,14 @@ public class UserOrderService {
 
         checkShopId.setOrderStatus(getByStatusToOrder(orderStatusId));
         return orderMapper.toDTO(orderJPA.save(checkShopId));
+    }
+
+    public boolean getUserEmailCancelReason(Integer orderId, String cancelReason) {
+        Order order = getById(orderId);
+        String mail = order.getUser().getEmail();
+        String setSubject = ("Đơn hàng #" + "" + order.getId() + " " + "của bạn đã bị hủy");
+        emailUtil.sendMailCancelReason(mail, setSubject, cancelReason);
+        return true;
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
@@ -144,9 +158,9 @@ public class UserOrderService {
     }
 
     public Order getByUserId(int orderId, int userId) {
-        // Order order = orderJPA.getOrderByUserId(orderId, userId)
-        // .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
-        return null;
+        Order order = orderJPA.getOrderByUserId(orderId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy id user"));
+        return order;
     }
 
     public OrderStatus getByStatusToOrder(int id) {
@@ -184,28 +198,38 @@ public class UserOrderService {
         map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
         map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
         map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-        // map.put("paymentMethod", order.getPaymentMethod());
-        // map.put("paymentStatus", order.getPaymentStatus());
+        map.put("paymentMethod", order.getOrderPayment().getPaymentMethod());
+        map.put("paymentStatus", order.getOrderPayment().getPaymentStatus());
         map.put("shippingFee", order.getShippingFee());
         map.put("createdAt", order.getCreatedAt());
         map.put("orderStatusName", order.getOrderStatus().getName());
         map.put("noted", order.getNoted());
-        // map.put("shopId", order.getShop().getId());
-        // map.put("shopName", order.getShop().getName());
         map.put("orderItems", order.getOrderItems().stream()
                 .map(item -> {
                     ProductOrderDTO productOrderDTO = new ProductOrderDTO();
+
+                    productOrderDTO.setOrderItemId(item.getId());
                     productOrderDTO.setProductId(item.getProduct().getId());
                     productOrderDTO.setProductName(item.getProduct().getName());
                     productOrderDTO.setProductImage(
-                            item.getProduct().getImages().get(0).getImageName());// lấy ảnh
-                                                                                 // đầu
-                                                                                 // tiên
+                            item.getProduct().getImages().getLast().getImageName());
                     productOrderDTO.setPriceProduct(item.getPrice());
                     productOrderDTO.setQuantityProduct(item.getQuantity());
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
                     productOrderDTO.setShopId(item.getProduct().getShop().getId());
                     productOrderDTO.setShopName(item.getProduct().getShop().getName());
+
+                    Review review = reviewService.findReviewByOrderItem(item.getId(), userId);
+                    productOrderDTO.setReviewed(review != null);
+                    if (review != null) {
+                        productOrderDTO.setReviewId(review.getId());
+                        productOrderDTO.setReviewContent(review.getContent());
+                        productOrderDTO.setReviewRating(review.getRate());
+                        productOrderDTO.setReviewEditable(reviewService.checkDayUpdateReview(review.getId()));
+                    } else {
+                        productOrderDTO.setReviewEditable(false);
+                    }
+
                     return productOrderDTO;
                 })
                 .collect(Collectors.toList()));

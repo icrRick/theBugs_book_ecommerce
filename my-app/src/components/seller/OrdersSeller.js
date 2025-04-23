@@ -4,17 +4,18 @@ import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
 import Pagination from "../admin/Pagination"
-import { showErrorToast, showSuccessToast } from "../../utils/Toast";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast"
+import { formatCurrency } from "../../utils/Format"
 
 const OrdersSeller = () => {
   const navigate = useNavigate()
- 
- 
   const [searchParams, setSearchParams] = useSearchParams()
+
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "")
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [orders, setOrders] = useState([])
+  const [allOrders, setAllOrders] = useState([])
   const [totalOrders, setTotalOrders] = useState(0)
   const [tabCounts, setTabCounts] = useState({})
   const [filters, setFilters] = useState({
@@ -22,14 +23,14 @@ const OrdersSeller = () => {
     startDate: searchParams.get("startDate") || "",
     endDate: searchParams.get("endDate") || "",
   })
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
+  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "")
   const [cancelReason, setCancelReason] = useState("")
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [orderToCancel, setOrderToCancel] = useState(null)
  
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page")) || 1)
-  const [totalPages, setTotalPages] = useState(1)
-  const pageSize = 10;
+  const pageSize = 10
+  const [totalPages, setTotalPages] = useState(0)
 
   const statusConfig = {
     "Chờ duyệt": {
@@ -101,125 +102,141 @@ const OrdersSeller = () => {
     { id: "5", label: "Đã nhận" },
   ]
 
-
-
-  const getStatusNameFromId = (statusId) => {
-    switch (statusId) {
-      case "1": return "Chờ duyệt"
-      case "2": return "Đã hủy"
-      case "3": return "Đã duyệt"
-      case "4": return "Đang giao"
-      case "5": return "Đã nhận"
-      default: return ""
+  const getStatusIdFromName = (statusName) => {
+    switch (statusName) {
+      case "Chờ duyệt":
+        return 1
+      case "Đã hủy":
+        return 2
+      case "Đã duyệt":
+        return 3
+      case "Đang giao":
+        return 4
+      case "Đã nhận":
+        return 5
+      default:
+        return 0
     }
   }
 
-  
+  const getStatusNameFromId = (statusId) => {
+    switch (statusId) {
+      case "1":
+        return "Chờ duyệt"
+      case "2":
+        return "Đã hủy"
+      case "3":
+        return "Đã duyệt"
+      case "4":
+        return "Đang giao"
+      case "5":
+        return "Đã nhận"
+      default:
+        return ""
+    }
+  }
 
-  
+  const calculateTabCounts = (ordersList) => {
+    const counts = {}
+    tabs.forEach((tab) => {
+      if (tab.id === "") {
+        counts[tab.id] = ordersList.length
+      } else {
+        counts[tab.id] = ordersList.filter(
+          (order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(tab.id),
+        ).length
+      }
+    })
+    return counts
+  }
 
-const handleSearch = (value) => {
-  setKeyword(value);
-  setCurrentPage(1);
-  const params = new URLSearchParams()
-  if(value) params.set("keyword", value)
-  if(activeTab) params.set("status", activeTab)
-  if(filters.userName) params.set("userName", filters.userName)
-  if(filters.startDate) params.set("startDate", filters.startDate)
-  if(filters.endDate) params.set("endDate", filters.endDate)
-    params.set("page" , 1)
-  setSearchParams(params)
-}
-
-const handlePageChange = (newPage) => {
-  setCurrentPage(newPage)
-  const params = new URLSearchParams();
-  if(keyword) params.set("keyword", keyword)
-  if(activeTab) params.set("status", activeTab)
-  if(filters.userName) params.set("userName", filters.userName)
-  if(filters.startDate) params.set("startDate", filters.startDate)
-  if(filters.endDate) params.set("endDate", filters.endDate)
-  params.set("page", newPage)
-  setSearchParams(params)
-}
-
-
-  // Hàm lấy danh sách đơn hàng (hợp nhất getAllOrders và searchOrders)
-  const fetchOrders = async (page = 1, statusOrder = activeTab) => {
+  const fetchAllOrders = async (page = 1) => {
     setIsLoading(true)
     showErrorToast(null)
     try {
-      const response = await axiosInstance.get("/seller/order",{
+      const response = await axiosInstance.get("/seller/order", {
         params: {
-          keyword: keyword || undefined,
-          userName: filters.userName || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-          statusOrder: statusOrder || undefined,
           page: page,
           size: pageSize,
         },
       })
-      const { data } = response.data
+      const { data, message } = response.data
       if (response.status === 200) {
-        setOrders(data.objects || [])
+        const ordersList = data.objects || []
+        setAllOrders(ordersList)
+        setOrders(ordersList)
         setTotalOrders(data.totalItems || 0)
         setTotalPages(Math.ceil(data.totalItems / pageSize))
+        setTabCounts(calculateTabCounts(ordersList))
       } else {
-        console.error("Không thể tải đơn hàng:", response.data.message)
-        showErrorToast(response.data.message || "Không thể tải danh sách đơn hàng.")
+        console.error("Không thể tải đơn hàng:", message)
+        showErrorToast(message || "Không thể tải danh sách đơn hàng.")
+        setAllOrders([])
         setOrders([])
+        setTabCounts({})
       }
     } catch (error) {
       console.error("Error fetching orders:", error)
-      showErrorToast("Đã xảy ra lỗi khi tải đơn hàng.")
+      setAllOrders([])
+      setOrders([])
+      setTabCounts({})
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const searchOrders = async (page = 1) => {
+    setIsLoading(true)
+    try {
+      const params = {
+        userName: filters.userName || undefined,
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+        statusOrder: activeTab || undefined,
+        page: page,
+        size: pageSize,
+      }
+      const response = await axiosInstance.get("/seller/order", { params })
+      const { data, message } = response.data
+      if (response.status === 200) {
+        const ordersList = data.objects || []
+        setOrders(ordersList)
+        setTotalOrders(data.totalItems || 0)
+        setTotalPages(Math.ceil(data.totalItems / pageSize))
+        setTabCounts(calculateTabCounts(ordersList))
+      } else {
+        console.error("Failed to search orders:", message)
+        setOrders([])
+      }
+    } catch (error) {
+      console.error("Error searching orders:", error)
       setOrders([])
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Hàm lấy số lượng đơn hàng cho các tab
-  const fetchTabCounts = async () => {
-    const counts = {}
-    try {
-      for (const tab of tabs) {
-        const response = await axiosInstance.get("/seller/order", {
-          params: {
-            statusOrder: tab.id || undefined,
-            page: 1,
-            size: 1, // Chỉ cần tổng số
-          },
-        })
-        counts[tab.id] = response.data.data.totalItems || 0
-      }
-      setTabCounts(counts)
-    } catch (error) {
-      console.error("Error fetching tab counts:", error)
-      setTabCounts({})
-    }
-  }
-
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, cancelReason = "") => {
     try {
       const response = await axiosInstance.put(`/seller/order/update/${orderId}`, {
         orderStatus: newStatus,
-        cancelReason: newStatus === 2 ? cancelReason : "",
+        cancelReason: cancelReason,
       })
       const { message, status } = response.data
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString())
-        showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành: ${statusName}`)
-        fetchOrders(currentPage, activeTab)
-        fetchTabCounts()
+        showSuccessToast(`Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`)
+        fetchAllOrders(currentPage)
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`)
-        closeCancelModal()
       }
     } catch (error) {
       console.error("Error updating order status:", error)
-      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!")
-      closeCancelModal()
+      if (error.response && error.response.data && error.response.data.message) {
+        showErrorToast(error.response.data.message)
+      } else {
+        showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái")
+      }
     }
   }
 
@@ -235,24 +252,9 @@ const handlePageChange = (newPage) => {
     setCancelReason("")
   }
 
-  useEffect(() =>{
-    const params = new URLSearchParams(searchParams)
-    const keyword = params.get("keyword") || ""
-    const page = parseInt(params.get("page")) || 1
-    setKeyword(keyword)
-    setCurrentPage(page)
-    setFilters({
-      userName: params.get("userName") || "",
-      startDate: params.get("startDate") || "",
-      endDate: params.get("endDate") || "",
-    })
-    fetchOrders(page, activeTab)
-    fetchTabCounts()
-  }, [searchParams, activeTab])
-
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
-      showErrorToast("Lý do hủy không được để trống")
+      alert("Lý do hủy không được để trống!")
       return
     }
     try {
@@ -264,14 +266,18 @@ const handlePageChange = (newPage) => {
       if (status) {
         showSuccessToast("Đơn hàng đã được hủy thành công!")
         closeCancelModal()
-        fetchOrders(currentPage, activeTab)
-        fetchTabCounts()
+        fetchAllOrders(currentPage)
       } else {
         showErrorToast(`Hủy đơn hàng thất bại: ${message}`)
         closeCancelModal()
       }
     } catch (error) {
-      showErrorToast(error.response?.data?.message || "Đã xảy ra lỗi khi hủy đơn hàng!")
+      if (error.response && error.response.data && error.response.data.message) {
+        showErrorToast(error.response.data.message)
+        closeCancelModal()
+      }
+      console.error("Error cancelling order:", error)
+      showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng")
       closeCancelModal()
     }
   }
@@ -280,18 +286,27 @@ const handlePageChange = (newPage) => {
     setIsTransitioning(true)
     setActiveTab(tabId)
     setCurrentPage(1)
-    const params = new URLSearchParams();
-    if(tabId) params.set("status", tabId)
-    if(keyword) params.set("keyword", keyword)
-    if(filters.userName) params.set("userName", filters.userName)
-    if(filters.startDate) params.set("startDate", filters.startDate)
-    if(filters.endDate) params.set("endDate", filters.endDate)
-      params.set("page", 1)
+    const params = new URLSearchParams()
+    if (tabId) params.set("status", tabId)
+    if (filters.userName) params.set("userName", filters.userName)
+    if (filters.startDate) params.set("startDate", filters.startDate)
+    if (filters.endDate) params.set("endDate", filters.endDate)
+    params.set("page", 1)
     setSearchParams(params)
-    
     setTimeout(() => {
       setIsTransitioning(false)
     }, 300)
+  }
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
+    const params = new URLSearchParams()
+    if (activeTab) params.set("status", activeTab)
+    if (filters.userName) params.set("userName", filters.userName)
+    if (filters.startDate) params.set("startDate", filters.startDate)
+    if (filters.endDate) params.set("endDate", filters.endDate)
+    params.set("page", newPage)
+    setSearchParams(params)
   }
 
   const handleFilterChange = (e) => {
@@ -314,34 +329,49 @@ const handlePageChange = (newPage) => {
     e.preventDefault()
     setCurrentPage(1)
     const params = new URLSearchParams()
-    if(keyword) params.set("keyword", keyword)
-    if(activeTab) params.set("status", activeTab)
-    if(filters.userName) params.set("userName", filters.userName)
-    if(filters.startDate) params.set("startDate", filters.startDate)
-    if(filters.endDate) params.set("endDate", filters.endDate)
+    if (activeTab) params.set("status", activeTab)
+    if (filters.userName) params.set("userName", filters.userName)
+    if (filters.startDate) params.set("startDate", filters.startDate)
+    if (filters.endDate) params.set("endDate", filters.endDate)
     if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
       showErrorToast("Ngày bắt đầu không được lớn hơn ngày kết thúc")
-        return
-    }
-      params.set("page", 1)
+      return
+    }  
+    params.set("page", 1)
     setSearchParams(params)
-   
   }
 
   const handleViewDetails = (orderId) => {
     navigate(`/seller/order/${orderId}`)
   }
 
- 
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams)
+    const page = parseInt(params.get("page")) || 1
+    setCurrentPage(page)
+    setFilters({
+      userName: params.get("userName") || "",
+      startDate: params.get("startDate") || "",
+      endDate: params.get("endDate") || "",
+    })
+    if (filters.userName || filters.startDate || filters.endDate || activeTab) {
+      searchOrders(page)
+    } else {
+      fetchAllOrders(page)
+    }
+  }, [searchParams])
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }
     return new Date(dateString).toLocaleDateString("vi-VN", options)
   }
 
+  const filteredOrders = activeTab
+    ? orders.filter((order) => getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab))
+    : orders
+
   return (
     <div className="w-full mx-auto">
-      <h2 className="text-xl font-bold text-gray-800 my-6">Danh sách đơn hàng</h2>
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Bộ lọc đơn hàng</h2>
         <form onSubmit={handleFilterSubmit} className="grid grid-cols-12 gap-4">
@@ -404,7 +434,6 @@ const handlePageChange = (newPage) => {
         </form>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm mb-6 overflow-x-auto">
         <div className="flex space-x-1 p-1 min-w-max">
           {tabs.map((tab) => (
@@ -421,15 +450,17 @@ const handlePageChange = (newPage) => {
               `}
             >
               {tab.label}
-              <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">
-                {tabCounts[tab.id] || 0}
-              </span>
+              {tab.id === "" && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
+              )}
+              {tab.id !== "" && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tabCounts[tab.id] || 0}</span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Orders List */}
       <div className={`space-y-6 transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
         {isLoading ? (
           Array(3)
@@ -454,8 +485,8 @@ const handlePageChange = (newPage) => {
                 </div>
               </div>
             ))
-        ) : orders.length > 0 ? (
-          orders.map((order) => (
+        ) : filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => (
             <div
               key={order.id}
               className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
@@ -473,7 +504,7 @@ const handlePageChange = (newPage) => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-sm">Ngày đặt:</span>
-                      <span>{formatDate(order.orderDate)}</span>
+                      <span>{formatDate(order.createdAt)}</span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       {order.paymentMethod || "Đã Thanh Toán"} • {order.paymentStatus || "Chưa thanh toán"}
@@ -504,11 +535,11 @@ const handlePageChange = (newPage) => {
                     <div className="flex items-center">
                       <span className="text-gray-600 mr-2">Tổng tiền:</span>
                       <span className="text-lg font-bold text-emerald-600">
-                        {order.totalPrice?.toLocaleString("vi-VN")}đ
+                        {formatCurrency(order.totalPrice)}
                       </span>
                     </div>
-                    {order.orderStatusName === "Hủy" && (
-                      <div className="text-sm text-red-600 mt-1 "><p className="font-bold">Lý do hủy : {order?.noted}</p> </div>
+                    {order.orderStatusName === "Đã hủy" && (
+                      <div className="text-sm text-red-600 mt-1"><p className="font-bold">Lý do hủy: {order?.noted}</p></div>
                     )}
                   </div>
                 </div>
@@ -532,6 +563,24 @@ const handlePageChange = (newPage) => {
                   {order.orderStatusName === "Chờ duyệt" && (
                     <>
                       <button
+                        onClick={() => openCancelModal(order.id)}
+                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>Hủy đơn</span>
+                      </button>
+                      <button
                         onClick={() => updateOrderStatus(order.id, 3)}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5"
                       >
@@ -549,6 +598,10 @@ const handlePageChange = (newPage) => {
                         </svg>
                         <span>Duyệt đơn</span>
                       </button>
+                    </>
+                  )}
+                  {order.orderStatusName === "Đã duyệt" && (
+                    <>
                       <button
                         onClick={() => openCancelModal(order.id)}
                         className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
@@ -567,24 +620,22 @@ const handlePageChange = (newPage) => {
                         </svg>
                         <span>Hủy đơn</span>
                       </button>
-                    </>
-                  )}
-                  {order.orderStatusName === "Đã duyệt" && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 4)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1.5"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
+                      <button
+                        onClick={() => updateOrderStatus(order.id, 4)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1.5"
                       >
-                        <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                        <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                      </svg>
-                      <span>Đang giao</span>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                        </svg>
+                        <span>Giao hàng</span>
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -609,19 +660,11 @@ const handlePageChange = (newPage) => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Không có đơn hàng nào</h3>
-            <p className="text-gray-600 mb-6">Bạn chưa có đơn hàng nào trong mục này</p>
-            <button
-              onClick={() => navigate("/")}
-              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors inline-flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-              </svg>
-              Mua sắm ngay
-            </button>
+            <p className="text-gray-600 mb-6">Không có đơn hàng nào trong mục này</p>
           </div>
         )}
       </div>
+
       {totalOrders > 0 && (
         <Pagination
           currentPage={currentPage}
