@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -54,10 +55,9 @@ public class OrderSellerService {
         private EmailUtil emailUtil;
 
         public ArrayList<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable) {
-                // Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
-                // return order.stream()
-                //                 .collect(Collectors.toCollection(ArrayList::new));
-                return null;
+                Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
+                return order.stream()
+                                .collect(Collectors.toCollection(ArrayList::new));
         }
 
         public Integer getTotalOrder() {
@@ -65,34 +65,27 @@ public class OrderSellerService {
         }
 
         // code cua tam
-        // public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
-        //                 Integer orderStatusName, // Đảm bảo là Integer
-        //                 String nameUser, Pageable pageable) {
-        //         User user = userService.getUserToken(token);
-        //         int shopId = user.getShop().getId();
-        //         Page<OrderSimpleDTO> orderPage =null;
-        //         // if (startDate == null && endDate == null && orderStatusName == null
-        //         //                 && (nameUser == null || nameUser.trim().isEmpty())) {
+        public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
+                        Integer orderStatusName, // Đảm bảo là Integer
+                        String nameUser, Pageable pageable) {
+                User user = userService.getUserToken(token);
+                int shopId = user.getShop().getId();
+                Page<OrderSimpleDTO> orderPage;
+                if (startDate == null && endDate == null && orderStatusName == null
+                                && (nameUser == null || nameUser.trim().isEmpty())) {
 
-        //         //        // orderPage = orderJPA.findOrderByShopId(shopId, pageable);
-        //         // } else {
+                        orderPage = orderJPA.findOrderByShopId(shopId, pageable);
+                } else {
 
-        //         //       //  orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
-        //         //       //                  nameUser, pageable);
-        //         // }
-        //         // return orderPage.stream()
-        //         //                 .collect(Collectors.toCollection(ArrayList::new));
-        //         return null;
-        //                 orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
-        //                                 nameUser, pageable);
-        //                 System.out.printf(
-        //                                 "==============================================================================="
-        //                                                 + orderPage);
-        //         }
-        //         return orderPage.stream()
-        //                         .collect(Collectors.toCollection(ArrayList::new));
-        // }
-        
+                        orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
+                                        nameUser, pageable);
+                        System.out.printf(
+                                        "==============================================================================="
+                                                        + orderPage);
+                }
+                return orderPage.stream()
+                                .collect(Collectors.toCollection(ArrayList::new));
+        }
 
         public int countOrders(String token, Date startDate, Date endDate, Integer orderStatusName, String nameUser) {
                 User user = userService.getUserToken(token);
@@ -114,8 +107,8 @@ public class OrderSellerService {
                 map.put("fullName", FormatCustomerInfo.fullName(order.getCustomerInfo()));
                 map.put("phone", FormatCustomerInfo.phone(order.getCustomerInfo()));
                 map.put("address", FormatCustomerInfo.address(order.getCustomerInfo()));
-                // map.put("paymentMethod", order.getPaymentMethod());
-                // map.put("paymentStatus", order.getPaymentStatus());
+                map.put("paymentMethod", order.getOrderPayment().getPaymentMethod());
+                map.put("paymentStatus", order.getOrderPayment().getPaymentStatus());
                 map.put("shippingFee", order.getShippingFee());
                 map.put("createdAt", order.getCreatedAt());
                 map.put("orderStatusName", order.getOrderStatus().getName());
@@ -331,5 +324,7 @@ public class OrderSellerService {
                 }
                 return false;
         }
+
+       
 
 }

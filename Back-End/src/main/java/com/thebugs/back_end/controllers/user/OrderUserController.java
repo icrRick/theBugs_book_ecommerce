@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -23,15 +24,12 @@ import com.thebugs.back_end.dto.OrderDTO;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.resp.ResponseDataPagination;
 import com.thebugs.back_end.services.user.UserOrderService;
-import com.thebugs.back_end.services.user.UserService;
 
 @RestController
 @RequestMapping("/user/order")
 public class OrderUserController {
     @Autowired
     UserOrderService userOrderService;
-    @Autowired
-    UserService userService;
 
     @GetMapping("")
     public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
@@ -99,4 +97,5 @@ public class OrderUserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseData(false, ex.getMessage(), null));
         }
     }
+
 }
