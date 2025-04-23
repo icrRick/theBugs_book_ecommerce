@@ -69,8 +69,7 @@ public class Seller_ProductConverter {
         product.setProductGenres(productGenres);
         product.setProductAuthors(productAuthors);
         product.setPublisher(publisher);
-        product.setActive(bean.getActive());
-
+        product.setStatus(null);
         // Cho phép shop chỉnh sửa trạng thái active
         product.setActive(bean.getActive());
 

@@ -87,7 +87,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "LEFT JOIN PromotionProduct pp ON pp.product.id = p.id " +
                         "LEFT JOIN Promotion pr ON pr.id = pp.promotion.id " +
                         "LEFT JOIN Image i ON i.product.id = p.id " +
-                        "WHERE p.active = true AND p.approve = true AND p.status = true " +
+                        "WHERE p.active = true AND p.approve = true " +
                         "AND (i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id) OR i.imageName IS NULL) "
                         +
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName, p.product_code")
