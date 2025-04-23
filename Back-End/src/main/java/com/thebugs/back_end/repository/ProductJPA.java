@@ -60,6 +60,10 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName")
         Optional<ProItemDTO> getProItemDTO(Integer productId);
 
+
+
+        
+
         // code cua tam
         @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.id = :productId")
         Product findProductByShopId(@Param("shopId") Integer shopId,

@@ -2,15 +2,41 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { showSuccessToast } from '../../utils/Toast';
+import axiosInstance from '../../utils/axiosInstance';
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
+  const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
   const { userInfo, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const fetchCartItems = async () => {
+    try {
+      const response = await axiosInstance.get('/user/cart/getCartItems');
+      if (response.status === 200 && response.data.status === true) {
+        const shopList = response.data.data; // đây là mảng chứa nhiều shop
+
+        let totalProductIds = 0;
+        shopList.forEach(shop => {
+          totalProductIds += shop.products.length;
+        });
+
+        setCartCount(totalProductIds);
+      } else {
+        console.log(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCartItems();
+  }, []);
+
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -22,6 +48,7 @@ const Navbar = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  
   }, []);
 
 
@@ -218,28 +245,28 @@ const Navbar = () => {
 
               {isDropdownOpen && (
                 <div className="mt-2 space-y-1">
-                   {isAuthenticated && userInfo ? (
-                      <>
-                        <Link to={'/account/profile'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Tài khoản
-                        </Link>
-
-                        {userInfo.role === 2 && (
-                          <Link to={'/seller/dashboard'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Cửa hàng của bạn
-                          </Link>
-                        )}
-                        <Link to={'/account/ordered'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Đơn hàng
-                        </Link>
-                        <Link className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={handleLogoutClick}>
-                          Đăng xuất
-                        </Link>
-                      </>) : (
-                      <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Đăng nhập
+                  {isAuthenticated && userInfo ? (
+                    <>
+                      <Link to={'/account/profile'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Tài khoản
                       </Link>
-                    )}
+
+                      {userInfo.role === 2 && (
+                        <Link to={'/seller/dashboard'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          Cửa hàng của bạn
+                        </Link>
+                      )}
+                      <Link to={'/account/ordered'} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Đơn hàng
+                      </Link>
+                      <Link className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={handleLogoutClick}>
+                        Đăng xuất
+                      </Link>
+                    </>) : (
+                    <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      Đăng nhập
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

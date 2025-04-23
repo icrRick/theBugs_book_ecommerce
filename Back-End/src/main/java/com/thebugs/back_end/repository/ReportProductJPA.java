@@ -18,8 +18,8 @@ public interface ReportProductJPA extends JpaRepository<ReportProduct, Integer> 
     @Query("SELECT COUNT(r) FROM ReportProduct r WHERE (:active IS NULL AND r.active IS NULL) OR (:active IS NOT NULL AND r.active = :active)")
     int countByActive(@Param("active") Boolean active);
 
-    @Query("SELECT r FROM ReportProduct r WHERE r.user.id=:userId AND r.product.id =:productId AND (:active IS NULL AND r.active IS NULL) OR (:active IS NOT NULL AND r.active = :active)")
-    List<ReportProduct> findReportProductsByUserAndActive(@Param("userId") Integer userId,@Param("productId") Integer productId,
+    @Query("SELECT r FROM ReportProduct r WHERE r.product.id =:productId AND (:active IS NULL AND r.active IS NULL) OR (:active IS NOT NULL AND r.active = :active)")
+    List<ReportProduct> findReportProductsByUserAndActive(@Param("productId") Integer productId,
             @Param("active") Boolean active);
 
 }

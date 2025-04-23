@@ -453,7 +453,7 @@ const ReportProducts = () => {
               <form className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lý do từ chối 
+                    Lý do từ chối
                   </label>
                   <div className="space-y-2">
                     <div className="flex items-start">
