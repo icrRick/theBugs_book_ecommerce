@@ -98,6 +98,7 @@ public class CartItemService {
     }
 
     public boolean saveCartItemProductCode(String authorizationHeader, String productCode, Integer quantity) {
+        System.out.println("quantity "+quantity);
         User user = userService.getUserToken(authorizationHeader);
         Product product=productService.getProductByProductCode(productCode);
         if (quantity > product.getQuantity()) {
@@ -105,13 +106,13 @@ public class CartItemService {
         }
         CartItem cartItem = findProductCodeByUser(productCode, user.getId());
         if (cartItem != null) {
-            cartItem.setQuantity(quantity);
+            cartItem.setQuantity(cartItem.getQuantity() +quantity);
             cartItemJPA.save(cartItem);
             return true;
         } else {
             CartItem cartItemAdd = new CartItem();
             cartItemAdd.setProduct(product);
-            cartItemAdd.setQuantity(product.getQuantity()+quantity);
+            cartItemAdd.setQuantity(quantity);
             cartItemAdd.setUser(user);
             cartItemJPA.save(cartItemAdd);
             return true;
