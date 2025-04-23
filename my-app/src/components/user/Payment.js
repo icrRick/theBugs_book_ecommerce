@@ -383,7 +383,7 @@ const Payment = () => {
                     removeListProductIds();
                     removeListVoucherIds();
                 } else {
-                    navigate("/user/payment-cod");
+                    navigate("/payment-cod");
                 }
                 removeListProductIds();
                 removeListVoucherIds();
