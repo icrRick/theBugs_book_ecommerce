@@ -53,6 +53,7 @@ public class Seller_ProductBean {
     private List<Integer> authors_id;
 
     private Boolean active;
+    
 
     @Override
     public String toString() {

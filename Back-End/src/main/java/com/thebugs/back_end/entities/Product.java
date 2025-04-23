@@ -45,8 +45,8 @@ public class Product {
     @Column(nullable = false)
     private boolean active;
 
-    @Column(nullable = false)
-    private boolean approve;
+    @Column
+    private Boolean approve;
 
     @Column(nullable = true)
     private Boolean status;
@@ -59,7 +59,7 @@ public class Product {
 
     @Column(name = "created_at", nullable = false, updatable = false) // Thêm createdAt
     @Temporal(TemporalType.DATE)
-    private Date createdAt;
+    private Date createdAt =new Date();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;

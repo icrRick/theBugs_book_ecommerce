@@ -1,556 +1,377 @@
-"use client"
+import React, { useState, useEffect } from 'react';
 
-import { useState, useEffect } from "react"
-
-// Dữ liệu mẫu cho thống kê
-const sampleData = {
-  totalRevenue: 1250000000,
-  totalOrders: 15680,
-  totalUsers: 8450,
-  totalProducts: 12500,
-  totalStores: 120,
-
-  // Dữ liệu doanh thu theo tháng (12 tháng gần nhất)
-  revenueByMonth: [
-    { month: "T1", value: 85000000 },
-    { month: "T2", value: 92000000 },
-    { month: "T3", value: 98000000 },
-    { month: "T4", value: 105000000 },
-    { month: "T5", value: 115000000 },
-    { month: "T6", value: 108000000 },
-    { month: "T7", value: 118000000 },
-    { month: "T8", value: 125000000 },
-    { month: "T9", value: 132000000 },
-    { month: "T10", value: 138000000 },
-    { month: "T11", value: 145000000 },
-    { month: "T12", value: 160000000 },
-  ],
-
-  // Dữ liệu đơn hàng theo tháng (12 tháng gần nhất)
-  ordersByMonth: [
-    { month: "T1", value: 1050 },
-    { month: "T2", value: 1120 },
-    { month: "T3", value: 1180 },
-    { month: "T4", value: 1250 },
-    { month: "T5", value: 1320 },
-    { month: "T6", value: 1280 },
-    { month: "T7", value: 1350 },
-    { month: "T8", value: 1420 },
-    { month: "T9", value: 1480 },
-    { month: "T10", value: 1550 },
-    { month: "T11", value: 1620 },
-    { month: "T12", value: 1780 },
-  ],
-
-  // Dữ liệu người dùng mới theo tháng (12 tháng gần nhất)
-  newUsersByMonth: [
-    { month: "T1", value: 320 },
-    { month: "T2", value: 350 },
-    { month: "T3", value: 380 },
-    { month: "T4", value: 410 },
-    { month: "T5", value: 450 },
-    { month: "T6", value: 420 },
-    { month: "T7", value: 460 },
-    { month: "T8", value: 490 },
-    { month: "T9", value: 520 },
-    { month: "T10", value: 550 },
-    { month: "T11", value: 580 },
-    { month: "T12", value: 620 },
-  ],
-
-  // Dữ liệu thể loại sách bán chạy
-  topGenres: [
-    { name: "Văn học", value: 28 },
-    { name: "Kinh tế", value: 22 },
-    { name: "Kỹ năng sống", value: 18 },
-    { name: "Thiếu nhi", value: 15 },
-    { name: "Giáo khoa", value: 10 },
-    { name: "Khác", value: 7 },
-  ],
-
-  // Dữ liệu cửa hàng hàng đầu
-  topStores: [
-    { name: "Nhà sách Phương Nam", orders: 1850, revenue: 185000000 },
-    { name: "Nhà sách Fahasa", orders: 1720, revenue: 172000000 },
-    { name: "Nhà sách Kim Đồng", orders: 1580, revenue: 158000000 },
-    { name: "Nhà sách Tiến Thọ", orders: 1450, revenue: 145000000 },
-    { name: "Nhà sách Trí Tuệ", orders: 1320, revenue: 132000000 },
-  ],
-
-  // Dữ liệu sách bán chạy
-  topProducts: [
-    { name: "Đắc Nhân Tâm", author: "Dale Carnegie", sold: 850, revenue: 73100000 },
-    { name: "Nhà Giả Kim", author: "Paulo Coelho", sold: 780, revenue: 53820000 },
-    { name: "Tuổi Trẻ Đáng Giá Bao Nhiêu", author: "Rosie Nguyễn", sold: 720, revenue: 50400000 },
-    { name: "Cây Cam Ngọt Của Tôi", author: "José Mauro de Vasconcelos", sold: 680, revenue: 73440000 },
-    { name: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh", author: "Nguyễn Nhật Ánh", sold: 650, revenue: 81250000 },
-  ],
-}
+import axiosInstance from '../../utils/axiosInstance';
+import Pagination from './Pagination';
+import { showErrorToast, showSuccessToast } from '../../utils/Toast';
+import { useForm } from "react-hook-form";
+import Loading from '../../utils/Loading';
+import { useNavigate } from 'react-router-dom';
 
 const Statistics = () => {
-  const [data, setData] = useState(sampleData)
-  const [loading, setLoading] = useState(false)
-  const [timeRange, setTimeRange] = useState("year")
-  const [chartType, setChartType] = useState("revenue")
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Dữ liệu mẫu thống kê doanh thu
+  const [data, setData] = useState([
+    {
+      id: 1,
+      shopSlug: "cua-hang-sach-abc",
+      shopName: "Cửa hàng Sách ABC",
+      userFullName: "Nguyễn Văn A",
+      approve: true,
+      active: true,
+      status: false,
+      totalRevenue: 15000000,
+      phicodinh: 5,
+      tiendatra: 1000000
+
+    },
+    {
+      id: 2,
+      shopSlug: "cua-hang-sach-abc",
+      shopName: "Cửa hàng Sách ABC",
+      userFullName: "Nguyễn Văn A",
+      approve: true,
+      active: true,
+      status: false,
+      totalRevenue: 15000000,
+      phicodinh: 5,
+      tiendatra: 1000000
+
+    },
+    {
+      id: 3,
+      shopSlug: "cua-hang-sach-abc",
+      shopName: "Cửa hàng Sách ABC",
+      userFullName: "Nguyễn Văn A",
+      approve: true,
+      active: true,
+      status: false,
+      totalRevenue: 15000000,
+      phicodinh: 5,
+      tiendatra: 1000000
+
+    },
+  ]);
+
+  const [items, setItems] = useState(data);
 
   useEffect(() => {
-    // Trong thực tế, bạn sẽ gọi API để lấy dữ liệu thống kê ở đây
-    setLoading(true)
-    setTimeout(() => {
-      setData(sampleData)
-      setLoading(false)
-    }, 500)
-  }, [timeRange])
+    setTotalItems(items.length);
+  }, [items]);
 
-  // Hàm vẽ biểu đồ cột
-  const renderBarChart = (data, color) => {
-    const maxValue = Math.max(...data.map((item) => item.value))
+  const handleSearch = (value) => {
+    const filtered = data.filter(item => 
+      item.shopName.toLowerCase().includes(value.toLowerCase()) ||
+      item.userFullName.toLowerCase().includes(value.toLowerCase())
+    );
+    setItems(filtered);
+    setCurrentPage(1);
+  };
 
-    return (
-      <div className="flex items-end h-64 gap-1 mt-4">
-        {data.map((item, index) => {
-          const height = (item.value / maxValue) * 100
-          return (
-            <div key={index} className="flex flex-col items-center flex-1">
-              <div
-                className={`w-full rounded-t-sm ${color}`}
-                style={{ height: `${height}%` }}
-                title={`${item.month}: ${item.value.toLocaleString()}`}
-              ></div>
-              <div className="text-xs mt-2 text-gray-600">{item.month}</div>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
+  const handleRefresh = () => {
+    setItems(data);
+    setCurrentPage(1);
+  };
 
-  // Hàm vẽ biểu đồ tròn
-  const renderPieChart = (data) => {
-    const total = data.reduce((sum, item) => sum + item.value, 0)
-    let startAngle = 0
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
-    return (
-      <div className="flex justify-center mt-4">
-        <div className="relative w-64 h-64">
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            {data.map((item, index) => {
-              const percentage = (item.value / total) * 100
-              const angle = (percentage / 100) * 360
-              const endAngle = startAngle + angle
+  const handleEdit = (item) => {
+    // Xử lý khi click vào nút chi tiết
+    console.log('Chi tiết cửa hàng:', item);
+  };
 
-              // Tính toán tọa độ cho đường cung
-              const x1 = 50 + 50 * Math.cos((startAngle * Math.PI) / 180)
-              const y1 = 50 + 50 * Math.sin((startAngle * Math.PI) / 180)
-              const x2 = 50 + 50 * Math.cos((endAngle * Math.PI) / 180)
-              const y2 = 50 + 50 * Math.sin((endAngle * Math.PI) / 180)
-
-              // Xác định cờ large-arc
-              const largeArcFlag = angle > 180 ? 1 : 0
-
-              // Tạo đường dẫn SVG
-              const path = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
-
-              // Mảng màu cho các phần
-              const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
-
-              const result = (
-                <path key={index} d={path} fill={colors[index % colors.length]} stroke="#fff" strokeWidth="0.5" />
-              )
-
-              startAngle = endAngle
-              return result
-            })}
-          </svg>
-        </div>
-      </div>
-    )
-  }
-
-  // Hàm hiển thị chú thích cho biểu đồ tròn
-  const renderPieLegend = (data) => {
-    const total = data.reduce((sum, item) => sum + item.value, 0)
-    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
-
-    return (
-      <div className="grid grid-cols-2 gap-4 mt-6">
-        {data.map((item, index) => {
-          const percentage = ((item.value / total) * 100).toFixed(1)
-          return (
-            <div key={index} className="flex items-center">
-              <div className="w-4 h-4 rounded-sm mr-2" style={{ backgroundColor: colors[index % colors.length] }}></div>
-              <div className="text-sm">
-                <span className="font-medium">{item.name}</span>
-                <span className="text-gray-500 ml-2">{percentage}%</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Thống kê tổng quan</h1>
+    <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center text-sm text-gray-500 mb-1">
+                <a href="#" className="hover:text-blue-600 transition-colors duration-200">Trang chủ</a>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 mx-2 text-gray-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+                <span className="text-gray-700 font-medium">Thống kê</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Thống kê doanh thu cửa hàng</h1>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1">Thống kê doanh thu từng cửa hàng trong hệ thống</p>
+                </div>
+              </div>
+            </div>
 
-      {/* Thẻ thống kê */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng doanh thu</p>
-              <h3 className="text-2xl font-bold text-gray-800">{data.totalRevenue.toLocaleString()}đ</h3>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <svg
-                className="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="flex items-center">
+              <button
+                onClick={handleRefresh}
+                className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="hidden xs:inline">Làm mới</span>
+              </button>
             </div>
-          </div>
-          <div className="flex items-center mt-4">
-            <span className="text-green-500 text-sm font-medium flex items-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              8.2%
-            </span>
-            <span className="text-gray-500 text-xs ml-2">so với tháng trước</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng đơn hàng</p>
-              <h3 className="text-2xl font-bold text-gray-800">{data.totalOrders.toLocaleString()}</h3>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center mt-4">
-            <span className="text-green-500 text-sm font-medium flex items-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              5.3%
-            </span>
-            <span className="text-gray-500 text-xs ml-2">so với tháng trước</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng người dùng</p>
-              <h3 className="text-2xl font-bold text-gray-800">{data.totalUsers.toLocaleString()}</h3>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <svg
-                className="w-6 h-6 text-purple-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center mt-4">
-            <span className="text-green-500 text-sm font-medium flex items-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              3.8%
-            </span>
-            <span className="text-gray-500 text-xs ml-2">so với tháng trước</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng sản phẩm</p>
-              <h3 className="text-2xl font-bold text-gray-800">{data.totalProducts.toLocaleString()}</h3>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
-              <svg
-                className="w-6 h-6 text-yellow-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center mt-4">
-            <span className="text-green-500 text-sm font-medium flex items-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              2.5%
-            </span>
-            <span className="text-gray-500 text-xs ml-2">so với tháng trước</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng cửa hàng</p>
-              <h3 className="text-2xl font-bold text-gray-800">{data.totalStores.toLocaleString()}</h3>
-            </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <svg
-                className="w-6 h-6 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-center mt-4">
-            <span className="text-green-500 text-sm font-medium flex items-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              1.2%
-            </span>
-            <span className="text-gray-500 text-xs ml-2">so với tháng trước</span>
           </div>
         </div>
       </div>
 
-      {/* Biểu đồ chính */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Thống kê theo thời gian</h3>
-            <div className="flex space-x-2">
-              <select
-                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={chartType}
-                onChange={(e) => setChartType(e.target.value)}
-              >
-                <option value="revenue">Doanh thu</option>
-                <option value="orders">Đơn hàng</option>
-                <option value="users">Người dùng mới</option>
-              </select>
-              <select
-                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-              >
-                <option value="year">Năm nay</option>
-                <option value="quarter">Quý này</option>
-                <option value="month">Tháng này</option>
-              </select>
-            </div>
-          </div>
-
-          {chartType === "revenue" && renderBarChart(data.revenueByMonth, "bg-blue-500")}
-          {chartType === "orders" && renderBarChart(data.ordersByMonth, "bg-green-500")}
-          {chartType === "users" && renderBarChart(data.newUsersByMonth, "bg-purple-500")}
-
-          <div className="mt-4">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                {chartType === "revenue" && "Tổng doanh thu: "}
-                {chartType === "orders" && "Tổng đơn hàng: "}
-                {chartType === "users" && "Tổng người dùng mới: "}
-                <span className="font-medium text-gray-800">
-                  {chartType === "revenue" && data.totalRevenue.toLocaleString() + "đ"}
-                  {chartType === "orders" && data.totalOrders.toLocaleString()}
-                  {chartType === "users" && data.totalUsers.toLocaleString()}
-                </span>
-              </div>
-              <div className="text-sm text-green-500 font-medium">
-                <span className="flex items-center">
-                  <svg
-                    className="w-3 h-3 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      {/* Main Content */}
+      <div className="p-4">
+        <div className="mb-6">
+          {/* Date Range Picker */}
+          <div className="flex items-center gap-4">
+            <div className="w-56">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {chartType === "revenue" && "10.4%"}
-                  {chartType === "orders" && "8.7%"}
-                  {chartType === "users" && "6.2%"}
-                </span>
+                </div>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="w-56">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out shadow-sm"
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Thể loại sách bán chạy</h3>
+        {/* Results stats */}
+        <div className="flex flex-wrap justify-between items-center mb-4">
+          <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+            <span className="hidden sm:inline">Hiển thị</span>{" "}
+            <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+            <span className="hidden sm:inline">trên</span>{" "}
+            <span className="font-medium">{totalItems}</span> cửa hàng{" "}
+            <span className="inline sm:hidden">• Trang {currentPage}</span>
           </div>
 
-          {renderPieChart(data.topGenres)}
-          {renderPieLegend(data.topGenres)}
+
         </div>
-      </div>
 
-      {/* Bảng thống kê */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Cửa hàng hàng đầu</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+        {/* Table Container */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {isLoading && items.length > 0 && (
+            <div className="p-4 flex justify-center">
+              <div className="animate-pulse flex space-x-2 items-center">
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <span className="text-xs sm:text-sm text-gray-500">Đang tải...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Table for tablet and desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cửa hàng
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tên cửa hàng
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Đơn hàng
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tên chủ Cửa hàng
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doanh thu
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tổng doanh thu
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phí cố định (%)
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tiền đã trả
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    TT hoạt động
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    TT khóa
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    TT duyệt
+                  </th>
+                  <th scope="col" className="relative px-4 sm:px-6 py-3 w-[80px] sm:w-[100px] md:w-[140px]">
+                    <span className="sr-only">Thao tác</span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.topStores.map((store, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{store.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
-                      {store.orders.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
-                      {store.revenue.toLocaleString()}đ
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.length === 0 && !isLoading ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-10 text-center text-sm text-gray-500">
+                      <div className="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 w-8 sm:w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <span>Không tìm thấy cửa hàng nào</span>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  items.map((item) => (
+                    <tr key={item.id} className="hover:bg-blue-50 transition-colors duration-150">
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopName}</div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.userFullName}</div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item?.totalRevenue)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {item?.phicodinh}%
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item?.tiendatra)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden sm:table-cell">
+                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                          }`}>
+                          {item?.active ? "Đang hoạt động" : "Ngừng hoạt động"}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
+                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.status
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-green-100 text-green-800'
+                          }`}>
+                          {item?.status ? "Đã khóa" : "Không khóa"}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
+                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.approve
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                          }`}>
+                          {item?.approve ? "Đã duyệt" : "Chưa duyệt"}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-1 sm:gap-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                          >
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span className="hidden sm:inline">Chi tiết</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Sách bán chạy</h3>
+          {/* Mobile card view for small screens */}
+          <div className="md:hidden">
+            {items.length === 0 && !isLoading ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-500">
+                <div className="flex flex-col items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <span>Không tìm thấy cửa hàng nào</span>
+                </div>
+              </div>
+            ) : (
+              items.map((item) => (
+                <div key={item.id} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">{item?.shopName}</span>
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                    >
+                      <svg className="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Chi tiết
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-600 mb-1">Chủ cửa hàng: {item?.userFullName}</div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${item?.active
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}>
+                      {item?.active ? "Đang hoạt động" : "Ngừng hoạt động"}
+                    </span>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${item?.status
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
+                      }`}>
+                      {item?.status ? "Đã khóa" : "Không khóa"}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sách
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tác giả
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Đã bán
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doanh thu
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.topProducts.map((product, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{product.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.author}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
-                      {product.sold.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
-                      {product.revenue.toLocaleString()}đ
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+          {/* Pagination */}
+          {items.length > 0 && (
+            <div className={`border-t border-gray-200 ${isLoading ? 'opacity-50' : ''}`}>
+              <Pagination currentPage={currentPage} totalPages={Math.ceil(totalItems / 10)} setCurrentPage={handlePageChange} />
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Statistics
-
+export default Statistics;

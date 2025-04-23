@@ -12,7 +12,7 @@ public class AdminProductMapper {
         if (product == null) {
             return null;
         } 
-        AdminProductDTO adminProductDTO=new AdminProductDTO();
+        AdminProductDTO adminProductDTO = new AdminProductDTO();
         adminProductDTO.setProductId(product.getId());
         adminProductDTO.setProductName(product.getName());
         adminProductDTO.setProductPrice(product.getPrice());
@@ -21,8 +21,10 @@ public class AdminProductMapper {
         adminProductDTO.setProductCode(product.getProduct_code());
         adminProductDTO.setShopName(product.getShop().getName());
         adminProductDTO.setActive(product.isActive());
-        adminProductDTO.setApprove(product.isApprove());
+        adminProductDTO.setApprove(product.getApprove());
         adminProductDTO.setStatus(product.getStatus());
         return adminProductDTO;
     }
+
+
 }

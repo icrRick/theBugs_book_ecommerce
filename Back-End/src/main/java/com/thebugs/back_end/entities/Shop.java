@@ -1,5 +1,6 @@
 package com.thebugs.back_end.entities;
 
+import java.util.Date;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -12,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,8 +38,6 @@ public class Shop {
     @Column(nullable = false, length = 100)
     private String name;
 
-    
-
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
@@ -54,16 +55,15 @@ public class Shop {
 
     @Column(length = 100)
     private String image;
-    
+
     @Column(length = 100)
     private String banner;
 
-    // Còn hoạt động hay không
     @Column(nullable = false)
     private boolean active;
 
-    @Column(nullable = false)
-    private boolean approve;
+    @Column
+    private Boolean approve;
 
     @Column(nullable = true)
     private Boolean status;
@@ -79,10 +79,12 @@ public class Shop {
     @OneToMany(mappedBy = "shop")
     private List<ReportShop> reportShops;
 
+    @Column
+    @Temporal(TemporalType.DATE)
+    private Date createAt= new Date();
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-
 
 }
