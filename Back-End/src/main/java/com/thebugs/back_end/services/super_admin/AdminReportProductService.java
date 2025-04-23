@@ -93,17 +93,16 @@ public class AdminReportProductService {
         String emailUser = reportProduct.getUser().getEmail();
         boolean checksendEmail = emailUtil.sendEmailApprove(emailUser,"Báo cáo sản phẩm", product.getProduct_code());
         boolean checkUpdateApprove = updateActiveAllUser(reportProduct, true);
-        boolean checksendEmailShop = emailUtil.sendEmailShopReject(emailShop, "Sản phẩm", product.getProduct_code(),reportProduct.getNote());
+        boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(emailShop, "Sản phẩm", product.getProduct_code(),reportProduct.getNote(),reportProduct.getUrl());
+       
         return checksendEmailShop && checkUpdateApprove && checksendEmail;
     }
 
     public boolean reject(Integer id, List<String> reasons) {
         ReportProduct reportProduct = getById(id);
         Product product = reportProduct.getProduct();
-        String emailShop = product.getShop().getUser().getEmail();
         String emailUser = reportProduct.getUser().getEmail();
-        List<ReportProduct> reportProducts = findReportProductsByUserAndActive(reportProduct, null);
-        boolean checksendEmail = emailUtil.sendEmailReject(emailShop, "Báp cáp sản phẩm", product.getProduct_code(),
+        boolean checksendEmail = emailUtil.sendEmailReject(emailUser, "Báp cáo sản phẩm", product.getProduct_code(),
                 reasons);
         boolean checkUpdateApprove = updateActive(reportProduct, false);
         return checksendEmail && checkUpdateApprove;
@@ -122,7 +121,7 @@ public class AdminReportProductService {
     }
 
     public List<ReportProduct> findReportProductsByUserAndActive(ReportProduct reportProduct, Boolean active) {
-        return reportProductJPA.findReportProductsByUserAndActive(reportProduct.getUser().getId(),
+        return reportProductJPA.findReportProductsByUserAndActive(
                 reportProduct.getProduct().getId(), active);
     }
 

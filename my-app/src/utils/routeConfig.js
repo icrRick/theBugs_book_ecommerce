@@ -11,6 +11,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import PaymentStatus from "../components/user/PaymentStatus";
 import Products from "../components/seller/Products";
 import AdminShopDetail from "../components/admin/AdminShopDetail";
+import PaymentCOD from "../components/user/PaymentCOD";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -89,7 +90,8 @@ export const PUBLIC_ROUTES = [
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
       { path: "otp", element: <Otp /> },
-    
+      { path: "payment-cod", element: <PaymentCOD /> },
+
 ];
 export const USER_ROUTES = [
   { path: 'payment', element: <Payment /> },

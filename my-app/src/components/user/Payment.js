@@ -383,7 +383,7 @@ const Payment = () => {
                     removeListProductIds();
                     removeListVoucherIds();
                 } else {
-                    navigate("/user/payment-status");
+                    navigate("/user/payment-cod");
                 }
                 removeListProductIds();
                 removeListVoucherIds();
@@ -514,7 +514,7 @@ const Payment = () => {
                                                         (-{formatCurrency(calculateVoucherDiscount(
                                                             calculateShopTotal(shop),
                                                             getSelectedVoucherForShop(shop.shopId)
-                                                        ))}đ)
+                                                        ))})
                                                     </span>
                                                 </span>
                                                 <button
