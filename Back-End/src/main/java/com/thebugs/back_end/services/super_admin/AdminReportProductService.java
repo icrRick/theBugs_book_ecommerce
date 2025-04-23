@@ -10,19 +10,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.thebugs.back_end.dto.GenreDTO;
-import com.thebugs.back_end.entities.Genre;
+
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.mappers.AdminReportMapper;
+import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.ReportProductJPA;
+import com.thebugs.back_end.services.user.ProductService;
 import com.thebugs.back_end.utils.EmailUtil;
 
-import jakarta.validation.constraints.Email;
+
 
 @Service
 public class AdminReportProductService {
 
+    @Autowired 
+    private ProductJPA productJPA;
     @Autowired
     private ReportProductJPA reportProductJPA;
 
@@ -92,7 +95,7 @@ public class AdminReportProductService {
         String emailShop = product.getShop().getUser().getEmail();
         String emailUser = reportProduct.getUser().getEmail();
         boolean checksendEmail = emailUtil.sendEmailApprove(emailUser,"Báo cáo sản phẩm", product.getProduct_code());
-        boolean checkUpdateApprove = updateActiveAllUser(reportProduct, true);
+        boolean checkUpdateApprove = updateActiveAll(reportProduct, true);
         boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(emailShop, "Sản phẩm", product.getProduct_code(),reportProduct.getNote(),reportProduct.getUrl());
        
         return checksendEmailShop && checkUpdateApprove && checksendEmail;
@@ -120,18 +123,21 @@ public class AdminReportProductService {
         }
     }
 
-    public List<ReportProduct> findReportProductsByUserAndActive(ReportProduct reportProduct, Boolean active) {
-        return reportProductJPA.findReportProductsByUserAndActive(
+    public List<ReportProduct> findReportProductsByProductAndActive(ReportProduct reportProduct, Boolean active) {
+        return reportProductJPA.findReportProductsByProductAndActive(
                 reportProduct.getProduct().getId(), active);
     }
 
-    public boolean updateActiveAllUser(ReportProduct reportProduct, Boolean active) {
-        List<ReportProduct> reportProducts = findReportProductsByUserAndActive(reportProduct, null);
+    public boolean updateActiveAll(ReportProduct reportProduct, Boolean active) {
+        List<ReportProduct> reportProducts = findReportProductsByProductAndActive(reportProduct, null);
 
         boolean updated = false;
         for (ReportProduct rp : reportProducts) {
             updated |= updateActive(rp, active);
         }
+        Product product= reportProduct.getProduct();
+        product.setApprove(true);
+        productJPA.save(product);
 
         return updated;
     }
