@@ -115,7 +115,7 @@ const Sidebar = ({ sidebarOpen }) => {
   }
 
   return (
-    <aside className={`fixed top-0 left-0 z-40 w-64 h-screen pt-16 transition-transform ${!sidebarOpen ? '-translate-x-full' : ''} bg-white border-r border-gray-200 lg:translate-x-0`}>
+    <aside className={`fixed top-0 left-0 z-20 w-64 h-screen pt-16 transition-transform ${!sidebarOpen ? '-translate-x-full' : ''} bg-white border-r border-gray-200 lg:translate-x-0`}>
       <div className="h-full px-3 py-4 overflow-y-auto">
         <ul className="space-y-2">
           {/* Menu items không có submenu */}

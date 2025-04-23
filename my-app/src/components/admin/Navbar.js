@@ -19,7 +19,7 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
   };
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-white shadow-sm border-b border-gray-200">
+    <nav className="fixed top-0 z-30 w-full bg-white shadow-sm border-b border-gray-200">
       <div className="px-4 py-2.5 lg:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">

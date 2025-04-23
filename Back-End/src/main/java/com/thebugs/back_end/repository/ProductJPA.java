@@ -68,6 +68,13 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
 
 
         @Query("SELECT p FROM Product p WHERE p.product_code = ?1 ")
-        Optional<Product> findProductByProductCode(String productCode);               
+        Optional<Product> findProductByProductCode(String productCode);          
+        
+        
+
+
+        
+        @Query("SELECT p FROM Product p WHERE p.product_code = ?1 ")
+        Optional<Product> getProductByProductCode(String productCode);    
 
 }

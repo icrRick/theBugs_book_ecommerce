@@ -48,4 +48,5 @@ public class Review {
     @Temporal(TemporalType.DATE)
     @Column(nullable = false)
     private Date updatedAt;
+
 }
