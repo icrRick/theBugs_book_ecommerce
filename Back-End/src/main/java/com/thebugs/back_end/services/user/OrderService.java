@@ -1,7 +1,5 @@
 package com.thebugs.back_end.services.user;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,8 +33,8 @@ public class OrderService {
                         Order order = findById(orderId);
                         if (paymentOnlineBean.getVnp_ResponseCode().equals("00")) {
                                 order.setOrderPayment(orderPaymentService.findByOrderPayment(3));
-                        }else{
-                                order.setOrderPayment(orderPaymentService.findByOrderPayment(4));   
+                        } else {
+                                order.setOrderPayment(orderPaymentService.findByOrderPayment(4));
                         }
                         saveOrder(order);
                 }

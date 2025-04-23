@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ProductOrderDTO {
+    private Integer orderItemId;
     private Integer productId;
     private String productName;
     private String productImage;
@@ -16,4 +17,9 @@ public class ProductOrderDTO {
     private Double totalPriceProduct;
     private Integer shopId;
     private String shopName;
+    private boolean isReviewed;
+    private Integer reviewId;
+    private String reviewContent;
+    private Double reviewRating;
+    private boolean isReviewEditable;
 }
