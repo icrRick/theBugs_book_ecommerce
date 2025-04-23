@@ -1,94 +1,123 @@
-"use client"
+"use client";
 
-import { Swiper, SwiperSlide } from "swiper/react"
-import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules"
-import "swiper/css"
-import "swiper/css/navigation"
-import "swiper/css/pagination"
-import "swiper/css/autoplay"
-import "swiper/css/effect-fade"
-import "swiper/css/effect-coverflow"
-import "../../assets/css/home.css"
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import axios from "axios"
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/autoplay";
+import "swiper/css/effect-fade";
+import "swiper/css/effect-coverflow";
+import "../../assets/css/home.css";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import CardProduct from "./CardProduct";
+import axiosInstance from "../../utils/axiosInstance";
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState("popular")
+  const [newProducts, setNewProducts] = useState([]);
+  const fetchProducts2 = async () => {
+    try {
+      const response = await axiosInstance.get("/home/allProducts");
+      if (response.status === 200 && response.data.status === true) {
+        setNewProducts(response.data.data);
+      } else {
+        console.log(response.data.message);
+      }
+    } catch (error) {
+      console.log(error.response.data.message);
+    }
+  };
+  useEffect(() => {
+    fetchProducts2();
+  }, []);
+
+  const [activeTab, setActiveTab] = useState("popular");
   const [countdown, setCountdown] = useState({
     hours: 5,
     minutes: 30,
     seconds: 0,
-  })
-  const [isVisible, setIsVisible] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [featuredAuthors, setFeaturedAuthors] = useState([])
-  const [genres, setGenres] = useState([])
-  const [products, setProducts] = useState([])
-  const [promotions, setPromotions] = useState([])
-  const [flashSaleShops, setFlashSaleShops] = useState([])
+  });
+  const [isVisible, setIsVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [featuredAuthors, setFeaturedAuthors] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [flashSaleShops, setFlashSaleShops] = useState([]);
 
   // Effect for countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 }
+          return { ...prev, seconds: prev.seconds - 1 };
         } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
         } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 }
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
         }
-        return prev
-      })
-    }, 1000)
+        return prev;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [])
+    return () => clearInterval(timer);
+  }, []);
 
   // Effect for fade-in animations
   useEffect(() => {
     const handleScroll = () => {
-      setIsVisible(true)
-    }
+      setIsVisible(true);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    handleScroll()
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
 
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         // Fetch products
-        const productsResponse = await axios.get("http://localhost:8080/home/products?page=1&filter=")
-        const productsData = productsResponse.data.data.map(product => ({
+        const productsResponse = await axios.get(
+          "http://localhost:8080/home/products?page=1&filter="
+        );
+        const productsData = productsResponse.data.data.map((product) => ({
           id: product.productId,
           name: product.productName,
           price: product.productPrice,
           images: [{ image_name: product.productImage || "/placeholder.svg" }],
           authors: product.authorName ? [{ name: product.authorName }] : [],
-          promotions: product.promotionValue ? [{ promotion_value: product.promotionValue }] : [],
+          promotions: product.promotionValue
+            ? [{ promotion_value: product.promotionValue }]
+            : [],
           reviews: product.rate ? [{ rate: product.rate }] : [],
           is_new: product.isNew,
           discount: product.discount,
-          is_bestseller: product.promotionValue || product.isNew // Giả định bestseller
-        }))
+          is_bestseller: product.promotionValue || product.isNew, // Giả định bestseller
+        }));
 
         // Fetch authors
-        const authorsResponse = await axios.get("http://localhost:8080/home/authors")
-        const authorsData = authorsResponse.data.data
+        const authorsResponse = await axios.get(
+          "http://localhost:8080/home/authors"
+        );
+        const authorsData = authorsResponse.data.data;
 
         // Fetch genres
-        const genresResponse = await axios.get("http://localhost:8080/home/genres")
-        const genresData = genresResponse.data.data
+        const genresResponse = await axios.get(
+          "http://localhost:8080/home/genres"
+        );
+        const genresData = genresResponse.data.data;
 
         // Fetch flash sale shops
-        const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
-        const shopsData = shopsResponse.data.data
+        const shopsResponse = await axios.get(
+          "http://localhost:8080/home/shops/flash-sale"
+        );
+        const shopsData = shopsResponse.data.data;
 
         // Mock promotions (since endpoint is commented out)
         const mockPromotions = [
@@ -113,68 +142,73 @@ const Home = () => {
             expiry: "10/05/2025",
             backgroundColor: "bg-gradient-to-r from-orange-500 to-red-600",
           },
-        ]
+        ];
 
-        setProducts(productsData)
-        setFeaturedAuthors(authorsData)
-        setGenres(genresData)
-        setFlashSaleShops(shopsData)
-        setPromotions(mockPromotions)
-        setLoading(false)
+        setProducts(productsData);
+        setFeaturedAuthors(authorsData);
+        setGenres(genresData);
+        setFlashSaleShops(shopsData);
+        setPromotions(mockPromotions);
+        setLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error)
-        setLoading(false)
+        console.error("Error fetching data:", error);
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   // Helper function to get product image
   const getProductImage = (product) => {
     if (!product.images || product.images.length === 0) {
-      return "/placeholder.svg"
+      return "/placeholder.svg";
     }
-    return product.images[0].image_name
-  }
+    return product.images[0].image_name;
+  };
 
   // Helper function to calculate discounted price
   const calculateDiscountedPrice = (product) => {
     if (!product.promotions || product.promotions.length === 0) {
-      return product.price
+      return product.price;
     }
-    const discount = product.promotions[0].promotion_value
-    return product.price - (product.price * discount) / 100
-  }
+    const discount = product.promotions[0].promotion_value;
+    return product.price - (product.price * discount) / 100;
+  };
 
   // Helper function to get average rating
   const getAverageRating = (product) => {
     if (!product.reviews || product.reviews.length === 0) {
-      return 0
+      return 0;
     }
-    const sum = product.reviews.reduce((total, review) => total + review.rate, 0)
-    return (sum / product.reviews.length).toFixed(1)
-  }
+    const sum = product.reviews.reduce(
+      (total, review) => total + review.rate,
+      0
+    );
+    return (sum / product.reviews.length).toFixed(1);
+  };
 
   // Filter products based on tab
   const filteredProducts = () => {
     switch (activeTab) {
       case "popular":
-        return products.filter((product) => product.is_bestseller)
+        return products.filter((product) => product.is_bestseller);
       case "new":
-        return products.filter((product) => product.is_new)
+        return products.filter((product) => product.is_new);
       case "sale":
         return products
-          .filter((product) => product.promotions && product.promotions.length > 0)
+          .filter(
+            (product) => product.promotions && product.promotions.length > 0
+          )
           .sort((a, b) => {
-            const discountA = a.promotions[0].promotion_value
-            const discountB = b.promotions[0].promotion_value
-            return discountB - discountA
-          })
+            const discountA = a.promotions[0].promotion_value;
+            const discountB = b.promotions[0].promotion_value;
+            return discountB - discountA;
+          });
       default:
-        return products
+        return products;
     }
-  }
+  };
 
   // Mock data for banner
   const bannerSlides = [
@@ -205,7 +239,7 @@ const Home = () => {
       buttonText: "Xem bộ sưu tập",
       buttonLink: "/search?category=children",
     },
-  ]
+  ];
 
   // Mock data for testimonials
   const testimonials = [
@@ -233,7 +267,7 @@ const Home = () => {
       rating: 5,
       text: "Chất lượng sách rất tốt, đúng như mô tả. Tôi sẽ tiếp tục mua sắm tại đây trong tương lai.",
     },
-  ]
+  ];
 
   if (loading) {
     return (
@@ -259,7 +293,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -282,7 +316,11 @@ const Home = () => {
           {bannerSlides.map((slide) => (
             <SwiperSlide key={slide.id}>
               <div className="relative w-full h-full">
-                <img src={slide.image || "/placeholder.svg"} alt={slide.title} className="w-full h-full object-cover" />
+                <img
+                  src={slide.image || "/placeholder.svg"}
+                  alt={slide.title}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent flex items-center">
                   <div className="container mx-auto px-6 md:px-12">
                     <div className="max-w-lg">
@@ -337,7 +375,9 @@ const Home = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <h2 className="text-3xl md:text-4xl font-bold text-white">Flash Sale Shops</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-white">
+                  Flash Sale Shops
+                </h2>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="text-white text-sm">Kết thúc sau:</div>
@@ -409,8 +449,12 @@ const Home = () => {
                                 className="w-12 h-12 rounded-full border-2 border-white mr-3"
                               />
                               <div>
-                                <h3 className="font-bold text-white">{shop.name}</h3>
-                                <p className="text-white/90 text-sm">{shop.products} sản phẩm</p>
+                                <h3 className="font-bold text-white">
+                                  {shop.name}
+                                </h3>
+                                <p className="text-white/90 text-sm">
+                                  {shop.products} sản phẩm
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -420,7 +464,9 @@ const Home = () => {
                             <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                               Flash Sale
                             </span>
-                            <span className="text-red-600 font-bold">{shop.discount}</span>
+                            <span className="text-red-600 font-bold">
+                              {shop.discount}
+                            </span>
                           </div>
                           <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-300 flex items-center justify-center">
                             Xem ngay
@@ -449,14 +495,21 @@ const Home = () => {
       </section>
 
       {/* Danh mục */}
-      <section className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}>
+      <section
+        className={`mb-12 transition-opacity duration-1000 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative">
               Danh mục sách
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-            <Link to="/search" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group">
+            <Link
+              to="/search"
+              className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group"
+            >
               Xem tất cả
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -474,7 +527,11 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {genres.map((genre) => (
-              <Link to={`/search?category=${genre.id}`} key={genre.id} className="group">
+              <Link
+                to={`/search?category=${genre.id}`}
+                key={genre.id}
+                className="group"
+              >
                 <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
                   <div className="relative h-40 overflow-hidden">
                     <img
@@ -486,11 +543,15 @@ const Home = () => {
                       className={`absolute inset-0 bg-gradient-to-t ${genre.color} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
                     ></div>
                     <div className="absolute inset-0 flex items-center justify-center p-4">
-                      <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{genre.name}</h3>
+                      <h3 className="font-bold text-white text-center text-lg drop-shadow-md">
+                        {genre.name}
+                      </h3>
                     </div>
                   </div>
                   <div className="p-3 text-center">
-                    <span className="text-sm text-gray-600">{genre.count} sách</span>
+                    <span className="text-sm text-gray-600">
+                      {genre.count} sách
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -507,10 +568,9 @@ const Home = () => {
               Sách nổi bật
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-           
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {/* <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredProducts().map((product) => (
               <div
                 key={product.id}
@@ -614,6 +674,10 @@ const Home = () => {
                 </Link>
               </div>
             ))}
+          </div> */}
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-lg font-semibold mb-4">Sản phẩm</h2>
+            <CardProduct items={newProducts} />
           </div>
         </div>
       </section>
@@ -632,8 +696,12 @@ const Home = () => {
                 <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium mb-4 inline-block">
                   Ưu đãi đặc biệt
                 </span>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Giảm 30% cho tất cả sách văn học</h2>
-                <p className="text-white/90 mb-6">Chỉ áp dụng đến hết ngày 30/04/2025. Nhanh tay mua ngay!</p>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Giảm 30% cho tất cả sách văn học
+                </h2>
+                <p className="text-white/90 mb-6">
+                  Chỉ áp dụng đến hết ngày 30/04/2025. Nhanh tay mua ngay!
+                </p>
                 <Link
                   to="/search?category=literature&discount=true"
                   className="px-6 py-3 bg-white text-emerald-700 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-300 inline-flex items-center shadow-lg"
@@ -666,7 +734,10 @@ const Home = () => {
               Tác giả nổi bật
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-            <Link to="/authors" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group">
+            <Link
+              to="/authors"
+              className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group"
+            >
               Xem tất cả
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -684,7 +755,11 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {featuredAuthors.map((author) => (
-              <Link to={`/author/${author.id}`} key={author.id} className="group">
+              <Link
+                to={`/author/${author.id}`}
+                key={author.id}
+                className="group"
+              >
                 <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl text-center p-4">
                   <div className="relative mx-auto w-24 h-24 mb-4">
                     <img
@@ -693,8 +768,12 @@ const Home = () => {
                       className="w-full h-full object-cover rounded-full border-2 border-emerald-100 transform group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <h3 className="font-medium text-gray-800 mb-1">{author.name}</h3>
-                  <p className="text-sm text-gray-500">{author.book_count} cuốn sách</p>
+                  <h3 className="font-medium text-gray-800 mb-1">
+                    {author.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {author.book_count} cuốn sách
+                  </p>
                 </div>
               </Link>
             ))}
@@ -706,10 +785,12 @@ const Home = () => {
       <section className="mb-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Khách hàng nói gì về chúng tôi</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+              Khách hàng nói gì về chúng tôi
+            </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Khám phá trải nghiệm mua sắm tuyệt vời từ những khách hàng đã tin tưởng và sử dụng dịch vụ của E-Com
-              Books.
+              Khám phá trải nghiệm mua sắm tuyệt vời từ những khách hàng đã tin
+              tưởng và sử dụng dịch vụ của E-Com Books.
             </p>
           </div>
 
@@ -726,13 +807,19 @@ const Home = () => {
                     className="w-12 h-12 rounded-full object-cover mr-4"
                   />
                   <div>
-                    <h3 className="font-semibold text-gray-800">{testimonial.name}</h3>
+                    <h3 className="font-semibold text-gray-800">
+                      {testimonial.name}
+                    </h3>
                     <div className="flex text-amber-400">
                       {[...Array(5)].map((_, i) => (
                         <svg
                           key={i}
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`h-4 w-4 ${i < testimonial.rating ? "fill-current" : "stroke-current fill-none"}`}
+                          className={`h-4 w-4 ${
+                            i < testimonial.rating
+                              ? "fill-current"
+                              : "stroke-current fill-none"
+                          }`}
                           viewBox="0 0 24 24"
                         >
                           <path
@@ -758,8 +845,12 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-8 md:p-12 shadow-2xl">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Đăng ký nhận thông báo</h2>
-              <p className="text-white/90 mb-8">Nhận thông tin về sách mới và khuyến mãi đặc biệt qua email</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                Đăng ký nhận thông báo
+              </h2>
+              <p className="text-white/90 mb-8">
+                Nhận thông tin về sách mới và khuyến mãi đặc biệt qua email
+              </p>
               <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
                 <input
                   type="email"
@@ -778,7 +869,7 @@ const Home = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

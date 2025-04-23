@@ -9,7 +9,7 @@ const CardProduct = ({ items }) => {
                     className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
                 >
                     <div className="relative">
-                        <Link to={`/product-detail/${product?.productId}`} className="block">
+                        <Link to={`/product-detail/${product?.productCode}`} className="block">
                             <img
                                 src={product?.productImage || "/placeholder.svg"}
                                 alt={product?.productName}
