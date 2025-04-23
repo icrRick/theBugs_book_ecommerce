@@ -265,4 +265,3 @@ const ReportProducts = () => {
 }
 
 export default ReportProducts;
-

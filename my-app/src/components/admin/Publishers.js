@@ -140,15 +140,14 @@ const Publishers = () => {
         }
     };
 
-    if (isLoading) {
-        return <Loading />
-    }
-
+ 
     return (
-        <div className="my-6 bg-white">
+       <>
+       {isLoading && <Loading />}
+        <div className="my-4 bg-white">
             {/* Header */}
             <div className="bg-white shadow-sm border-b border-gray-200">
-                <div className="px-4 sm:px-6 lg:px-8 py-6 ">
+                <div className="p-4 ">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center text-sm text-gray-500 mb-1">
@@ -181,7 +180,7 @@ const Publishers = () => {
             </div>
 
             {/* Main Content */}
-            <div className=" px-4 sm:px-6 lg:px-8 py-8">
+            <div className=" p-4">
                 {/* Search Box */}
                 <div className="mb-6">
                     <div className="max-w-md w-full">
@@ -380,6 +379,7 @@ const Publishers = () => {
             )}
 
         </div>
+       </>
     );
 };
 

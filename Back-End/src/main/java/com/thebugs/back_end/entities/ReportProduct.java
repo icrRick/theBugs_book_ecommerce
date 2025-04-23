@@ -46,6 +46,6 @@ public class ReportProduct {
         private String note;
         @Column(nullable = false)
         private String url;
-        @Column(nullable = false)
-        private boolean active;
+        @Column
+        private Boolean active;
 }

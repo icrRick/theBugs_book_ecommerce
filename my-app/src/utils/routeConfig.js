@@ -10,6 +10,7 @@ import ReportDetail from "../components/admin/ReportDetail";
 import ProtectedRoute from "./ProtectedRoute";
 import PaymentStatus from "../components/user/PaymentStatus";
 import Products from "../components/seller/Products";
+import AdminShopDetail from "../components/admin/AdminShopDetail";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -25,6 +26,7 @@ const Login = lazy(() => import("../components/auth/Login"));
 const Register = lazy(() => import("../components/auth/Register"));
 const ChangePassword = lazy(() => import("../components/auth/ChangePassword"));
 const ReportProducts = lazy(() => import("../components/user/ReportProducts"));
+const AdminReportProducts = lazy(() => import("../components/admin/ReportProducts"));
 const ReportProductDetail = lazy(() =>
       import("../components/user/ReportProductDetail")
 );
@@ -122,10 +124,11 @@ export const ADMIN_ROUTES = [
       { path: "products", element: <AdminProducts /> },
       { path: "stores", element: <Stores /> },
       { path: "publishers", element: <Publishers /> },
-      { path: "reports/products", element: <ReportProducts /> },
+      { path: "reports/products", element: <AdminReportProducts /> },
       { path: "reports/stores", element: <ReportStores /> },
       { path: "authors", element: <Authors /> },
-      { path: "product/:productId", element: <AdminProductDetail /> },
+      { path: "shop/:shopSlug", element: <AdminShopDetail /> },
+      { path: "product/:productCode", element: <AdminProductDetail /> },
       { path: "seller/requests", element: <SellerRegistrationRequests /> },
       { path: "users", element: <UserManagement /> },
       { path: "statistics", element: <Statistics /> },
