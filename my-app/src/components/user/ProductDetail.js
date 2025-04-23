@@ -258,7 +258,7 @@ const ProductDetail = () => {
   }, [id])
 
   const handleQuantityChange = (value) => {
-    const newQuantity = quantity + value
+    const newQuantity = quantity + value;
     setQuantity(newQuantity)
   }
 
@@ -274,10 +274,10 @@ const ProductDetail = () => {
       const response = await axiosInstance.post(`/user/cart/saveCartItemProductCode?productCode=${id}&quantity=${quantity}`);
       if (response.status === 200 && response.data.status === true) {
         showSuccessToast(response.data.message);
-        window.location.reload();
       } else {
         showErrorToast(response.data.message);
       }
+      console.log(id, quantity);
     } catch (error) {
       console.log(error);
     }
