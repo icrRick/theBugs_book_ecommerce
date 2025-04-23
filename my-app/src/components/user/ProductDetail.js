@@ -259,21 +259,18 @@ const ProductDetail = () => {
 
   const handleQuantityChange = (value) => {
     const newQuantity = quantity + value
-    if (newQuantity >= 1 && newQuantity <= (selectedVariant?.inStock || product?.inStock || 999)) {
-      setQuantity(newQuantity)
-    }
+    setQuantity(newQuantity)
   }
 
   const handleQuantityInput = (e) => {
     const value = parseInt(e.target.value)
-    if (!isNaN(value) && value >= 1 && value <= (selectedVariant?.inStock || product?.inStock || 999)) {
-      setQuantity(value)
-    }
+    setQuantity(value)
   }
 
 
   const saveCartItem = async (id, quantity) => {
     try {
+      console.log(id, quantity);
       const response = await axiosInstance.post(`/user/cart/saveCartItemProductCode?productCode=${id}&quantity=${quantity}`);
       if (response.status === 200 && response.data.status === true) {
         showSuccessToast(response.data.message);

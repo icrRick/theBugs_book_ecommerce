@@ -111,7 +111,7 @@ public class CartItemService {
         } else {
             CartItem cartItemAdd = new CartItem();
             cartItemAdd.setProduct(product);
-            cartItemAdd.setQuantity(product.getQuantity()+quantity);
+            cartItemAdd.setQuantity(product.getQuantity() + quantity);
             cartItemAdd.setUser(user);
             cartItemJPA.save(cartItemAdd);
             return true;
