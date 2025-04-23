@@ -49,10 +49,4 @@ public class Review {
     @Column(nullable = false)
     private Date updatedAt;
 
-    @Column 
-    private String reply;
-    
-    @Temporal(TemporalType.DATE)
-    @Column
-    private Date reply_at;
 }
