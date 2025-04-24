@@ -21,7 +21,21 @@ public class ProductService {
         return productJPA.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy productId: " + productId));
     }
+
+
     
+    
+
+
+    public Product getProductByProductCode(String productCode) {
+        return productJPA.getProductByProductCode(productCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy productcode: " + productCode));
+    }
+
+    public Product getProductByProductCode1(String productCode) {
+        return productJPA.getProductByProductCode(productCode)
+                .orElse(null);
+    }
     public Product updateProductQuantity(Integer productId, Integer quantity) {
         Product product=getProductById(productId);
         if (product.getQuantity() < quantity) {

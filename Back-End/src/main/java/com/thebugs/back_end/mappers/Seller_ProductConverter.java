@@ -69,19 +69,18 @@ public class Seller_ProductConverter {
         product.setProductGenres(productGenres);
         product.setProductAuthors(productAuthors);
         product.setPublisher(publisher);
-        product.setActive(bean.getActive());
-
+        product.setStatus(null);
         // Cho phép shop chỉnh sửa trạng thái active
         product.setActive(bean.getActive());
 
         if (oldProduct != null) {
             // Không cho phép sửa approve/product_code
-            product.setApprove(oldProduct.isApprove());
+            product.setApprove(oldProduct.getApprove());
             product.setProduct_code(oldProduct.getProduct_code());
         } else {
             // Trường hợp tạo mới
             product.setActive(true); // Mặc định active nếu tạo mới
-            product.setApprove(false); // Mặc định chưa duyệt
+            product.setApprove(null); // Mặc định chưa duyệt
         }
 
         return product;
@@ -101,7 +100,7 @@ public class Seller_ProductConverter {
                 product.getWeight(),
                 product.getDescription(),
                 product.isActive(),
-                product.isApprove(),
+                product.getApprove(),
                 product.getShop().getId(),
                 product.getPublisher().getId(),
                 product.getImages() != null ? product.getImages().stream()

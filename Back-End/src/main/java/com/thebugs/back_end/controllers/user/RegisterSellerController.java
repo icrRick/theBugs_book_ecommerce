@@ -26,6 +26,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -106,10 +107,15 @@ public class RegisterSellerController {
             @RequestPart("accountInfor") UserRegisterBean registerBean,
             @RequestPart(value = "logo", required = false) MultipartFile logo,
             @RequestPart(value = "banner", required = false) MultipartFile banner) {
-                System.out.println("SUCCESS DATA");
-        ResponseData result = g_RegisterSellerService.createSeller(shopBean, addressBean, registerBean, logo,
-                banner);
-        return ResponseEntity.status(HttpStatus.valueOf(result.getStatusCode())).body(result);
+        try {
+            ResponseData result = g_RegisterSellerService.createSeller(shopBean, addressBean, registerBean, logo,
+                    banner);
+            return ResponseEntity.status(HttpStatus.valueOf(result.getStatusCode())).body(result);
+        } catch (UnexpectedRollbackException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseData(false, "Lỗi dữ liệu", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseData(false, "Lỗi hệ thống", null));
+        }
     }
 
     @PostMapping("/validate-register-user")

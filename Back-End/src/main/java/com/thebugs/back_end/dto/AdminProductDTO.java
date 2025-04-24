@@ -13,7 +13,7 @@ public class AdminProductDTO {
     private String productCode;
     private String shopName;
     private Boolean status;
-    private boolean approve;
+    private Boolean approve;
     private boolean active;
     
 }

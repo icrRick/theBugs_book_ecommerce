@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.CartItem;
+import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.repository.CartItemJPA;
 import com.thebugs.back_end.services.seller.VoucherService;
@@ -63,7 +64,7 @@ public class CartItemService {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);
                     shopInfo.put("shopName", shopName);
-                    shopInfo.put("vouchers", voucherService.findByShopIdNotInOrderByUser(id,user.getId()));
+                    shopInfo.put("vouchers", voucherService.findByShopIdNotInOrderByUser(id, user.getId()));
                     shopInfo.put("products", new ArrayList<Map<String, Object>>());
                     return shopInfo;
                 });
@@ -81,12 +82,12 @@ public class CartItemService {
         if (quantity > productService.getProductById(productId).getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
-        CartItem cartItem=findProductByUser(productId, user.getId());
+        CartItem cartItem = findProductByUser(productId, user.getId());
         if (cartItem != null) {
             cartItem.setQuantity(quantity);
             cartItemJPA.save(cartItem);
             return true;
-        }else{
+        } else {
             CartItem cartItemAdd = new CartItem();
             cartItemAdd.setProduct(productService.getProductById(productId));
             cartItemAdd.setQuantity(quantity);
@@ -96,18 +97,45 @@ public class CartItemService {
         }
     }
 
+    public boolean saveCartItemProductCode(String authorizationHeader, String productCode, Integer quantity) {
+        System.out.println("quantity "+quantity);
+        User user = userService.getUserToken(authorizationHeader);
+        Product product=productService.getProductByProductCode(productCode);
+        if (quantity > product.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
+        }
+        CartItem cartItem = findProductCodeByUser(productCode, user.getId());
+        if (cartItem != null) {
+            cartItem.setQuantity(cartItem.getQuantity() +quantity);
+            cartItemJPA.save(cartItem);
+            return true;
+        } else {
+            CartItem cartItemAdd = new CartItem();
+            cartItemAdd.setProduct(product);
+            cartItemAdd.setQuantity(quantity);
+            cartItemAdd.setUser(user);
+            cartItemJPA.save(cartItemAdd);
+            return true;
+        }
+    }
+
     public boolean deleteCartItem(String authorizationHeader, Integer productId) {
         User user = userService.getUserToken(authorizationHeader);
-        CartItem cartItem=findProductByUser(productId, user.getId());
-        if (cartItem !=null) {
+        CartItem cartItem = findProductByUser(productId, user.getId());
+        if (cartItem != null) {
             cartItemJPA.delete(cartItem);
             return true;
         }
         return false;
     }
 
+    public CartItem findProductByUser(Integer productId, Integer userId) {
 
-    public CartItem findProductByUser(Integer productId,Integer userId){
         return cartItemJPA.findProductByUserId(productId, userId).orElse(null);
+    }
+
+    public CartItem findProductCodeByUser(String productCode, Integer userId) {
+        Product product = productService.getProductByProductCode1(productCode);
+        return cartItemJPA.findProductByUserId(product.getId(), userId).orElse(null);
     }
 }

@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class FPT_BaseResponse {
     @JsonProperty("code")
     private String code;
-    
     private String message;
     private String warning;
 }

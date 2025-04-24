@@ -1,6 +1,7 @@
 package com.thebugs.back_end.services.user;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpEntity;
@@ -114,6 +115,46 @@ public class ApiGHNService {
         }
     }
 
+
+    public  String getProvinceName(Integer provinceId) {
+        List<Map<String, Object>> provinces = (List<Map<String, Object>>) getProvinces();
+        if (provinces != null) {
+            for (Map<String, Object> province : provinces) {
+                if (provinceId.equals(province.get("ProvinceID"))) {
+                    return (String) province.get("ProvinceName");
+                }
+            }
+        }
+        return null;
+    }
+    public String getDistrictName(Integer provinceId,Integer districtId){
+        List<Map<String, Object>> districts = (List<Map<String, Object>>) getDistricts(provinceId);
+        if (districts != null) {
+            for (Map<String, Object> item : districts) {
+                if (districtId.equals(item.get("DistrictID"))) {
+                    return (String) item.get("DistrictName");
+                }
+            }
+        }
+        return null;
+    }
+    public String getWardName(Integer districtId, String wardId){
+        List<Map<String, Object>> wards = (List<Map<String, Object>>) getWards(districtId);
+        if (wards != null) {
+            for (Map<String, Object> item : wards) {
+                if (wardId.equals(item.get("WardCode"))) {
+                    return (String) item.get("WardName");
+                }
+            }
+        }
+        return null;
+    }
+    
+
+
+
+
+
     public Object calculateFee(Integer shopId, Integer addressUserId, Float weight) {
         try {
             Address addressShop = addressService.getAddressShopId(shopId);
@@ -159,4 +200,7 @@ public class ApiGHNService {
             return null;
         }
     }
+
+
+
 }

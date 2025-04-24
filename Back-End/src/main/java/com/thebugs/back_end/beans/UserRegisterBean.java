@@ -8,6 +8,10 @@ import lombok.Data;
 
 @Data
 public class UserRegisterBean {
+    private Integer id;
+    private String cccd;
+    private Date dob;
+    
     @NotBlank(message = "Tên không được bỏ trống")
     @Size(max = 100, message = "Tên không được quá 100 ký tự")
     private String fullName;
@@ -26,6 +30,4 @@ public class UserRegisterBean {
     @NotBlank(message = "Không được bỏ trống xác nhận mật khẩu")
     private String confirmPassword;
 
-    private String cccd;
-    private Date dob;
 }

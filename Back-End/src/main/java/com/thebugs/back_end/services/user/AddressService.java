@@ -69,7 +69,7 @@ public class AddressService {
         public AddressDTO getDefault(Integer addressId, String authorizationHeader){
                 Integer userId= userService.getUserToken(authorizationHeader).getId();
                 Address address;
-                if (addressId !=null ) {
+                if (addressId != null ) {
                         address=findAddressByIdWhereUserId(addressId, userId);
                 }else{
                         address=addressJPA.findFirstByUserIdOrderByIdAsc(userId).get();
@@ -81,8 +81,7 @@ public class AddressService {
 
         public Address getAddressShopId(Integer shopId) {
                 Address address = addressJPA.getAddressShopId(shopId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Không tìm thấy địa chỉ có id = " + shopId));
+                                .orElse(null);
                 return address;
         }
 

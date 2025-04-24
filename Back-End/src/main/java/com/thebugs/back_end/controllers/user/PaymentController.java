@@ -9,6 +9,7 @@ import com.thebugs.back_end.beans.ShippingFreeBean;
 
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.ApiGHNService;
+
 import com.thebugs.back_end.services.user.PaymentService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
 
@@ -56,8 +57,8 @@ public class PaymentController {
                         @RequestBody List<CartBean> cartBeans) {
                 try {
                         System.out.println("Dữ liệu nhận được: " + cartBeans);
-                        List<Integer> orderIdIntegers=paymentService.createOrder(authorizationHeader, cartBeans);
-                        System.out.println("List "+orderIdIntegers);
+                        List<Integer> orderIdIntegers = paymentService.createOrder(authorizationHeader, cartBeans);
+                        System.out.println("List " + orderIdIntegers);
                         return ResponseEntityUtil.OK("Thành công", orderIdIntegers);
                 } catch (Exception e) {
                         return ResponseEntityUtil.badRequest(e.getMessage());

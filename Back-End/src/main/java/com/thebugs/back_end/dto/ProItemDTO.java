@@ -14,4 +14,14 @@ public class ProItemDTO {
     private double promotionValue;
     private double weight;
     private double rate;
+    private String productCode;
+    public ProItemDTO(int productId, String productName, double productPrice, String productImage, double promotionValue, double weight, double rate) {
+        this.productId = productId;
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.productImage = productImage;
+        this.promotionValue = promotionValue;
+        this.weight = weight;
+        this.rate = rate;
+    }
 }

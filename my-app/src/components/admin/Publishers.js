@@ -18,7 +18,9 @@ const Publishers = () => {
 
 
     const [isLoading, setIsLoading] = useState(false);
-
+    const itemsPerPage = 10;
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
     const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
         defaultValues: {
             name: '',
@@ -140,15 +142,14 @@ const Publishers = () => {
         }
     };
 
-    if (isLoading) {
-        return <Loading />
-    }
-
+ 
     return (
-        <div className="my-6 bg-white">
+       <>
+       {isLoading && <Loading />}
+        <div className="my-4 bg-white">
             {/* Header */}
             <div className="bg-white shadow-sm border-b border-gray-200">
-                <div className="px-4 sm:px-6 lg:px-8 py-6 ">
+                <div className="p-4 ">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center text-sm text-gray-500 mb-1">
@@ -181,7 +182,7 @@ const Publishers = () => {
             </div>
 
             {/* Main Content */}
-            <div className=" px-4 sm:px-6 lg:px-8 py-8">
+            <div className=" p-4">
                 {/* Search Box */}
                 <div className="mb-6">
                     <div className="max-w-md w-full">
@@ -204,7 +205,15 @@ const Publishers = () => {
                         </div>
                     </div>
                 </div>
-
+                <div className="flex flex-wrap justify-between items-center mb-4">
+                                    <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+                                          <span className="hidden sm:inline">Hiển thị</span>{" "}
+                                          <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+                                          <span className="hidden sm:inline">trên</span>{" "}
+                                          <span className="font-medium">{totalItems}</span> sản phẩm{" "}
+                                          <span className="inline sm:hidden">• Trang {currentPage}</span>
+                                    </div>
+                              </div>
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="min-w-full">
@@ -380,6 +389,7 @@ const Publishers = () => {
             )}
 
         </div>
+       </>
     );
 };
 

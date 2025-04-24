@@ -8,12 +8,12 @@ import ShopInfoStep from "./ShopInfoStep";
 import ShopAddressStep from "./ShopAddressStep";
 import axiosInstance from "../../utils/axiosInstance";
 import Loading from "../../utils/Loading";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 const SellerRegistration = () => {
       const [isLoading, setIsLoading] = useState(false);
       const navigate = useNavigate();
       const [currentStep, setCurrentStep] = useState(1);
-
       const [accountInfo, setAccountInfo] = useState({
             fullName: "",
             email: "",
@@ -64,13 +64,17 @@ const SellerRegistration = () => {
       const [errors, setErrors] = useState({});
       const [registrationComplete, setRegistrationComplete] = useState(false);
       const [isProcessingId, setIsProcessingId] = useState(false);
-
+      useEffect(() => {
+            console.log(accountInfo);
+      }, [accountInfo]);
       useEffect(() => {
             const fetchUserData = async () => {
                   axiosInstance
                         .get("api/users/me")
                         .then((response) => {
-                              setAccountInfo(response.data);
+                              setAccountInfo(() => ({
+                                    id: response.data.data.id,
+                              }));
                               setCurrentStep(2);
                         })
                         .catch(() => {
@@ -85,7 +89,7 @@ const SellerRegistration = () => {
             console.log(shopInfo);
             console.log(shopAddress);
             console.log(accountInfo);
-            
+
             formDataToSend.append(
                   "shopInfor",
                   new Blob([JSON.stringify(shopInfo)], {
@@ -111,10 +115,11 @@ const SellerRegistration = () => {
                         },
                   })
                   .then((response) => {
-                        console.log(response);
+                        showSuccessToast(response.data.message)
+                        navigate("/home")
                   })
                   .catch((error) => {
-                        console.log(error);
+                        showErrorToast(error.response.data.message)
                   });
       };
       const handleAccountInfoChange = (e) => {

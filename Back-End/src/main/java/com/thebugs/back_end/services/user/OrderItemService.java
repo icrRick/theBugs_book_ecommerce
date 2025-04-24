@@ -14,4 +14,16 @@ public class OrderItemService {
     public OrderItem saveOrderItem(OrderItem orderItem) {
         return orderItemJPA.save(orderItem);
     }
+
+    public OrderItem getOrderItemById(Integer id) {
+        if(id == null) {
+            throw new IllegalArgumentException("ID không được null");
+        }
+        return orderItemJPA.findById(id).orElseThrow(() -> new IllegalArgumentException(
+            "OrderItem không tồn tại"));
+    }
+
+    public void deleteOrderItem(OrderItem orderItem) {
+        orderItemJPA.delete(orderItem);
+    }
 }

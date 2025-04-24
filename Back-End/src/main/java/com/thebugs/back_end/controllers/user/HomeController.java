@@ -2,8 +2,12 @@ package com.thebugs.back_end.controllers.user;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.ProductHomeService;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
+
+import lombok.Getter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 public class HomeController {
+        @Autowired
+        private ProductJPA g_ProductJPA; // Thêm ProductJPA`
 
         // @Autowired
         // private ReviewService reviewService; // Thêm ReviewService
@@ -60,6 +66,15 @@ public class HomeController {
                         responseData.setMessage("Lỗi: " + e.getMessage());
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                }
+        }
+
+        @GetMapping("/home/allProducts")
+        public ResponseEntity<ResponseData> getAllActiveProduct() {
+                try {
+                        return ResponseEntityUtil.OK("OK", g_ProductJPA.getAllProItemDTO());
+                } catch (Exception e) {
+                        return ResponseEntityUtil.badRequest(e.getMessage());
                 }
         }
 

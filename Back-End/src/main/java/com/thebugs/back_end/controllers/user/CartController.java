@@ -1,4 +1,5 @@
 package com.thebugs.back_end.controllers.user;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,17 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.CartItemService;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
-
 
 @RestController
 @RequestMapping("/user/cart")
 public class CartController {
-    
+
     @Autowired
     private CartItemService cartItemService;
-
 
     @GetMapping("/getCartItems")
     public ResponseEntity<ResponseData> getCartItems(@RequestHeader("Authorization") String authorizationHeader) {
@@ -39,11 +39,12 @@ public class CartController {
     }
 
     @PostMapping("/saveCartItem")
-    public ResponseEntity<ResponseData> saveCartItem(@RequestHeader("Authorization") String authorizationHeader,@RequestParam Integer productId, @RequestParam Integer quantity) {
+    public ResponseEntity<ResponseData> saveCartItem(@RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer productId, @RequestParam Integer quantity) {
         ResponseData responseData = new ResponseData();
         try {
-            boolean check= cartItemService.saveCartItem(authorizationHeader,productId, quantity);
-            if(check==false){
+            boolean check = cartItemService.saveCartItem(authorizationHeader, productId, quantity);
+            if (check == false) {
                 responseData.setStatus(false);
                 responseData.setMessage("Lỗi khi thêm sản phẩm vào giỏ hàng! ");
                 responseData.setData(null);
@@ -60,12 +61,32 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
         }
     }
+
+    @PostMapping("/saveCartItemProductCode")
+    public ResponseEntity<ResponseData> saveCartItem1(@RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam String productCode, @RequestParam Integer quantity) {
+
+        try {
+            boolean check = cartItemService.saveCartItemProductCode(authorizationHeader, productCode, quantity);
+            if (check == false) {
+
+                return ResponseEntityUtil.badRequest("Lỗi ");
+            }
+
+            return ResponseEntityUtil.OK("Thêm vào giỏ hàng thành công", null);
+        } catch (Exception e) {
+
+            return ResponseEntityUtil.badRequest(e.getMessage());
+        }
+    }
+
     @PostMapping("/deleteCartItem")
-    public ResponseEntity<ResponseData> deleteCartItem(@RequestHeader("Authorization") String authorizationHeader,@RequestParam Integer productId) {
+    public ResponseEntity<ResponseData> deleteCartItem(@RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer productId) {
         ResponseData responseData = new ResponseData();
         try {
-            boolean check= cartItemService.deleteCartItem(authorizationHeader,productId);
-            if(check==false){
+            boolean check = cartItemService.deleteCartItem(authorizationHeader, productId);
+            if (check == false) {
                 responseData.setStatus(false);
                 responseData.setMessage("Xoa that bai! ");
                 responseData.setData(null);
@@ -82,5 +103,5 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
         }
     }
-   
+
 }

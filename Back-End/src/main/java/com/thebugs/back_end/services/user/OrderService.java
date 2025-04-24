@@ -1,10 +1,9 @@
 package com.thebugs.back_end.services.user;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.thebugs.back_end.beans.PaymentOnlineBean;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.repository.OrderJPA;
 
@@ -13,6 +12,9 @@ public class OrderService {
 
         @Autowired
         private OrderJPA orderJPA;
+
+        @Autowired
+        private OrderPaymentService orderPaymentService;
 
         public Order saveOrder(Order order) {
                 return orderJPA.save(order);
@@ -26,15 +28,16 @@ public class OrderService {
                                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy order " + orderId));
         }
 
-        // public boolean updatePaymentStatus(List<Integer> orderIdIntegers, String paymentStatus) {
-        //         for (Integer orderId : orderIdIntegers) {
-        //                 Order order = findById(orderId);
-        //                 if ("Thanh toán chuyển khoản ngân hàng".equals(order.getPaymentMethod()) &&
-        //                                 (order.getPaymentStatus() == null || order.getPaymentStatus().isEmpty())) {
-        //                         order.setPaymentStatus(paymentStatus);
-        //                 }
-        //                 saveOrder(order);
-        //         }
-        //         return true;
-        // }
+        public boolean updatePaymentStatus(PaymentOnlineBean paymentOnlineBean) {
+                for (Integer orderId : paymentOnlineBean.getOrderIdIntegers()) {
+                        Order order = findById(orderId);
+                        if (paymentOnlineBean.getVnp_ResponseCode().equals("00")) {
+                                order.setOrderPayment(orderPaymentService.findByOrderPayment(3));
+                        } else {
+                                order.setOrderPayment(orderPaymentService.findByOrderPayment(4));
+                        }
+                        saveOrder(order);
+                }
+                return true;
+        }
 }

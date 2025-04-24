@@ -3,6 +3,7 @@ package com.thebugs.back_end.services.user;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 
@@ -32,7 +34,6 @@ import com.thebugs.back_end.repository.UserJPA;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.utils.CloudinaryUpload;
 import com.thebugs.back_end.utils.ColorUtil;
-import com.thebugs.back_end.utils.JwtUtil;
 import com.thebugs.back_end.utils.WebClientConfig;
 
 @Service
@@ -78,40 +79,49 @@ public class RegisterSellerService {
         }
     }
 
+    @Transactional
     public ResponseData createSeller(ShopBean shopBean, AddressBean addressBean,
             UserRegisterBean registerBean, MultipartFile logo, MultipartFile banner) {
-        User user = registerUser(registerBean);
-        if (user == null || user.getId() == null) {
-            return new ResponseData(false, "Không thể đăng ký người dùng, lỗi hệ thông", null, 500);
-        }
-        String imageUrl = "";
-        String bannerUrl = "";
-        if (logo != null && !logo.isEmpty()) {
-            imageUrl = uploadImage(logo);
-        }
-        if (banner != null && !banner.isEmpty()) {
-            bannerUrl = uploadImage(banner);
-        }
+        try {
+            User user = Optional.ofNullable(registerBean.getId())
+                    .flatMap(g_UserJPA::findById)
+                    .orElseGet(() -> registerUser(registerBean));
 
-        Shop shop = shopBeanToEntity(shopBean);
-        shop.setImage(imageUrl);
-        shop.setBaner(bannerUrl);
-        shop.setTotalPayout(0.0);
-        shop.setUser(user);
+            if (user == null || user.getId() == null) {
+                throw new RuntimeException("Không thể đăng ký người dùng.");
+            }
 
-        Shop savedShop = g_ShopJPA.save(shop);
-        if (savedShop.getId() == null) {
-            return new ResponseData(false, "Không thể đăng ký shop, lỗi hệ thông", null,
-                    500);
-        }
-        Address address = addressBeanToEntity(addressBean, user);
-        Address savedAddress = g_AddressJPA.save(address);
-        if (savedAddress.getId() == null) {
-            return new ResponseData(false, "Không thể đăng ký địa chỉ, lỗi hệ thông", null,
-                    500);
-        }
-        return new ResponseData(true, "Đăng ký thành công", null, 201);
+            String imageUrl = "";
+            String bannerUrl = "";
+            if (logo != null && !logo.isEmpty()) {
+                imageUrl = uploadImage(logo);
+            }
+            if (banner != null && !banner.isEmpty()) {
+                bannerUrl = uploadImage(banner);
+            }
 
+            Shop shop = shopBeanToEntity(shopBean);
+            shop.setImage(imageUrl);
+            shop.setBanner(bannerUrl);
+            shop.setTotalPayout(0.0);
+            shop.setUser(user);
+
+            Shop savedShop = g_ShopJPA.save(shop);
+            if (savedShop.getId() == null) {
+                throw new RuntimeException("Không thể đăng ký shop.");
+            }
+
+            Address address = addressBeanToEntity(addressBean, user);
+            Address savedAddress = g_AddressJPA.save(address);
+            if (savedAddress.getId() == null) {
+                throw new RuntimeException("Không thể đăng ký địa chỉ.");
+            }
+
+            return new ResponseData(true, "Đăng ký thành công", null, 201);
+
+        } catch (Exception e) {
+            return new ResponseData(false, e.getMessage(), null, 500);
+        }
     }
 
     public GHN_Ward_DTO getWardInfor(int districtID) {

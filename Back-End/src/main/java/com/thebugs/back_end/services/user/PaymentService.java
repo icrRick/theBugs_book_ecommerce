@@ -58,6 +58,9 @@ public class PaymentService {
     @Autowired
     private CartItemService cartItemService;
 
+    @Autowired
+    private OrderPaymentService orderPaymentService;
+
     public List<Integer> createOrder(String authorizationHeader, List<CartBean> cartBeans) {
         List<Integer> orderIdIntegers = new ArrayList<>();  
         if (cartBeans == null || cartBeans.isEmpty()) {
@@ -69,7 +72,6 @@ public class PaymentService {
             order.setUser(user);
             order.setShop(shopService.getShopById(cartBean2.getShopId()));
 
-         //   order.setPaymentMethod(cartBean2.getPaymentMethod());
 
             order.setCustomerInfo(cartBean2.getCustomerInfo());
             if (cartBean2.getVoucherId() != null) {
@@ -83,7 +85,9 @@ public class PaymentService {
             order.setOrderStatus(orderStatusService.getOrderStatusById(1));
             
             if (cartBean2.getPaymentMethod().equals("Thanh toán tiền mặt khi nhận hàng")) {
-               // order.setPaymentStatus("Chưa thanh toán");
+               order.setOrderPayment(orderPaymentService.findByOrderPayment(1));
+            }else{
+                order.setOrderPayment(orderPaymentService.findByOrderPayment(4));
             }
             Order savedOrder = orderService.saveOrder(order);
             orderIdIntegers.add(savedOrder.getId());

@@ -45,13 +45,13 @@ public class Product {
     @Column(nullable = false)
     private boolean active;
 
-    @Column(nullable = false)
-    private boolean approve;
+    @Column
+    private Boolean approve;
 
     @Column(nullable = true)
     private Boolean status;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
@@ -59,7 +59,7 @@ public class Product {
 
     @Column(name = "created_at", nullable = false, updatable = false) // Thêm createdAt
     @Temporal(TemporalType.DATE)
-    private Date createdAt;
+    private Date createdAt =new Date();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
@@ -92,4 +92,11 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    public String getFirstImageName() {
+        if (images != null && !images.isEmpty()) {
+            return images.get(0).getImageName(); 
+        }
+        return null;
+    }
 }
