@@ -44,7 +44,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "FROM Order o " +
                         "LEFT JOIN o.orderPayment op " +
                         "LEFT JOIN o.orderItems oi " +
-                        "LEFT JOIN o.voucher v " + // 👈 Thêm dòng này để rõ ràng
+                        "LEFT JOIN o.voucher v " +
                         "WHERE o.user.id = ?1 " +
                         "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +

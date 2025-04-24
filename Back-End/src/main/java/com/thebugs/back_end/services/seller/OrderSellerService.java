@@ -178,6 +178,11 @@ public class OrderSellerService {
                                 throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
                         } else {
                                 checkShopId.setNoted(cancelReason);
+                                if (checkShopId.getOrderPayment().getId() == 3) {
+                                        String setSubject = "Đơn hàng đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
+                                                        + checkShopId.getShop().getUser().getEmail();
+                                        getUserEmailCancelReason(orderId, setSubject);
+                                }
                         }
                 }
                 if (orderStatusId == 3) {
@@ -324,7 +329,5 @@ public class OrderSellerService {
                 }
                 return false;
         }
-
-       
 
 }

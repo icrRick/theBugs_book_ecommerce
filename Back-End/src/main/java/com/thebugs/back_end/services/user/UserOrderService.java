@@ -48,6 +48,9 @@ public class UserOrderService {
         int userId = userService.getUserToken(token).getId();
         Pageable pageable2 = PageRequest.of(page - 1, size, Sort.Direction.DESC, "id");
         Page<OrderSimpleDTO> order = orderJPA.findOrderByUserId(userId, pageable2);
+        System.out.println("VOUCHER:");
+        System.out.println(order.getContent());
+
         return order.stream()
                 .collect(Collectors.toCollection(ArrayList::new));
     }
