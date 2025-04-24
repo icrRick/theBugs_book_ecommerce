@@ -77,7 +77,7 @@ const AdminProductDetail = lazy(() => import("../components/admin/AdminProductDe
 export const PUBLIC_ROUTES = [
       { path: "/", element: <Navigate to="/home" /> },
       { path: "home", element: <Home /> },
-      { path: "cart", element: <Cart /> },
+  
       { path: "product-detail/:id", element: <ProductDetail /> },
       { path: "payment", element: <Payment /> },
       { path: "login", element: <Login /> },

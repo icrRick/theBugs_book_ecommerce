@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import CardProduct from "./CardProduct";
 import axiosInstance from "../../utils/axiosInstance";
+import ProductCart from "./ProductCart";
 
 const Home = () => {
   const [newProducts, setNewProducts] = useState([]);
@@ -496,9 +497,8 @@ const Home = () => {
 
       {/* Danh mục */}
       <section
-        className={`mb-12 transition-opacity duration-1000 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}
+        className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"
+          }`}
       >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
@@ -815,11 +815,10 @@ const Home = () => {
                         <svg
                           key={i}
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`h-4 w-4 ${
-                            i < testimonial.rating
+                          className={`h-4 w-4 ${i < testimonial.rating
                               ? "fill-current"
                               : "stroke-current fill-none"
-                          }`}
+                            }`}
                           viewBox="0 0 24 24"
                         >
                           <path
