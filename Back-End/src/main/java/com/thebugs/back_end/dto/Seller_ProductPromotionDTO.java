@@ -7,13 +7,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class Seller_ProductPromotionDTO {
-  private int productId;
-  private String productName;
-  private double productPrice;
-  private double promotionValue;
-  private Date promotionStartDate;
-  private Date promotionEndDate;
+  private int id;
+  private String name;
+  private Double price;
+  private CurrentPromotionDTO currentPromotionDTO;
+  public Seller_ProductPromotionDTO(int id, String name, Double price, Double promotionValue, Date promotionStartDate, Date promotionEndDate, Boolean isPromotionActive) {
+    this.currentPromotionDTO = new CurrentPromotionDTO(promotionValue, promotionStartDate, promotionEndDate, isPromotionActive);
+    this.id = id;
+    this.name = name;
+    this.price = price;
+  }
 }

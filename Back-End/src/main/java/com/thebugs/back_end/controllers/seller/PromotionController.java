@@ -2,9 +2,9 @@ package com.thebugs.back_end.controllers.seller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.thebugs.back_end.beans.PromotionBean;
 import com.thebugs.back_end.dto.PromotionDTO;
 import com.thebugs.back_end.resp.ResponseData;
-
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.Map;
 
 import com.thebugs.back_end.services.seller.PromotionService;
+import com.thebugs.back_end.services.user.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -24,16 +25,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
-@RequestMapping("/seller/promotion")
+@RequestMapping("/api/seller/promotion")
 public class PromotionController {
-
         @Autowired
-        private  PromotionService promotionService;
+        private UserService g_UserService;
+        @Autowired
+        private PromotionService promotionService;
+
         @GetMapping("/list")
         public ResponseEntity<ResponseData> getList(
                         @RequestHeader("Authorization") String authorizationHeader,
@@ -42,9 +46,7 @@ public class PromotionController {
                         @RequestParam(defaultValue = "1") int page) throws ParseException {
                 ResponseData responseData = new ResponseData();
                 try {
-
                         Pageable pageable = PageRequest.of(page - 1, 9, Sort.by(Sort.Order.desc("id")));
-
                         ArrayList<PromotionDTO> promotions = promotionService.findByShopAndDateRange(
                                         authorizationHeader, startDate, expireDate, pageable);
                         int total = promotionService.total(authorizationHeader, startDate, expireDate);
@@ -60,9 +62,7 @@ public class PromotionController {
                         responseData.setMessage("Lỗi " + e.getMessage());
                         responseData.setData(null);
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-
                 }
-
         }
 
         @GetMapping("/get/{id}")
@@ -74,8 +74,6 @@ public class PromotionController {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
                 }
         }
-
-
 
         @PostMapping("/delete")
         public ResponseEntity<ResponseData> deletePromotion(@RequestParam Integer id) {
@@ -93,7 +91,7 @@ public class PromotionController {
                                 responseData.setData(null);
                                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
                         }
-                    
+
                 } catch (Exception e) {
                         responseData.setStatus(false);
                         responseData.setMessage("Lỗi " + e.getMessage());
@@ -102,20 +100,24 @@ public class PromotionController {
                 }
         }
 
+        @PostMapping("/create")
+        public ResponseEntity<ResponseData> createPromotion(
+                        @RequestHeader("Authorization") String authorizationHeader,
+                        @RequestBody PromotionBean promotion) {
+                ResponseData responseData = promotionService.createPromotion(promotion, authorizationHeader);
+                ResponseEntity<ResponseData> responseEntity = ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode()))
+                                .body(responseData);
+                return responseEntity;
+        }
+
         @GetMapping("/products")
-        public ResponseEntity<ResponseData> getListProduct() {
-                ResponseData responseData = new ResponseData();
-                try {
-                        responseData.setStatus(true);
-                        responseData.setData(null);
-                        responseData.setMessage("Load thành công");
-                        return ResponseEntity.ok(responseData);
-                } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-                }
+        public ResponseEntity<ResponseData> getListProduct(
+                        @RequestHeader("Authorization") String authorizationHeader,
+                        @RequestParam(defaultValue = "1") int pageNumber) {
+                int shopId = g_UserService.getUserToken(authorizationHeader).getShop().getId();
+                ResponseData responseData = promotionService.getProductAndPromotion(shopId,
+                                PageRequest.of(pageNumber - 1, 10));
+                return ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode())).body(responseData);
         }
 
 }
