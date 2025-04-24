@@ -1,138 +1,96 @@
-"use client"
-
-import { useState, useEffect, useRef } from "react"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { FreeMode, Navigation, Thumbs, Zoom } from "swiper/modules"
-import { useNavigate, useParams, Link } from "react-router-dom"
-import "swiper/css"
-import "swiper/css/free-mode"
-import "swiper/css/navigation"
-import "swiper/css/thumbs"
-import "swiper/css/zoom"
-import ChatButton from "./ChatButton"
-import axiosInstance from "../../utils/axiosInstance"
-import { showErrorToast, showSuccessToast } from "../../utils/Toast"
+import { useState, useEffect, useRef } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode, Navigation, Thumbs, Zoom } from "swiper/modules";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import "swiper/css";
+import "swiper/css/free-mode";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
+import "swiper/css/zoom";
+import ChatButton from "./ChatButton";
 
 const ProductDetail = () => {
-  const [thumbsSwiper, setThumbsSwiper] = useState(null)
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [quantity, setQuantity] = useState(1)
-  const [activeTab, setActiveTab] = useState("description")
-  const [showFullDescription, setShowFullDescription] = useState(false)
-  const [showImageModal, setShowImageModal] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [showAddToCartNotification, setShowAddToCartNotification] = useState(false)
-  const [selectedVariant, setSelectedVariant] = useState(null)
-  const [similarProducts, setSimilarProducts] = useState([])
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const descriptionRef = useRef(null)
-  const [showReviewModal, setShowReviewModal] = useState(false)
-  const [newReview, setNewReview] = useState("")
+  const [thumbsSwiper, setThumbsSwiper] = useState(null);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState("description");
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showAddToCartNotification, setShowAddToCartNotification] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const descriptionRef = useRef(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [newReview, setNewReview] = useState("");
+
   useEffect(() => {
     const fetchProductData = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        // Giả lập API call
-        await new Promise((resolve) => setTimeout(resolve, 800))
+        // Fetch product details
+        const productResponse = await fetch(`http://localhost:8080/product-detail/${id}`);
+        if (!productResponse.ok) {
+          throw new Error(`HTTP error! Status: ${productResponse.status}`);
+        }
+        const productData = await productResponse.json();
 
-        // Dữ liệu mẫu cho sản phẩm
-        const productData = {
-          id: Number.parseInt(id) || 1,
-          name: "Đắc Nhân Tâm (Khổ Lớn) - Cuốn Sách Hay Nhất Của Mọi Thời Đại Giúp Bạn Đạt Được Thành Công Trong Cuộc Sống",
-          description: `<p><strong>Đắc Nhân Tâm</strong> - Được xuất bản lần đầu vào năm 1936 và là một trong những quyển sách bán chạy nhất mọi thời đại, với hơn 30 triệu bản được tiêu thụ trên toàn thế giới. Đây là cuốn sách đầu tiên và hay nhất, nổi tiếng nhất, bán chạy nhất của Dale Carnegie. Đây cũng là cuốn sách duy nhất về thể loại self-help liên tục đứng đầu danh mục sách bán chạy nhất (best-selling Books) do báo The New York Times bình chọn suốt 10 năm liền.</p>
-          <p>Đắc Nhân Tâm là cuốn sách "đầu tiên và hay nhất mọi thời đại" về nghệ thuật giao tiếp và ứng xử, về nghệ thuật làm người. Đắc Nhân Tâm là cuốn sách gối đầu giường của nhiều thế hệ luôn muốn hoàn thiện chính mình để vươn tới một cuộc sống tốt đẹp và thành công.</p>
-          <p>Đắc Nhân Tâm không chỉ là nghệ thuật thu phục lòng người, Đắc Nhân Tâm còn đem lại cho độc giả góc nhìn mới về cuộc sống, giúp thay đổi tư duy, cách suy nghĩ, cách ứng xử trong mối quan hệ với những người xung quanh. Đắc Nhân Tâm đã, đang và sẽ còn là cuốn sách đầu giường của nhiều người trên khắp thế giới.</p>
-          <p>Đắc Nhân Tâm, tên tiếng Anh là How to Win Friends and Influence People là một quyển sách nhằm tự giúp bản thân (self-help) bán chạy nhất từ trước đến nay. Quyển sách này do Dale Carnegie viết và đã được xuất bản lần đầu vào năm 1936, nó đã được bán 15 triệu bản trên khắp thế giới. Nó cũng là quyển sách bán chạy nhất của New York Times trong 10 năm. Tác phẩm được đánh giá là cuốn sách đầu tiên và hay nhất, có ảnh hưởng làm thay đổi cuộc đời của hàng triệu người trên thế giới.</p>
-          <p>Những nguyên tắc trong Đắc Nhân Tâm là những nguyên tắc bất biến trong giao tiếp, trong đối nhân xử thế. Những nguyên tắc ấy đã và đang được hàng triệu người thực hành và đúc kết thành những bài học quý báu.</p>`,
-          fullDescription: `<p><strong>Đắc Nhân Tâm</strong> - Được xuất bản lần đầu vào năm 1936 và là một trong những quyển sách bán chạy nhất mọi thời đại, với hơn 30 triệu bản được tiêu thụ trên toàn thế giới. Đây là cuốn sách đầu tiên và hay nhất, nổi tiếng nhất, bán chạy nhất của Dale Carnegie. Đây cũng là cuốn sách duy nhất về thể loại self-help liên tục đứng đầu danh mục sách bán chạy nhất (best-selling Books) do báo The New York Times bình chọn suốt 10 năm liền.</p>
-          <p>Đắc Nhân Tâm là cuốn sách "đầu tiên và hay nhất mọi thời đại" về nghệ thuật giao tiếp và ứng xử, về nghệ thuật làm người. Đắc Nhân Tâm là cuốn sách gối đầu giường của nhiều thế hệ luôn muốn hoàn thiện chính mình để vươn tới một cuộc sống tốt đẹp và thành công.</p>
-          <p>Đắc Nhân Tâm không chỉ là nghệ thuật thu phục lòng người, Đắc Nhân Tâm còn đem lại cho độc giả góc nhìn mới về cuộc sống, giúp thay đổi tư duy, cách suy nghĩ, cách ứng xử trong mối quan hệ với những người xung quanh. Đắc Nhân Tâm đã, đang và sẽ còn là cuốn sách đầu giường của nhiều người trên khắp thế giới.</p>
-          <p>Đắc Nhân Tâm, tên tiếng Anh là How to Win Friends and Influence People là một quyển sách nhằm tự giúp bản thân (self-help) bán chạy nhất từ trước đến nay. Quyển sách này do Dale Carnegie viết và đã được xuất bản lần đầu vào năm 1936, nó đã được bán 15 triệu bản trên khắp thế giới. Nó cũng là quyển sách bán chạy nhất của New York Times trong 10 năm. Tác phẩm được đánh giá là cuốn sách đầu tiên và hay nhất, có ảnh hưởng làm thay đổi cuộc đời của hàng triệu người trên thế giới.</p>
-          <p>Những nguyên tắc trong Đắc Nhân Tâm là những nguyên tắc bất biến trong giao tiếp, trong đối nhân xử thế. Những nguyên tắc ấy đã và đang được hàng triệu người thực hành và đúc kết thành những bài học quý báu.</p>
-          <h3>Nội dung chính</h3>
-          <p>Đắc Nhân Tâm được chia thành 4 phần chính:</p>
-          <ul>
-            <li>Phần 1: Những nguyên tắc cơ bản trong cách đối xử với người</li>
-            <li>Phần 2: Sáu cách tạo thiện cảm</li>
-            <li>Phần 3: Mười hai cách để thuyết phục người khác đồng ý với mình</li>
-            <li>Phần 4: Chín cách thay đổi người khác mà không làm họ phật lòng</li>
-          </ul>
-          <p>Cuốn sách đưa ra những lời khuyên về cách thức cư xử, ứng xử và giao tiếp với mọi người để đạt được thành công trong cuộc sống. Dale Carnegie đã đúc kết những nguyên tắc, những cách ứng xử thông qua việc quan sát và nghiên cứu những mẫu chuyện có thật trong cuộc sống.</p>
-          <p>Những nguyên tắc trong sách có thể áp dụng trong cuộc sống hàng ngày cũng như trong công việc kinh doanh, quản lý. Đây là cuốn sách rất hữu ích cho những ai muốn cải thiện các mối quan hệ cá nhân và nghề nghiệp.</p>`,
-          price: 150000,
-          discountPrice: 120000,
-          images: [
-            {
-              id: 1,
-              image: "https://placehold.co/600x800/2ecc71/ffffff?text=Đắc+Nhân+Tâm+1",
-            },
-            {
-              id: 2,
-              image: "https://placehold.co/600x800/3498db/ffffff?text=Đắc+Nhân+Tâm+2",
-            },
-            {
-              id: 3,
-              image: "https://placehold.co/600x800/9b59b6/ffffff?text=Đắc+Nhân+Tâm+3",
-            },
-            {
-              id: 4,
-              image: "https://placehold.co/600x800/e74c3c/ffffff?text=Đắc+Nhân+Tâm+4",
-            },
-            {
-              id: 5,
-              image: "https://placehold.co/600x800/f1c40f/ffffff?text=Đắc+Nhân+Tâm+5",
-            },
-          ],
-          brand: "NXB Tổng hợp TP.HCM",
-          rating: 4.8,
-          reviewCount: 1254,
-          soldCount: 5280,
-          inStock: 158,
-          author: "Dale Carnegie",
-          publisher: "NXB Tổng hợp TP.HCM",
-          publishYear: 2022,
+        if (!productData.status || !productData.data) {
+          throw new Error(productData.message || "Không tìm thấy sản phẩm");
+        }
+
+        const apiProduct = productData.data;
+
+        // Map API data to frontend product structure
+        const mappedProduct = {
+          id: apiProduct.productId,
+          name: apiProduct.productName,
+          description: apiProduct.description || "Không có mô tả",
+          fullDescription: apiProduct.description || "Không có mô tả",
+          price: apiProduct.price,
+          discountPrice: apiProduct.discountedPrice,
+          images: apiProduct.images.map((image, index) => ({
+            id: index + 1,
+            image: `/images/${image}`,
+          })),
+          brand: apiProduct.publisher,
+          rating: apiProduct.rate,
+          reviewCount: apiProduct.reviewCount,
+          soldCount: apiProduct.soldQuantity,
+          inStock: apiProduct.stockQuantity,
+          author: apiProduct.authorNames && apiProduct.authorNames.length > 0 ? apiProduct.authorNames[0] : "Không rõ",
+          authors: apiProduct.authorNames,
+          publisher: apiProduct.publisher,
+          publishYear: apiProduct.createdAt ? new Date(apiProduct.createdAt).getFullYear() : null,
           language: "Tiếng Việt",
-          pages: 320,
-          weight: "350g",
-          dimensions: "14.5 x 20.5 cm",
-          coverType: "Bìa mềm",
-          isbn: "8935086854753",
-          categories: ["Sách kỹ năng sống", "Sách tâm lý", "Sách self-help"],
-          tags: ["kỹ năng giao tiếp", "phát triển bản thân", "đắc nhân tâm", "dale carnegie"],
+          pages: 0,
+          weight: apiProduct.weight ? `${apiProduct.weight}kg` : "Không rõ",
+          dimensions: "Không rõ",
+          coverType: "Không rõ",
+          isbn: "Không rõ",
+          categories: apiProduct.genres || [],
+          tags: [],
           variants: [
             {
               id: 1,
-              name: "Bìa mềm - Khổ lớn",
-              price: 150000,
-              discountPrice: 120000,
-              inStock: 158,
-            },
-            {
-              id: 2,
-              name: "Bìa cứng - Khổ lớn",
-              price: 220000,
-              discountPrice: 180000,
-              inStock: 75,
-            },
-            {
-              id: 3,
-              name: "Bìa mềm - Khổ nhỏ",
-              price: 120000,
-              discountPrice: 95000,
-              inStock: 200,
+              name: "Phiên bản mặc định",
+              price: apiProduct.price,
+              discountPrice: apiProduct.discountedPrice,
+              inStock: apiProduct.stockQuantity,
             },
           ],
           shop: {
-            id: 1,
-            name: "Nhà sách Phương Nam",
-            logo: "https://placehold.co/100x100/2ecc71/ffffff?text=Logo",
+            id: apiProduct.shop.id || 1,
+            name: apiProduct.shop.name || "Nhà sách Phương Nam",
+            logo: apiProduct.shop.logo || "https://placehold.co/100x100/2ecc71/ffffff?text=Logo",
             rate: 4.9,
             responseRate: 98,
             responseTime: "trong vòng 5 phút",
             followers: 15243,
-            verify: true,
+            verify: apiProduct.shop.verify !== undefined ? apiProduct.shop.verify : true,
           },
           warranty: "Đổi trả trong vòng 7 ngày nếu sản phẩm lỗi",
           shipping: {
@@ -140,186 +98,105 @@ const ProductDetail = () => {
             methods: ["Giao hàng tiêu chuẩn", "Giao hàng nhanh"],
             time: "1-3 ngày làm việc",
           },
-          reviews: [
-            {
-              id: 1,
-              user: {
-                name: "Nguyễn Văn A",
-                avatar: "https://placehold.co/100x100/2ecc71/ffffff?text=A",
-              },
-              rating: 5,
-              date: "2024-03-15",
-              content: "Sách rất hay, nội dung súc tích và dễ hiểu. Đóng gói cẩn thận, giao hàng nhanh.",
-              images: ["https://placehold.co/300x300/3498db/ffffff?text=Review+1"],
-              likes: 24,
-            },
-            {
-              id: 2,
-              user: {
-                name: "Trần Thị B",
-                avatar: "https://placehold.co/100x100/3498db/ffffff?text=B",
-              },
-              rating: 4,
-              date: "2024-03-10",
-              content: "Sách hay, giá cả hợp lý. Tuy nhiên bìa sách hơi bị cong một chút.",
-              images: [],
-              likes: 12,
-            },
-            {
-              id: 3,
-              user: {
-                name: "Lê Văn C",
-                avatar: "https://placehold.co/100x100/9b59b6/ffffff?text=C",
-              },
-              rating: 5,
-              date: "2024-03-05",
-              content:
-                "Một cuốn sách kinh điển mà ai cũng nên đọc ít nhất một lần trong đời. Nội dung sâu sắc và đầy ý nghĩa.",
-              images: [
-                "https://placehold.co/300x300/e74c3c/ffffff?text=Review+2",
-                "https://placehold.co/300x300/f1c40f/ffffff?text=Review+3",
-              ],
-              likes: 36,
-            },
-          ],
-          priceHistory: [
-            { date: "2024-01-01", price: 150000 },
-            { date: "2024-02-01", price: 135000 },
-            { date: "2024-03-01", price: 120000 },
-          ],
+          reviews: [],
+          priceHistory: [],
+        };
+
+        setProduct(mappedProduct);
+        setSelectedVariant(mappedProduct.variants[0]);
+
+        // Fetch related products
+        const similarResponse = await fetch(`http://localhost:8080/product-detail/${id}/related`);
+        if (!similarResponse.ok) {
+          throw new Error(`HTTP error! Status: ${similarResponse.status}`);
         }
+        const similarData = await similarResponse.json();
 
-        setProduct(productData)
-        setSelectedVariant(productData.variants[0])
-
-        // Dữ liệu mẫu cho sản phẩm tương tự
-        const similarProductsData = [
-          {
-            id: 101,
-            name: "Nhà Giả Kim",
-            image: "https://placehold.co/300x400/3498db/ffffff?text=Nhà+Giả+Kim",
-            author: "Paulo Coelho",
-            price: 120000,
-            discountPrice: 95000,
-            rating: 4.7,
-            soldCount: 4800,
-          },
-          {
-            id: 102,
-            name: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-            image: "https://placehold.co/300x400/9b59b6/ffffff?text=Tuổi+Trẻ",
-            author: "Rosie Nguyễn",
-            price: 90000,
-            discountPrice: 75000,
-            rating: 4.5,
-            soldCount: 3500,
-          },
-          {
-            id: 103,
-            name: "Tôi Tài Giỏi, Bạn Cũng Thế",
-            image: "https://placehold.co/300x400/e74c3c/ffffff?text=Tôi+Tài+Giỏi",
-            author: "Adam Khoo",
-            price: 130000,
-            discountPrice: 110000,
-            rating: 4.6,
-            soldCount: 4200,
-          },
-          {
-            id: 104,
-            name: "Đời Ngắn Đừng Ngủ Dài",
-            image: "https://placehold.co/300x400/f1c40f/ffffff?text=Đời+Ngắn",
-            author: "Robin Sharma",
-            price: 110000,
-            discountPrice: 90000,
-            rating: 4.4,
-            soldCount: 3800,
-          },
-          {
-            id: 105,
-            name: "Người Giàu Có Nhất Thành Babylon",
-            image: "https://placehold.co/300x400/1abc9c/ffffff?text=Người+Giàu+Có",
-            author: "George S. Clason",
-            price: 100000,
-            discountPrice: 85000,
-            rating: 4.8,
-            soldCount: 5100,
-          },
-        ]
-
-        setSimilarProducts(similarProductsData)
+        if (similarData.status && similarData.data) {
+          const mappedSimilarProducts = similarData.data.map((item) => ({
+            id: item.id,
+            name: item.productName,
+            image: item.images && item.images.length > 0 ? `/images/${item.images[0]}` : "/placeholder.svg",
+            author: item.authorNames && item.authorNames.length > 0 ? item.authorNames[0] : "Không rõ",
+            price: item.price,
+            discountPrice: item.discountPrice,
+            rating: item.avgRating,
+            soldCount: 0,
+          }));
+          setSimilarProducts(mappedSimilarProducts);
+        } else {
+          setSimilarProducts([]);
+        }
       } catch (error) {
-        console.error("Error fetching product data:", error)
+        console.error("Error fetching product data:", error);
+        setProduct(null);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProductData()
-  }, [id])
+    fetchProductData();
+  }, [id]);
 
   const handleQuantityChange = (value) => {
     const newQuantity = quantity + value;
-    setQuantity(newQuantity)
-  }
-
-  const handleQuantityInput = (e) => {
-    const value = parseInt(e.target.value)
-    setQuantity(value)
-  }
-
-
-  const saveCartItem = async (id, quantity) => {
-    try {
-      console.log(id, quantity);
-      const response = await axiosInstance.post(`/user/cart/saveCartItemProductCode?productCode=${id}&quantity=${quantity}`);
-      if (response.status === 200 && response.data.status === true) {
-        showSuccessToast(response.data.message);
-      } else {
-        showErrorToast(response.data.message);
-      }
-      console.log(id, quantity);
-    } catch (error) {
-      console.log(error);
+    if (newQuantity >= 1 && newQuantity <= (selectedVariant?.inStock || product?.inStock || 999)) {
+      setQuantity(newQuantity);
     }
-  }
+  };
 
+  const handleAddToCart = () => {
+    console.log("Thêm vào giỏ hàng:", {
+      productId: product.id,
+      variantId: selectedVariant?.id,
+      quantity: quantity,
+    });
+
+    setShowAddToCartNotification(true);
+    setTimeout(() => {
+      setShowAddToCartNotification(false);
+    }, 3000);
+  };
 
   const handleBuyNow = () => {
-    // Giả lập mua ngay
     console.log("Mua ngay:", {
       productId: product.id,
       variantId: selectedVariant?.id,
       quantity: quantity,
-    })
+    });
 
-    // Chuyển hướng đến trang thanh toán
-    navigate("/payment")
-  }
+    navigate("/payment");
+  };
 
   const handleReportProduct = () => {
-    navigate(`/report-product/${product.id}`)
-  }
+    navigate(`/report-product/${product.id}`);
+  };
 
   const handleImageClick = (index) => {
-    setCurrentImageIndex(index)
-    setShowImageModal(true)
-  }
+    setCurrentImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleVariantChange = (variant) => {
+    setSelectedVariant(variant);
+    setQuantity(1);
+  };
 
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" }
-    return new Date(dateString).toLocaleDateString("vi-VN", options)
-  }
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateString).toLocaleDateString("vi-VN", options);
+  };
 
   const calculateDiscountPercentage = (original, discounted) => {
-    return Math.round(((original - discounted) / original) * 100)
-  }
+    return Math.round(((original - discounted) / original) * 100);
+  };
+
   const handleSubmitReview = () => {
-    // In a real application, you would send the review data to your backend
-    console.log("Submitting review:", newReview)
-    // After submitting, you might want to close the modal and clear the input
-    setShowReviewModal(false)
-    setNewReview("")
-  }
+    console.log("Submitting review:", newReview);
+    setShowReviewModal(false);
+    setNewReview("");
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -327,7 +204,7 @@ const ProductDetail = () => {
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!product) {
@@ -341,7 +218,7 @@ const ProductDetail = () => {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -490,12 +367,23 @@ const ProductDetail = () => {
 
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-gray-600">Tác giả:</span>
-                  <Link
-                    to={`/search?author=${encodeURIComponent(product.author)}`}
-                    className="text-indigo-600 hover:underline"
-                  >
-                    {product.author}
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    {product.authors && product.authors.length > 0 ? (
+                      product.authors.map((author, index) => (
+                        <span key={index} className="flex items-center">
+                          <Link
+                            to={`/search?author=${encodeURIComponent(author)}`}
+                            className="text-indigo-600 hover:underline"
+                          >
+                            {author}
+                          </Link>
+                          {index < product.authors.length - 1 && <span className="text-gray-600 mx-1">,</span>}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-600">Không rõ</span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-2 mb-2">
@@ -543,41 +431,52 @@ const ProductDetail = () => {
                   Giá thấp nhất trong 30 ngày qua
                 </div>
               </div>
+
               {/* Số lượng */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Số lượng</h3>
                 <div className="flex items-center">
                   <button
-                    type="button"
                     onClick={() => handleQuantityChange(-1)}
-                    className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l-lg hover:bg-gray-100"
+                    disabled={quantity <= 1}
+                    className={`w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l-lg ${quantity <= 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-gray-100"
+                      }`}
                   >
                     <i className="bi bi-dash"></i>
                   </button>
                   <input
                     type="number"
                     min="1"
+                    max={selectedVariant?.inStock || product.inStock || 999}
                     value={quantity}
-
-                    onChange={handleQuantityInput}
-                    className="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none "
+                    onChange={(e) => {
+                      const val = Number.parseInt(e.target.value);
+                      if (!isNaN(val) && val >= 1 && val <= (selectedVariant?.inStock || product.inStock || 999)) {
+                        setQuantity(val);
+                      }
+                    }}
+                    className="w-16 h-10 border-t border-b border-gray-300 text-center focus:outline-none"
                   />
                   <button
-                    type="button"
                     onClick={() => handleQuantityChange(1)}
-                    className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-r-lg hover:bg-gray-100"
+                    disabled={quantity >= (selectedVariant?.inStock || product.inStock || 999)}
+                    className={`w-10 h-10 flex items-center justify-center border border-gray-300 rounded-r-lg ${quantity >= (selectedVariant?.inStock || product.inStock || 999)
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "hover:bg-gray-100"
+                      }`}
                   >
                     <i className="bi bi-plus"></i>
                   </button>
-
+                  <span className="ml-4 text-sm text-gray-600">
+                    Có sẵn: {selectedVariant?.inStock || product.inStock} sản phẩm
+                  </span>
                 </div>
               </div>
-
 
               {/* Nút mua hàng */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
-                  onClick={() => saveCartItem(id, quantity)}
+                  onClick={handleAddToCart}
                   className="flex-1 px-6 py-3 border-2 border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium flex items-center justify-center"
                 >
                   <i className="bi bi-cart-plus text-xl mr-2"></i>
@@ -636,6 +535,7 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
+
           <div className="flex space-x-4">
             <Link
               to={`/shop/${product.shop.id}`}
@@ -655,8 +555,8 @@ const ProductDetail = () => {
             <button
               onClick={() => setActiveTab("description")}
               className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${activeTab === "description"
-                ? "border-indigo-500 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-indigo-500 text-indigo-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
               Mô tả sản phẩm
@@ -664,8 +564,8 @@ const ProductDetail = () => {
             <button
               onClick={() => setActiveTab("specifications")}
               className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${activeTab === "specifications"
-                ? "border-indigo-500 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-indigo-500 text-indigo-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
               Thông số kỹ thuật
@@ -673,8 +573,8 @@ const ProductDetail = () => {
             <button
               onClick={() => setActiveTab("reviews")}
               className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${activeTab === "reviews"
-                ? "border-indigo-500 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-indigo-500 text-indigo-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
               Đánh giá ({product.reviews.length})
@@ -692,7 +592,9 @@ const ProductDetail = () => {
                   __html: showFullDescription ? product.fullDescription : product.description,
                 }}
               ></div>
-
+              {!showFullDescription && (
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
+              )}
               <div className="text-center mt-4">
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
@@ -782,39 +684,15 @@ const ProductDetail = () => {
                         <i
                           key={index}
                           className={`bi ${index < Math.floor(product.rating)
-                            ? "bi-star-fill"
-                            : index < Math.ceil(product.rating)
-                              ? "bi-star-half"
-                              : "bi-star"
+                              ? "bi-star-fill"
+                              : index < Math.ceil(product.rating)
+                                ? "bi-star-half"
+                                : "bi-star"
                             }`}
                         ></i>
                       ))}
                     </div>
                     <div className="text-gray-600">{product.reviewCount} đánh giá</div>
-                  </div>
-
-                  <div className="mt-6 space-y-2">
-                    {[5, 4, 3, 2, 1].map((star) => (
-                      <div key={star} className="flex items-center">
-                        <div className="w-12 text-sm text-gray-600">{star} sao</div>
-                        <div className="flex-1 mx-3">
-                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-yellow-400"
-                              style={{
-                                width: `${(product.reviews.filter((review) => Math.floor(review.rating) === star).length /
-                                  product.reviews.length) *
-                                  100
-                                  }%`,
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="w-10 text-sm text-gray-600 text-right">
-                          {product.reviews.filter((review) => Math.floor(review.rating) === star).length}
-                        </div>
-                      </div>
-                    ))}
                   </div>
 
                   <div className="mt-6">
@@ -830,29 +708,33 @@ const ProductDetail = () => {
                 {/* Danh sách đánh giá */}
                 <div className="md:w-2/3">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Đánh giá từ khách hàng</h3>
-                  <div className="space-y-6">
-                    {product.reviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-                        <div className="flex items-start">
-                          <div className="flex-1">
-                            <div className="flex flex-wrap items-center gap-2 mb-1">
-                              <h4 className="font-medium text-gray-800">{review.user.name}</h4>
-                              <span className="text-gray-500 text-sm">• {formatDate(review.date)}</span>
+                  {product.reviews.length === 0 ? (
+                    <p className="text-gray-600">Chưa có đánh giá nào cho sản phẩm này.</p>
+                  ) : (
+                    <div className="space-y-6">
+                      {product.reviews.map((review) => (
+                        <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                          <div className="flex items-start">
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <h4 className="font-medium text-gray-800">{review.user.name}</h4>
+                                <span className="text-gray-500 text-sm">• {formatDate(review.date)}</span>
+                              </div>
+                              <div className="flex text-yellow-400 mb-2">
+                                {[...Array(5)].map((_, index) => (
+                                  <i
+                                    key={index}
+                                    className={`bi ${index < review.rating ? "bi-star-fill" : "bi-star"}`}
+                                  ></i>
+                                ))}
+                              </div>
+                              <p className="text-gray-700 mb-3">{review.content}</p>
                             </div>
-                            <div className="flex text-yellow-400 mb-2">
-                              {[...Array(5)].map((_, index) => (
-                                <i
-                                  key={index}
-                                  className={`bi ${index < review.rating ? "bi-star-fill" : "bi-star"}`}
-                                ></i>
-                              ))}
-                            </div>
-                            <p className="text-gray-700 mb-3">{review.content}</p>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -863,73 +745,76 @@ const ProductDetail = () => {
       {/* Sản phẩm tương tự */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6">Sản phẩm tương tự</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {similarProducts.map((product) => (
-            <Link to={`/product-detail/${product.id}`} key={product.id} className="group">
-              <div className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300 h-full flex flex-col">
-                <div className="relative">
-                  <img
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {product.price > product.discountPrice && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs">
-                      -{calculateDiscountPercentage(product.price, product.discountPrice)}%
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-medium text-gray-800 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-2">{product.author}</p>
-                  <div className="flex items-center mb-2">
-                    <div className="flex text-yellow-400 text-sm">
-                      {[...Array(5)].map((_, index) => (
-                        <i
-                          key={index}
-                          className={`bi ${index < Math.floor(product.rating)
-                            ? "bi-star-fill"
-                            : index < Math.ceil(product.rating)
-                              ? "bi-star-half"
-                              : "bi-star"
-                            }`}
-                        ></i>
-                      ))}
-                    </div>
-                    <span className="text-gray-500 text-xs ml-1">({product.rating})</span>
-                  </div>
-                  <div className="mt-auto">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-indigo-600 font-bold">{product.discountPrice.toLocaleString()}đ</span>
-                        {product.price > product.discountPrice && (
-                          <span className="text-gray-500 text-sm line-through ml-1">
-                            {product.price.toLocaleString()}đ
-                          </span>
-                        )}
+        {similarProducts.length === 0 ? (
+          <p className="text-gray-600">Không có sản phẩm tương tự nào.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {similarProducts.map((product) => (
+              <Link to={`/product-detail/${product.id}`} key={product.id} className="group">
+                <div className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300 h-full flex flex-col">
+                  <div className="relative">
+                    <img
+                      src={product.image || "/placeholder.svg"}
+                      alt={product.name}
+                      className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {product.price > product.discountPrice && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs">
+                        -{calculateDiscountPercentage(product.price, product.discountPrice)}%
                       </div>
-                      <span className="text-gray-500 text-xs">Đã bán {product.soldCount}</span>
+                    )}
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    <h3 className="font-medium text-gray-800 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                      {product.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-2">{product.author}</p>
+                    <div className="flex items-center mb-2">
+                      <div className="flex text-yellow-400 text-sm">
+                        {[...Array(5)].map((_, index) => (
+                          <i
+                            key={index}
+                            className={`bi ${index < Math.floor(product.rating)
+                                ? "bi-star-fill"
+                                : index < Math.ceil(product.rating)
+                                  ? "bi-star-half"
+                                  : "bi-star"
+                              }`}
+                          ></i>
+                        ))}
+                      </div>
+                      <span className="text-gray-500 text-xs ml-1">({product.rating})</span>
+                    </div>
+                    <div className="mt-auto">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-indigo-600 font-bold">{product.discountPrice.toLocaleString()}đ</span>
+                          {product.price > product.discountPrice && (
+                            <span className="text-gray-500 text-sm line-through ml-1">
+                              {product.price.toLocaleString()}đ
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Image Modal */}
       {showImageModal && (
         <div
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
-          onClick={() => setShowImageModal(true)}
+          onClick={() => setShowImageModal(false)}
         >
           <div className="relative w-full max-w-4xl">
             <button
               className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-              onClick={() => setShowImageModal(true)}
+              onClick={() => setShowImageModal(false)}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -964,9 +849,25 @@ const ProductDetail = () => {
         </div>
       )}
 
-
+      {/* Add to Cart Notification */}
+      {showAddToCartNotification && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+          <div className="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Đã thêm vào giỏ hàng!</span>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default ProductDetail
+export default ProductDetail;

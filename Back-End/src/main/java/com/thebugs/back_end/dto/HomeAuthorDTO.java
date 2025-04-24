@@ -13,5 +13,4 @@ public class HomeAuthorDTO {
     private String urlImage;
     private String urlLink;
     private Integer bookCount;
-
 }

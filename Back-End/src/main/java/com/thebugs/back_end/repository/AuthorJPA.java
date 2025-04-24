@@ -26,7 +26,9 @@ public interface AuthorJPA extends JpaRepository<Author, Integer> {
                         "a.id, a.name, a.urlImage, a.urlLink, CAST(COUNT(pa.product.id) AS integer)) " +
                         "FROM Author a " +
                         "LEFT JOIN ProductAuthor pa ON a.id = pa.author.id " +
+                        "LEFT JOIN Product p ON pa.product.id = p.id " +
+                        "WHERE (p.active = true AND p.approve = true) OR p.id IS NULL " +
                         "GROUP BY a.id, a.name, a.urlImage, a.urlLink " +
                         "ORDER BY COUNT(pa.product.id) DESC")
-        List<HomeAuthorDTO> findFeaturedAuthors();
+        List<HomeAuthorDTO> findFeaturedAuthors(Pageable pageable);
 }

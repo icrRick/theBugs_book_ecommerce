@@ -1,6 +1,7 @@
 package com.thebugs.back_end.entities;
 
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Date; // Thêm import cho Date
 
 import jakarta.persistence.CascadeType;
@@ -57,9 +58,8 @@ public class Product {
     @Column(nullable = false)
     private String product_code;
 
-    @Column(name = "created_at", nullable = false, updatable = false) // Thêm createdAt
-    @Temporal(TemporalType.DATE)
-    private Date createdAt =new Date();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDate createdAt = LocalDate.now(); //
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
@@ -95,7 +95,7 @@ public class Product {
 
     public String getFirstImageName() {
         if (images != null && !images.isEmpty()) {
-            return images.get(0).getImageName(); 
+            return images.get(0).getImageName();
         }
         return null;
     }

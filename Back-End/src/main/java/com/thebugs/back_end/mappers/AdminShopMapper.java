@@ -19,13 +19,14 @@ import com.thebugs.back_end.utils.ReplaceName;
 public class AdminShopMapper {
     @Autowired
     private AddressService addressService;
-    @Autowired 
+    @Autowired
     private ApiGHNService apiGHNService;
+
     public Object toDTO(Product product) {
 
         String shopName = product.getShop().getName();
         String image = product.getShop().getImage();
-        boolean verify = product.getShop().getUser().isVerify();
+        boolean verify = product.getShop().getUser().getVerify();
         Map<String, Object> map = new HashMap<>();
         map.put("shopName", shopName);
         map.put("shopImage", image != null ? image : ReplaceName.generatePlaceholderUrl(shopName));
@@ -35,7 +36,7 @@ public class AdminShopMapper {
 
     public Object toShopDTO(Shop shop) {
         Map<String, Object> map = new HashMap<>();
-        boolean verify = shop.getUser().isVerify();
+        boolean verify = shop.getUser().getVerify();
         String userFullName = shop.getUser().getFullName();
         map.put("id", shop.getId());
         map.put("userFullName", userFullName);
@@ -54,9 +55,9 @@ public class AdminShopMapper {
         User user = shop.getUser();
         Address address = addressService.getAddressShopId(shop.getId());
 
-        Integer proviceId=address.getProvinceId();
-        Integer districtId=address.getDistrictId();
-        String wardId=String.valueOf(address.getWardId());
+        Integer proviceId = address.getProvinceId();
+        Integer districtId = address.getDistrictId();
+        String wardId = String.valueOf(address.getWardId());
 
         map.put("email", user.getEmail());
         map.put("phone", user.getPhone());
@@ -64,7 +65,7 @@ public class AdminShopMapper {
         map.put("userFullName", user.getFullName());
         map.put("gender", user.getGender());
         map.put("cccd", user.getCccd());
-        map.put("verify", user.isVerify());
+        map.put("verify", user.getVerify()); // Assuming 'getVerify()' is the correct method
         map.put("dob", user.getDob());
         map.put("active", user.isActive());
         map.put("address", user.getAddress());
@@ -88,7 +89,7 @@ public class AdminShopMapper {
         map.put("addressFullName", address.getFullName());
         map.put("addressPhone", address.getPhone());
         map.put("provinceName", apiGHNService.getProvinceName(proviceId));
-        map.put("districtName", apiGHNService.getDistrictName(proviceId,districtId));
+        map.put("districtName", apiGHNService.getDistrictName(proviceId, districtId));
         map.put("wardName", apiGHNService.getWardName(districtId, wardId));
         map.put("street", address.getStreet());
 

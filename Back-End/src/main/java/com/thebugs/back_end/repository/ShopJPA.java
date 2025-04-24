@@ -1,6 +1,5 @@
 package com.thebugs.back_end.repository;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,7 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.thebugs.back_end.dto.AdminRevenueShopDTO;
 import com.thebugs.back_end.dto.FlashSaleShopDTO;
 import com.thebugs.back_end.dto.ShopDetailDTO;
 import com.thebugs.back_end.entities.Shop;
@@ -59,7 +57,5 @@ public interface ShopJPA extends JpaRepository<Shop, Integer> {
 
         @Query("SELECT COUNT(s) FROM Shop s WHERE s.approve IS NULL")
         int countShopByApproveNull();
-
-      
 
 }

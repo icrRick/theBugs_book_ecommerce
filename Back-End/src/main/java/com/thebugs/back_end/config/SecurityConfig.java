@@ -72,7 +72,7 @@ public class SecurityConfig {
                                                                 "/home", "/home/**", "/",
                                                                 "/products",
                                                                 "/genre/list",
-                                                                "/productdetail/**", "/images/**", "/forgotpassword",
+                                                                "/product-detail/**", "/images/**", "/forgotpassword",
                                                                 "/updatepassword/**",
                                                                 "/shopdetail/**",
                                                                 "/payment-online/**",
