@@ -7,7 +7,6 @@ import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
 
-
 const OrdersSeller = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -182,15 +181,10 @@ const OrdersSeller = () => {
 
   const fetchAllOrders = async (keyword = "", page = 1) => {
     setIsLoading(true);
-    showErrorToast(null);
     try {
       const response = await axiosInstance.get("/user/order", {
         params: {
           keyword: keyword || undefined,
-          userName: filters.userName || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-          statusOrder: statusOrder || undefined,
           page: page,
           size: pageSize,
         },
@@ -245,7 +239,6 @@ const OrdersSeller = () => {
         console.error("Failed to search orders:", message);
         setOrders([]);
       }
-      setTabCounts(counts);
     } catch (error) {
       console.error("Error searching orders:", error);
       setOrders([]);
@@ -305,6 +298,7 @@ const OrdersSeller = () => {
       return;
     }
     try {
+      setIsLoading(true);
       const response = await axiosInstance.put(
         `/user/order/update/${orderToCancel}`,
         {
@@ -333,6 +327,8 @@ const OrdersSeller = () => {
       console.error("Error cancelling order:", error);
       showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng");
       closeCancelModal();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -604,8 +600,8 @@ const OrdersSeller = () => {
                 </div>
               </div>
             ))
-        ) : orders.length > 0 ? (
-          orders.map((order) => (
+        ) : filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => (
             <div
               key={order.id}
               className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-700 hover:shadow-md"
