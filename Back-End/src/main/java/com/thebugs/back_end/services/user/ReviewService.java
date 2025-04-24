@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.beans.ReviewBean;
-import com.thebugs.back_end.beans.UpdateReviewBean;
+
 import com.thebugs.back_end.entities.OrderItem;
 import com.thebugs.back_end.entities.Review;
 import com.thebugs.back_end.entities.User;
@@ -37,79 +37,34 @@ public class ReviewService { // Không cần abstract nếu là service cụ th�
     // createReview product by Tam
 
     public boolean createReview(ReviewBean reviewBean, String authorizationHeader) {
-        if (reviewBean.getOrderItemId() == null) {
-            throw new IllegalArgumentException("OrderItemId không được null");
-        }
+        OrderItem orderItem = orderItemService.getOrderItemById(reviewBean.getOrderItemId());
         User user = userService.getUserToken(authorizationHeader);
         int userId = user.getId();
-        OrderItem orderItem = orderItemService.getOrderItemById(reviewBean.getOrderItemId());
-
-        if (orderItem.getOrder().getOrderStatus().getId() != 5) {
-            throw new IllegalArgumentException("Chỉ có thể đánh giá khi đơn hàng đã được nhận");
+        Optional<Review> reviewOptional = reviewJPA.findExitsReviewByOrderItemId(reviewBean.getOrderItemId(), userId);
+        if (reviewOptional.isPresent()) {
+            throw new IllegalArgumentException("Đã có đánh giá của bạn cho sản phẩm này");
         }
-
+        if (orderItem.getOrder().getOrderStatus().getId() != 5) {
+            throw new IllegalArgumentException("Chỉ có thể đánh giá khi đơn hàng đã nhận được hàng");
+        }
+        if (reviewBean.getRating() < 1 || reviewBean.getRating() > 5) {
+            throw new IllegalArgumentException("Chỉ có thể đánh giá từ 1 đến 5 sao");
+        }
         Review review = new Review();
+        review.setOrderItem(orderItem);
         review.setContent(reviewBean.getContent());
         review.setRate(reviewBean.getRating());
         review.setCreatedAt(new Date());
         review.setUpdatedAt(new Date());
         review.setUser(user);
-        review.setOrderItem(orderItem);
         reviewJPA.save(review);
         return true;
-    }
-
-    public boolean updateReview(UpdateReviewBean updateReviewBean, String authorizationHeader) {
-        if (updateReviewBean.getId() == null || updateReviewBean.getOrderItemId() == null) {
-            throw new IllegalArgumentException("ID đánh giá hoặc OrderItemId không được null");
-        }
-        User user = userService.getUserToken(authorizationHeader);
-        int userId = user.getId();
-        Review review = findExitsReview(updateReviewBean.getId(), userId);
-        if (review == null) {
-            throw new IllegalArgumentException("Đánh giá không tồn tại hoặc bạn không có quyền chỉnh sửa");
-        }
-
-        if (!checkDayUpdateReview(updateReviewBean.getId())) {
-            throw new IllegalArgumentException("Đã quá thời gian được thay đổi đánh giá");
-        }
-
-        review.setContent(updateReviewBean.getContent());
-        review.setRate(updateReviewBean.getRating());
-        review.setUpdatedAt(new Date());
-        reviewJPA.save(review);
-        return true;
-    }
-
-    public boolean checkDayUpdateReview(Integer reviewId) {
-        if (reviewId == null) {
-            return false;
-        }
-        Date dateNow = new Date();
-        Review review = getReviewById(reviewId);
-        Date dateCreateAt = review.getCreatedAt();
-        long formatSecond = dateNow.getTime() - dateCreateAt.getTime();
-        long checkDay = formatSecond / (1000 * 60 * 60 * 24);
-        return checkDay <= 7;
-    }
-
-    public Review getReviewById(Integer id) {
-        if (id == null) {
-            throw new IllegalArgumentException("ID không được null");
-        }
-        return reviewJPA.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Đánh giá không tồn tại"));
-    }
-
-    public Review findExitsReview(Integer id, Integer userId) {
-        return reviewJPA.findExitsReviewById(id, userId).orElse(null);
     }
 
     public boolean checkReviewExist(Integer orderItemId, Integer userId) {
-        return reviewJPA.findExitsReviewByOrderItemId(orderItemId, userId).isPresent();
+        return reviewJPA.findExitsReviewByOrderItemId(orderItemId,
+                userId).isPresent();
     }
 
-    public Review findReviewByOrderItem(Integer orderItemId, Integer userId) {
-        return reviewJPA.findExitsReviewByOrderItemId(orderItemId, userId).orElse(null);
-    }
+   
 }

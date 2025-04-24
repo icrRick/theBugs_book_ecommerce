@@ -18,8 +18,4 @@ public class ProductOrderDTO {
     private Integer shopId;
     private String shopName;
     private boolean isReviewed;
-    private Integer reviewId;
-    private String reviewContent;
-    private Double reviewRating;
-    private boolean isReviewEditable;
 }

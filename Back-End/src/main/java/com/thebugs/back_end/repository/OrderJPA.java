@@ -14,6 +14,7 @@ import com.thebugs.back_end.dto.OrderSimpleDTO;
 import com.thebugs.back_end.entities.Order;
 
 public interface OrderJPA extends JpaRepository<Order, Integer> {
+        // code cua tam
 
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
                         "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, " +
@@ -44,7 +45,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "LEFT JOIN o.orderPayment op " +
                         "LEFT JOIN o.orderItems oi " +
                         "LEFT JOIN o.voucher v " +
-                        "WHERE o.user.id = ?1 " +
+                        "WHERE o.user.id = ?1 OR o.voucher IS NULL " +
                         "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +
                         "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
@@ -88,11 +89,10 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         @Query("SELECT o FROM Order o WHERE o.id = ?1 AND o.user.id = ?2 ")
         Optional<Order> getOrderByUserId(Integer orderId, Integer userId);
 
-        // code cua tam
-
         @Query("SELECT o FROM Order o WHERE o.id = ?1 AND o.shop.id = ?2 ")
         Optional<Order> getOrderByShopId(Integer orderId, Integer shopId);
 
+        // Tìm kiếm seller
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO("
                         + "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         + "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - "
@@ -102,6 +102,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         + "FROM Order o "
                         + "LEFT JOIN o.orderPayment op "
                         + "LEFT JOIN o.orderItems oi "
+                        + "LEFT JOIN o.voucher v "
                         + "WHERE o.shop.id = ?1 "
                         + "AND ((?2 IS NULL OR ?3 IS NULL) OR o.createdAt BETWEEN ?2 AND ?3) "
                         + "AND (?4 IS NULL OR o.orderStatus.id = ?4) "

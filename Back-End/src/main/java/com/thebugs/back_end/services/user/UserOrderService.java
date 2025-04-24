@@ -21,7 +21,6 @@ import com.thebugs.back_end.dto.OrderSimpleDTO;
 import com.thebugs.back_end.dto.ProductOrderDTO;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderStatus;
-import com.thebugs.back_end.entities.Review;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
@@ -112,7 +111,7 @@ public class UserOrderService {
         } else {
             checkShopId.setNoted(cancelReason);
             if (checkShopId.getOrderPayment().getId() == 3) {
-                String setSubject = "Đơn hàng đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
+                String setSubject = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
                         + checkShopId.getShop().getUser().getEmail();
                 getUserEmailCancelReason(orderId, setSubject);
             }
@@ -221,18 +220,8 @@ public class UserOrderService {
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
                     productOrderDTO.setShopId(item.getProduct().getShop().getId());
                     productOrderDTO.setShopName(item.getProduct().getShop().getName());
-
-                    Review review = reviewService.findReviewByOrderItem(item.getId(), userId);
-                    productOrderDTO.setReviewed(review != null);
-                    if (review != null) {
-                        productOrderDTO.setReviewId(review.getId());
-                        productOrderDTO.setReviewContent(review.getContent());
-                        productOrderDTO.setReviewRating(review.getRate());
-                        productOrderDTO.setReviewEditable(reviewService.checkDayUpdateReview(review.getId()));
-                    } else {
-                        productOrderDTO.setReviewEditable(false);
-                    }
-
+                    boolean isReviewed = reviewService.checkReviewExist(item.getId(), userId);
+                    productOrderDTO.setReviewed(isReviewed);
                     return productOrderDTO;
                 })
                 .collect(Collectors.toList()));

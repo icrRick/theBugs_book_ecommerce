@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.beans.ReviewBean;
-import com.thebugs.back_end.beans.UpdateReviewBean;
+
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.ReviewService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
@@ -35,18 +35,4 @@ public class ReviewController {
         }
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<ResponseData> createReview(@RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody UpdateReviewBean updateReviewBean) {
-        try {
-            boolean isCreated = reviewService.updateReview(updateReviewBean, authorizationHeader);
-            if (isCreated) {
-                return ResponseEntityUtil.OK("Cập nhật đánh giá thành công", null);
-            } else {
-                return ResponseEntityUtil.badRequest("Cập nhật đánh giá thất bại");
-            }
-        } catch (Exception e) {
-            return ResponseEntityUtil.badRequest(e.getMessage());
-        }
-    }
 }
