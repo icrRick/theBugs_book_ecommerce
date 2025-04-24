@@ -79,9 +79,6 @@ public class OrderSellerService {
 
                         orderPage = orderJPA.findOrderbyDateOrStatusOrName(shopId, startDate, endDate, orderStatusName,
                                         nameUser, pageable);
-                        System.out.printf(
-                                        "==============================================================================="
-                                                        + orderPage);
                 }
                 return orderPage.stream()
                                 .collect(Collectors.toCollection(ArrayList::new));
@@ -170,7 +167,6 @@ public class OrderSellerService {
                         throw new IllegalArgumentException("Lý do hủy không được để trống khi hủy đơn hàng");
                 }
                 if (orderStatusId == 2) {
-
                         if (!getUserEmailCancelReason(orderId, cancelReason)) {
                                 throw new IllegalArgumentException("Không tìm thấy email user");
                         } else if ((orderStatusId == 2)
@@ -179,10 +175,12 @@ public class OrderSellerService {
                         } else {
                                 checkShopId.setNoted(cancelReason);
                                 if (checkShopId.getOrderPayment().getId() == 3) {
-                                        String setSubject = "Đơn hàng đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
+                                        String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với Shop "
+                                                        + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
                                                         + checkShopId.getShop().getUser().getEmail();
-                                        getUserEmailCancelReason(orderId, setSubject);
+                                        getUserEmailCancelReason(orderId, setNoted);
                                 }
+
                         }
                 }
                 if (orderStatusId == 3) {
@@ -250,17 +248,17 @@ public class OrderSellerService {
         }
 
         private void updateProductQuantities(String token, int orderId) {
-                // tim order theo id
-                // lay duoc list order item theo order id
-
                 List<OrderItem> listOrderItems = orderItemJPA.findByOrderId(orderId);
                 if (listOrderItems.isEmpty()) {
                         throw new IllegalArgumentException("Không tìm thấy order item với id: " + orderId);
                 }
                 int shopId = userService.getUserToken(token).getShop().getId();
                 for (OrderItem orderItem : listOrderItems) {
-                        Product product = productJPA.findProductByShopId(shopId, orderItem.getProduct().getId());
-                        if (orderItem.getProduct().getId() == product.getId()) {
+                        Optional<Product> productOptional = productJPA.findProductByShopId(shopId,
+                                        orderItem.getProduct().getId());
+
+                        if (productOptional.isPresent()) {
+                                Product product = productOptional.get();
                                 if (orderItem.getQuantity() > product.getQuantity()) {
                                         String cancelReason = ("Số lượng sản phẩm trong kho không đủ - đã chuyển trạng thái đơn hàng sang hủy");
                                         updateStatusOrder(token, orderId, 2, cancelReason);
@@ -272,8 +270,12 @@ public class OrderSellerService {
                                 productJPA.save(product);
 
                                 if (checkQuantityPromotionProduct(token, orderId)) {
+
                                 }
 
+                        } else {
+                                throw new IllegalArgumentException("Không tìm thấy sản phẩm trong shop "
+                                                + orderItem.getOrder().getShop().getName());
                         }
                         break;
                 }
@@ -296,22 +298,6 @@ public class OrderSellerService {
                                                         + " đã cập nhật số lượng trong đơn hàng thành "
                                                         + orderItem.getQuantity());
                                         orderItem.getOrder().setNoted(note);
-                                        getUserEmailToast(orderId, note);
-
-                                        int quantityPromotionProduct = orderItem.getQuantity()
-                                                        - orderItem.getQuantity();
-
-                                        promotionProduct.setQuantity(quantityPromotionProduct);
-
-                                        int soldQuantity = promotionProduct.getSoldQuantity()
-                                                        + tam;
-
-                                        promotionProduct.setSoldQuantity(soldQuantity);
-                                        promotionProductJPA.save(promotionProduct);
-                                        if (promotionProduct.getQuantity() <= 0) {
-                                                promotionProductJPA.delete(promotionProduct);
-                                        }
-
                                 }
                                 int quantityPromotionProduct = promotionProduct.getQuantity()
                                                 - orderItem.getQuantity();
@@ -322,7 +308,12 @@ public class OrderSellerService {
 
                                 promotionProduct.setSoldQuantity(soldQuantity);
 
-                                promotionProductJPA.save(promotionProduct);
+                                // Xóa prmostion product khi quantity == 0
+                                if (promotionProduct.getQuantity() == 0) {
+                                        promotionProductJPA.delete(promotionProduct);
+                                } else {
+                                        promotionProductJPA.save(promotionProduct);
+                                }
                         }
                         return true;
 

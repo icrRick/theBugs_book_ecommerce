@@ -11,8 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.dto.ProductDetailDTO;
-import com.thebugs.back_end.dto.Seller_ProductPromotionDTO;
-import com.thebugs.back_end.dto.SearchProductDTO;
 import com.thebugs.back_end.entities.Product;
 
 public interface ProductJPA extends JpaRepository<Product, Integer> {
@@ -67,7 +65,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
 
         // code cua tam
         @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.id = :productId")
-        Product findProductByShopId(@Param("shopId") Integer shopId,
+        Optional<Product> findProductByShopId(@Param("shopId") Integer shopId,
                         @Param("productId") Integer productId);
 
         @Query("SELECT p FROM Product p WHERE p.product_code = ?1 ")
