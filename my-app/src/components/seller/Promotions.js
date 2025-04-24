@@ -17,7 +17,7 @@ const Promotions = () => {
   const fetchPromotions = useCallback(async (start, expire, page) => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.get("/seller/promotion/list", {
+      const response = await axiosInstance.get("/api/seller/promotion/list", {
         params: {
           startDate: start || null,
           expireDate: expire || null,

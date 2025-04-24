@@ -51,7 +51,7 @@ public class Product {
     @Column(nullable = true)
     private Boolean status;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
