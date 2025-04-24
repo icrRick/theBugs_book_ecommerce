@@ -10,22 +10,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.mappers.AdminReportMapper;
 import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.ReportProductJPA;
-import com.thebugs.back_end.services.user.ProductService;
 import com.thebugs.back_end.utils.EmailUtil;
-
-
 
 @Service
 public class AdminReportProductService {
 
-    @Autowired 
+    @Autowired
     private ProductJPA productJPA;
+    
     @Autowired
     private ReportProductJPA reportProductJPA;
 
@@ -89,22 +86,50 @@ public class AdminReportProductService {
 
     public boolean approve(Integer id) {
         ReportProduct reportProduct = getById(id);
+        List<ReportProduct> reportProducts = findReportProductsByProductAndActive(reportProduct, null);
+        boolean check = updateActiveAndSendEmail(reportProducts);
+        return check;
+    }
 
-        Product product = reportProduct.getProduct();
-        String emailShop = product.getShop().getUser().getEmail();
-        String emailUser = reportProduct.getUser().getEmail();
-        boolean checksendEmail = emailUtil.sendEmailApprove(emailUser,"Báo cáo sản phẩm", product.getProduct_code());
-        boolean checkUpdateApprove = updateActiveAll(reportProduct, true);
-        boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(emailShop, "Sản phẩm", product.getProduct_code(),reportProduct.getNote(),reportProduct.getUrl());
-       
-        return checksendEmailShop && checkUpdateApprove && checksendEmail;
+    public boolean updateActiveAndSendEmail(List<ReportProduct> reportProducts) {
+        for (ReportProduct reportProduct : reportProducts) {
+            try {
+                reportProduct.setActive(true);
+                reportProduct.setApprovalDate(new Date());
+                reportProductJPA.save(reportProduct);
+
+                String emailUser = reportProduct.getUser().getEmail();
+                String emailShop = reportProduct.getProduct().getShop().getUser().getEmail();
+
+                boolean checksendEmail = emailUtil.sendEmailApprove(
+                        emailUser, "Báo cáo sản phẩm", reportProduct.getProduct().getProduct_code());
+
+                boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(
+                        emailShop, "Sản phẩm", reportProduct.getProduct().getProduct_code(),
+                        reportProduct.getNote(), reportProduct.getUrl());
+
+                if (!checksendEmail || !checksendEmailShop) {
+                    System.err.println(
+                            "Gửi email thất bại cho sản phẩm: " + reportProduct.getProduct().getProduct_code());
+                }
+
+            } catch (Exception e) {
+                System.err.println("Lỗi khi xử lý report: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        Product product = reportProducts.get(0).getProduct();
+        product.setStatus(true);
+        productJPA.save(product);
+        return true;
     }
 
     public boolean reject(Integer id, List<String> reasons) {
         ReportProduct reportProduct = getById(id);
-        Product product = reportProduct.getProduct();
+
         String emailUser = reportProduct.getUser().getEmail();
-        boolean checksendEmail = emailUtil.sendEmailReject(emailUser, "Báp cáo sản phẩm", product.getProduct_code(),
+        boolean checksendEmail = emailUtil.sendEmailReject(emailUser, "Báp cáo sản phẩm",
+                reportProduct.getProduct().getProduct_code(),
                 reasons);
         boolean checkUpdateApprove = updateActive(reportProduct, false);
         return checksendEmail && checkUpdateApprove;
@@ -124,18 +149,6 @@ public class AdminReportProductService {
 
     public List<ReportProduct> findReportProductsByProductAndActive(ReportProduct reportProduct, Boolean active) {
         return reportProductJPA.findReportProductsByProductAndActive(reportProduct.getProduct().getId(), active);
-    }
-
-    public boolean updateActiveAll(ReportProduct reportProduct, Boolean active) {
-        List<ReportProduct> reportProducts = findReportProductsByProductAndActive(reportProduct, null);
-        boolean updated = false;
-        for (ReportProduct rp : reportProducts) {
-            updated |= updateActive(rp, active);
-        }
-        Product product= reportProduct.getProduct();
-        product.setApprove(true);
-        productJPA.save(product);
-        return updated;
     }
 
 }

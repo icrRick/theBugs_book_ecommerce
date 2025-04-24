@@ -18,6 +18,9 @@ const Authors = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const itemsPerPage = 10;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     defaultValues: {
       name: '',
@@ -256,7 +259,15 @@ const Authors = () => {
               </div>
             </div>
           </div>
-
+          <div className="flex flex-wrap justify-between items-center mb-4">
+            <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+              <span className="hidden sm:inline">Hiển thị</span>{" "}
+              <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+              <span className="hidden sm:inline">trên</span>{" "}
+              <span className="font-medium">{totalItems}</span> sản phẩm{" "}
+              <span className="inline sm:hidden">• Trang {currentPage}</span>
+            </div>
+          </div>
           {/* Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="min-w-full">
@@ -337,7 +348,7 @@ const Authors = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 overflow-y-auto z-50">
+          <div className="fixed inset-0 overflow-y-auto z-40">
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 transition-opacity" aria-hidden="true">
                 <div className="absolute inset-0 bg-gray-500 opacity-75"></div>

@@ -16,13 +16,6 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 10;
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
-    defaultValues: {
-      name: '',
-      image: null
-    }
-  });
-
   const getQueryParams = () => {
     const params = new URLSearchParams(window.location.search);
     const keyword = params.get("keyword") || "";
@@ -178,8 +171,6 @@ const Products = () => {
             <span className="font-medium">{totalItems}</span> sản phẩm{" "}
             <span className="inline sm:hidden">• Trang {currentPage}</span>
           </div>
-          
-         
         </div>
 
         {/* Table Container */}

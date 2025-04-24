@@ -11,17 +11,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.thebugs.back_end.beans.ReportRejectBean;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.AdminReportProductService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 @RestController
 @RequestMapping("/admin/report/product")
-public class AdminReportProduct {
+public class AdminReportProductController {
     @Autowired
     private AdminReportProductService adminReportProductService;
 
@@ -46,10 +48,22 @@ public class AdminReportProduct {
         try {
             boolean checkApprove = adminReportProductService.approve(id);
             if (checkApprove) {
-                return ResponseEntityUtil.OK("Duyệt sản phẩm thành công", null);
+                return ResponseEntityUtil.OK("Duyệt báo cáo sản phẩm thành công", null);
             }
             return ResponseEntityUtil.badRequest("Lỗi khi duyệt mã: " + id);
 
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+        }
+    }
+     @PostMapping("/reject")
+    public ResponseEntity<ResponseData> postRejctReportProduct(@RequestBody ReportRejectBean reportRejectBean) {
+        try {
+            boolean checkApprove = adminReportProductService.reject(reportRejectBean.getId(), reportRejectBean.getReasons());
+            if (checkApprove) {
+                return ResponseEntityUtil.OK("Từ chối  báo cáo sản phẩm thành công", null);
+            }
+            return ResponseEntityUtil.badRequest("Lỗi khi từ chỗi mã: " + reportRejectBean.getId());
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }

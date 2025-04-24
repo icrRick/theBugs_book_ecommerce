@@ -24,9 +24,8 @@ import com.thebugs.back_end.utils.ResponseEntityUtil;
 @RestController
 @RequestMapping("/admin/shop")
 public class AdminShopController {
-@Autowired
+    @Autowired
     private AdminShopService adminShopService;
-
 
     @GetMapping("/list")
     public ResponseEntity<ResponseData> getPage(@RequestParam(required = false) String keyword,
@@ -43,10 +42,10 @@ public class AdminShopController {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }
     }
+
     @GetMapping("/shopDetail")
     public ResponseEntity<ResponseData> getShopDetail(@RequestParam(required = false) String shopSlug) {
         try {
-
             Object items = adminShopService.getShopDetailByShopSlug(shopSlug);
             return ResponseEntityUtil.OK("Lấy thông tin thành công", items);
         } catch (Exception e) {
@@ -62,7 +61,6 @@ public class AdminShopController {
                 return ResponseEntityUtil.OK("Duyệt cửa hàng thành công", null);
             }
             return ResponseEntityUtil.badRequest("Lỗi khi duyệt mã: " + shopSlug);
-
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }
@@ -76,7 +74,6 @@ public class AdminShopController {
                 return ResponseEntityUtil.OK("Từ chối cửa hàng thành công", null);
             }
             return ResponseEntityUtil.badRequest("Lỗi khi từ chỗi mã: " + rejectBean.getRejectCode());
-
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }

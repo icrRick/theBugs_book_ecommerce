@@ -26,7 +26,7 @@ const ReportProducts = () => {
 
   const fetchData = async (active, page) => {
     try {
-      setIsLoading(true);
+    
       const response = await axiosInstance.get(`/admin/report/product/list?active=${active}&page=${page}`);
       if (response.status === 200) {
         setReports(response.data.data.arrayList);
@@ -35,8 +35,6 @@ const ReportProducts = () => {
     } catch (error) {
       console.error("Error fetching reports:", error);
       showErrorToast("Có lỗi xảy ra khi tải dữ liệu báo cáo");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -44,7 +42,11 @@ const ReportProducts = () => {
     setActiveTab(tab);
     setCurrentPage(1);
     const params = new URLSearchParams(window.location.search);
-    params.set("active", tab);
+    if (tab === "null") {
+      params.set("active", null);
+    } else {
+      params.set("active", tab);
+    }
     navigate(`/admin/reports/products?${params.toString()}`);
     fetchData(tab, 1);
   };
@@ -65,19 +67,16 @@ const ReportProducts = () => {
   };
 
   useEffect(() => {
-    const params = getQueryParams();
-    let activeValue = params.activeValue;
-    if (!activeValue) {
-      activeValue = "all";
+    if (getQueryParams().activeValue === "null") {
+      setActiveTab("null");
+    } else {
+      setActiveTab(getQueryParams().activeValue);
     }
-    setActiveTab(activeValue);
-    setCurrentPage(Number(params.page));
-    fetchData(activeValue, params.page);
+    setCurrentPage(Number(getQueryParams().page));
+    fetchData(getQueryParams().activeValue, getQueryParams().page);
   }, []);
 
-  useEffect(() => {
-    fetchData(activeTab, currentPage);
-  }, [activeTab, currentPage]);
+
 
   const getStatusInfo = (active) => {
     switch (active) {
@@ -155,7 +154,7 @@ const ReportProducts = () => {
     try {
       setIsLoading(true);
       const response = await axiosInstance.post('/admin/report/product/reject', {
-        productCode: selectedItem.productCode,
+        id: selectedItem.id,
         reasons: reasons
       });
 
@@ -350,6 +349,35 @@ const ReportProducts = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Hiển thị nhiều hình ảnh */}
+                  {report?.images && report.images.length > 0 && (
+                    <div className="mt-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {report.images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`Hình ảnh báo cáo ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <a
+                                href={image}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-white bg-opacity-80 rounded-full hover:bg-opacity-100 transition-all duration-300"
+                              >
+                                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                </svg>
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-end">
                     <div className="flex gap-2">

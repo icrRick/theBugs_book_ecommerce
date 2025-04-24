@@ -37,6 +37,9 @@ const Genres = () => {
       const [previewImage, setPreviewImage] = useState(null);
       const [selectedFile, setSelectedFile] = useState(null);
       const [isLoading, setIsLoading] = useState(false);
+      const itemsPerPage = 10;
+      const startItem = (currentPage - 1) * itemsPerPage + 1;
+      const endItem = Math.min(currentPage * itemsPerPage, totalItems);
       const {
             register,
             handleSubmit,
@@ -53,7 +56,7 @@ const Genres = () => {
       // Debounce keyword với delay 300ms
       const debouncedKeyword = useDebounce(keyword, 1200);
 
-     
+
       useEffect(() => {
             fetchItems(debouncedKeyword, currentPage);
       }, [debouncedKeyword, currentPage]);
@@ -66,6 +69,7 @@ const Genres = () => {
       };
 
       const fetchItems = async (keyword, currentPage) => {
+            setIsLoading(true);
             try {
                   const response = await axiosInstance.get(
                         "/admin/genre/list",
@@ -82,6 +86,8 @@ const Genres = () => {
                   }
             } catch (error) {
                   console.error("Error fetching items:", error);
+            } finally {
+                  setIsLoading(false);
             }
       };
 
@@ -319,6 +325,7 @@ const Genres = () => {
                               </div>
                         </div>
 
+
                         {/* Main Content */}
                         <div className="p-4">
                               {/* Search Box */}
@@ -359,7 +366,16 @@ const Genres = () => {
                                           </div>
                                     </div>
                               </div>
-
+                              {/* Results stats */}
+                              <div className="flex flex-wrap justify-between items-center mb-4">
+                                    <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+                                          <span className="hidden sm:inline">Hiển thị</span>{" "}
+                                          <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+                                          <span className="hidden sm:inline">trên</span>{" "}
+                                          <span className="font-medium">{totalItems}</span> sản phẩm{" "}
+                                          <span className="inline sm:hidden">• Trang {currentPage}</span>
+                                    </div>
+                              </div>
                               {/* Table */}
                               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
                                     <div className="min-w-full">
@@ -544,8 +560,8 @@ const Genres = () => {
                                                                               }
                                                                         )}
                                                                         className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.name
-                                                                                    ? "border-red-300"
-                                                                                    : "border-gray-300"
+                                                                              ? "border-red-300"
+                                                                              : "border-gray-300"
                                                                               }`}
                                                                   />
                                                                   {errors.name && (

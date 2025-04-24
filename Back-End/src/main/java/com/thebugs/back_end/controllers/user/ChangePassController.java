@@ -16,7 +16,7 @@ import com.thebugs.back_end.utils.ResponseEntityUtil;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/auth")
 public class ChangePassController {
         @Autowired
         private UserService userService;

@@ -6,89 +6,67 @@ import { showErrorToast, showSuccessToast } from '../../utils/Toast';
 import { useForm } from "react-hook-form";
 import Loading from '../../utils/Loading';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '../../utils/Format';
 
 const Statistics = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [items, setItems] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
+  const [keyword, setKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Dữ liệu mẫu thống kê doanh thu
-  const [data, setData] = useState([
-    {
-      id: 1,
-      shopSlug: "cua-hang-sach-abc",
-      shopName: "Cửa hàng Sách ABC",
-      userFullName: "Nguyễn Văn A",
-      approve: true,
-      active: true,
-      status: false,
-      totalRevenue: 15000000,
-      phicodinh: 5,
-      tiendatra: 1000000
 
-    },
-    {
-      id: 2,
-      shopSlug: "cua-hang-sach-abc",
-      shopName: "Cửa hàng Sách ABC",
-      userFullName: "Nguyễn Văn A",
-      approve: true,
-      active: true,
-      status: false,
-      totalRevenue: 15000000,
-      phicodinh: 5,
-      tiendatra: 1000000
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const itemsPerPage = 10;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-    },
-    {
-      id: 3,
-      shopSlug: "cua-hang-sach-abc",
-      shopName: "Cửa hàng Sách ABC",
-      userFullName: "Nguyễn Văn A",
-      approve: true,
-      active: true,
-      status: false,
-      totalRevenue: 15000000,
-      phicodinh: 5,
-      tiendatra: 1000000
-
-    },
-  ]);
-
-  const [items, setItems] = useState(data);
+  const fetchData = async (startDate, endDate, page) => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get(`/admin/revenue/shop/list?startDate=${startDate}&endDate=${endDate}&page=${page}`);
+      if (response.status === 200) {
+        setItems(response.data.data.arrayList);
+        setTotalItems(response.data.data.totalItems);
+      }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      showErrorToast("Có lỗi xảy ra khi tải dữ liệu thống kê");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setTotalItems(items.length);
-  }, [items]);
+    fetchData(startDate, endDate, currentPage);
+  }, [currentPage]);
 
-  const handleSearch = (value) => {
-    const filtered = data.filter(item => 
-      item.shopName.toLowerCase().includes(value.toLowerCase()) ||
-      item.userFullName.toLowerCase().includes(value.toLowerCase())
-    );
-    setItems(filtered);
-    setCurrentPage(1);
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
   };
 
   const handleRefresh = () => {
-    setItems(data);
     setCurrentPage(1);
+    fetchData(startDate, endDate, 1);
+
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchData(startDate, endDate, 1);
+
   };
 
-  const handleEdit = (item) => {
-    // Xử lý khi click vào nút chi tiết
-    console.log('Chi tiết cửa hàng:', item);
+  const handleViewDetails = (shopId) => {
+    console.log('View details for shop:', shopId);
   };
-
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
     <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
@@ -165,6 +143,16 @@ const Statistics = () => {
                 />
               </div>
             </div>
+
+            <button
+              onClick={handleSearch}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <svg className="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Tìm kiếm
+            </button>
           </div>
         </div>
 
@@ -204,31 +192,19 @@ const Statistics = () => {
                     Tên cửa hàng
                   </th>
 
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên chủ Cửa hàng
-                  </th>
 
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tổng doanh thu
                   </th>
 
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phí cố định (%)
+                    Phí cố định (5%)
                   </th>
 
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tiền đã trả
+                    Tổng tiền
                   </th>
 
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                    TT hoạt động
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    TT khóa
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    TT duyệt
-                  </th>
                   <th scope="col" className="relative px-4 sm:px-6 py-3 w-[80px] sm:w-[100px] md:w-[140px]">
                     <span className="sr-only">Thao tác</span>
                   </th>
@@ -248,56 +224,32 @@ const Statistics = () => {
                   </tr>
                 ) : (
                   items.map((item) => (
-                    <tr key={item.id} className="hover:bg-blue-50 transition-colors duration-150">
+                    <tr key={item.shopId} className="hover:bg-blue-50 transition-colors duration-150">
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopName}</div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.userFullName}</div>
-                      </td>
+
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item?.totalRevenue)}
+                          {formatCurrency(item?.totalRevenue || 0)}
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {item?.phicodinh}%
+                          {formatCurrency(item?.fixedFee || 0)}
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item?.tiendatra)}
+                          {formatCurrency(item?.netPay || 0)}
                         </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden sm:table-cell">
-                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                          }`}>
-                          {item?.active ? "Đang hoạt động" : "Ngừng hoạt động"}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
-                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.status
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-green-100 text-green-800'
-                          }`}>
-                          {item?.status ? "Đã khóa" : "Không khóa"}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
-                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.approve
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                          }`}>
-                          {item?.approve ? "Đã duyệt" : "Chưa duyệt"}
-                        </span>
-                      </td>
+
+
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-1 sm:gap-2">
                           <button
-                            onClick={() => handleEdit(item)}
+                            onClick={() => handleViewDetails(item.shopId)}
                             className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                           >
                             <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -328,11 +280,11 @@ const Statistics = () => {
               </div>
             ) : (
               items.map((item) => (
-                <div key={item.id} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
+                <div key={item.shopId} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">{item?.shopName}</span>
                     <button
-                      onClick={() => handleEdit(item)}
+                      onClick={() => handleViewDetails(item.shopId)}
                       className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                     >
                       <svg className="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,21 +294,9 @@ const Statistics = () => {
                       Chi tiết
                     </button>
                   </div>
-                  <div className="text-xs text-gray-600 mb-1">Chủ cửa hàng: {item?.userFullName}</div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${item?.active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                      }`}>
-                      {item?.active ? "Đang hoạt động" : "Ngừng hoạt động"}
-                    </span>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${item?.status
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-green-100 text-green-800'
-                      }`}>
-                      {item?.status ? "Đã khóa" : "Không khóa"}
-                    </span>
-                  </div>
+                  <div className="text-xs text-gray-600 mb-1">Tổng doanh thu: {formatCurrency(item?.totalRevenue || 0)}</div>
+                  <div className="text-xs text-gray-600 mb-1">Phí cố định: {formatCurrency(item?.fixedFee || 0)}</div>
+                  <div className="text-xs text-gray-600">Tổng tiền: {formatCurrency(item?.netPay || 0)}</div>
                 </div>
               ))
             )}

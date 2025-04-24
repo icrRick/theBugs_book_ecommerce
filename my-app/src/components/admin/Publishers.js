@@ -18,7 +18,9 @@ const Publishers = () => {
 
 
     const [isLoading, setIsLoading] = useState(false);
-
+    const itemsPerPage = 10;
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
     const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
         defaultValues: {
             name: '',
@@ -203,7 +205,15 @@ const Publishers = () => {
                         </div>
                     </div>
                 </div>
-
+                <div className="flex flex-wrap justify-between items-center mb-4">
+                                    <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+                                          <span className="hidden sm:inline">Hiển thị</span>{" "}
+                                          <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+                                          <span className="hidden sm:inline">trên</span>{" "}
+                                          <span className="font-medium">{totalItems}</span> sản phẩm{" "}
+                                          <span className="inline sm:hidden">• Trang {currentPage}</span>
+                                    </div>
+                              </div>
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="min-w-full">

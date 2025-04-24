@@ -2,11 +2,10 @@ import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Stores from "../components/admin/Stores";
 import ReportStores from "../components/admin/ReportStores";
-import SellerRegistrationRequests from "../components/admin/SellerRegistrationRequests";
-import UserManagement from "../components/admin/UserManagement";
+
 import Statistics from "../components/admin/Statistics";
-import ReportManagement from "../components/admin/ReportManagement";
-import ReportDetail from "../components/admin/ReportDetail";
+
+
 import ProtectedRoute from "./ProtectedRoute";
 import PaymentStatus from "../components/user/PaymentStatus";
 import Products from "../components/seller/Products";
@@ -64,7 +63,6 @@ const AddPromotion = lazy(() => import("../components/seller/AddPromotion"));
 const EditPromotion = lazy(() => import("../components/seller/EditPromotion"));
 const AddProduct = lazy(() => import("../components/seller/AddProduct"));
 const EditProduct = lazy(() => import("../components/seller/EditProduct"));
-const Test = lazy(() => import("../components/auth/Test"));
 const Publishers = lazy(() => import("../components/admin/Publishers"));
 const Authors = lazy(() => import("../components/admin/Authors"));
 const AddAddress = lazy(() => import("../components/user/AddAddress"));
@@ -131,11 +129,9 @@ export const ADMIN_ROUTES = [
       { path: "authors", element: <Authors /> },
       { path: "shop/:shopSlug", element: <AdminShopDetail /> },
       { path: "product/:productCode", element: <AdminProductDetail /> },
-      { path: "seller/requests", element: <SellerRegistrationRequests /> },
-      { path: "users", element: <UserManagement /> },
+    
       { path: "statistics", element: <Statistics /> },
-      { path: "reports", element: <ReportManagement /> },
-      { path: "report/:reportId", element: <ReportDetail /> },
+
 ];
 
 export const SELLER_ROUTES = [

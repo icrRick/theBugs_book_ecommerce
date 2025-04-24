@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.thebugs.back_end.dto.AdminRevenueShopDTO;
 import com.thebugs.back_end.dto.OrderSimpleDTO;
 import com.thebugs.back_end.entities.Order;
 
@@ -102,6 +103,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         + "FROM Order o "
                         + "LEFT JOIN o.orderPayment op "
                         + "LEFT JOIN o.orderItems oi "
+                        + "LEFT JOIN o.voucher v "
                         + "WHERE o.shop.id = ?1 "
                         + "AND ((?2 IS NULL OR ?3 IS NULL) OR o.createdAt BETWEEN ?2 AND ?3) "
                         + "AND (?4 IS NULL OR o.orderStatus.id = ?4) "
@@ -124,4 +126,29 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
 
         @Query("SELECT o FROM Order o WHERE o.orderStatus.id = ?1 AND o.deliveredAt IS NOT NULL")
         List<Order> findDeliveredOrdersByStatus(@Param("statusId") int statusId);
+
+        @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
+                        "o.shop.id, o.shop.name, SUM(oi.price * oi.quantity),(SUM(oi.price * oi.quantity)*0.05),(SUM(oi.price * oi.quantity)*0.95)) "
+                        +
+                        "FROM Order o " +
+                        "LEFT JOIN o.orderItems oi " +
+                        "WHERE o.orderStatus.id = 5 " +
+                        "AND o.orderPayment.id IN ( 2 , 3 ) " +
+                        "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
+                        "GROUP BY o.shop.id, o.shop.name " +
+                        "ORDER BY SUM(oi.price * oi.quantity) DESC")
+        Page<AdminRevenueShopDTO> getShopRevenuePage(@Param("startDate") Date startDate,
+                        @Param("endDate") Date endDate, Pageable pageable);
+
+        @Query("SELECT COUNT(DISTINCT o.shop.id) " +
+                        "FROM Order o " +
+                        "LEFT JOIN o.orderItems oi " +
+                        "WHERE o.orderStatus.id = 5 " +
+                        "AND o.orderPayment.id IN (2, 3) " +
+                        "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        int countRevenueShops(@Param("startDate") Date startDate,
+                        @Param("endDate") Date endDate);
+
 }

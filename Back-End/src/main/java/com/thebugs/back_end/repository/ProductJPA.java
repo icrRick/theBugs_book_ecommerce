@@ -188,4 +188,16 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
         // @Param("minPrice") Double minPrice,
         // @Param("maxPrice") Double maxPrice);
 
+
+
+
+
+        @Query("SELECT COUNT(s) FROM Product s WHERE s.active = true")
+        int countProductByActiveTrue();
+    
+        @Query("SELECT COUNT(s) FROM Product s WHERE s.status IS NOT NULL AND s.status = true")
+        int countProductByStatusTrue();
+    
+        @Query("SELECT COUNT(s) FROM Product s WHERE s.approve IS NULL")
+        int countProductByApproveNull();
 }

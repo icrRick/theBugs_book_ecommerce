@@ -20,4 +20,9 @@ public interface PublisherJPA extends JpaRepository<Publisher, Integer> {
         @Query("SELECT g FROM Publisher g WHERE g.name = ?2 AND (g.id <> ?1 OR ?1 IS NULL)")
         Optional<Publisher> findByNameExist(Integer id, String name);
 
+        @Query("SELECT COUNT(g) FROM Publisher g ")
+        int countfindAll();
+
+
 }
+

@@ -53,10 +53,10 @@ public class Shop {
     @Column(name = "total_payout", nullable = false)
     private Double totalPayout;
 
-    @Column(length = 100)
+    @Column
     private String image;
 
-    @Column(length = 100)
+    @Column
     private String banner;
 
     @Column(nullable = false)
