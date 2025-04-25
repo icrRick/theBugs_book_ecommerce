@@ -6,8 +6,9 @@ import axiosInstance from "../../utils/axiosInstance";
 import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
+import Loading from "../../utils/Loading";
 
-const OrdersSeller = () => {
+const Ordered = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -126,7 +127,8 @@ const OrdersSeller = () => {
     { id: "2", label: "Đã hủy" },
     { id: "3", label: "Đã duyệt" },
     { id: "4", label: "Đang giao" },
-    { id: "5", label: "Đã nhận" },
+    { id: "5", label: "Đã giao" },
+    { id: "6", label: "Đã nhận" },
   ];
 
   const getStatusIdFromName = (statusName) => {
@@ -137,10 +139,12 @@ const OrdersSeller = () => {
         return 2;
       case "Đã duyệt":
         return 3;
-      case "Đã giao":
+      case "Đang giao":
         return 4;
-      case "Đã nhận":
+      case "Đã giao":
         return 5;
+      case "Đã nhận":
+        return 6;
       default:
         return 0;
     }
@@ -155,8 +159,10 @@ const OrdersSeller = () => {
       case "3":
         return "Đã duyệt";
       case "4":
-        return "Đã giao";
+        return "Đang giao";
       case "5":
+        return "Đã giao";
+      case "6":
         return "Đã nhận";
       default:
         return "";
@@ -257,6 +263,7 @@ const OrdersSeller = () => {
           cancelReason: newStatus === 2 ? "Lý do hủy mặc định" : "",
         }
       );
+      setIsLoading(true);
       const { message, status } = response.data;
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString());
@@ -278,6 +285,8 @@ const OrdersSeller = () => {
       } else {
         showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -298,6 +307,7 @@ const OrdersSeller = () => {
       alert("Lý do hủy không được để trống!");
       return;
     }
+    setIsLoading(true);
     try {
       const response = await axiosInstance.put(
         `/user/order/update/${orderToCancel}`,
@@ -728,7 +738,7 @@ const OrdersSeller = () => {
                   )}
                   {order.orderStatusName === "Đã giao" && (
                     <button
-                      onClick={() => updateOrderStatus(order.id, 5)}
+                      onClick={() => updateOrderStatus(order.id, 6)}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5"
                     >
                       <svg
@@ -847,9 +857,9 @@ const OrdersSeller = () => {
           setCurrentPage={handlePageChange}
         />
       )}
-
+      {isLoading && <Loading />}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Hủy đơn hàng
@@ -900,4 +910,4 @@ const OrdersSeller = () => {
   );
 };
 
-export default OrdersSeller;
+export default Ordered;

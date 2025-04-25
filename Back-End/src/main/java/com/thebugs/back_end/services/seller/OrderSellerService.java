@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.OrderDTO;
@@ -53,16 +54,6 @@ public class OrderSellerService {
         private PromotionProductJPA promotionProductJPA;
         @Autowired
         private EmailUtil emailUtil;
-
-        public ArrayList<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable) {
-                Page<OrderSimpleDTO> order = orderJPA.findOrderByShopId(shopId, pageable);
-                return order.stream()
-                                .collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        public Integer getTotalOrder() {
-                return null;
-        }
 
         // code cua tam
         public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
@@ -116,9 +107,12 @@ public class OrderSellerService {
                                         productOrderDTO.setProductId(item.getProduct().getId());
                                         productOrderDTO.setProductName(item.getProduct().getName());
                                         productOrderDTO.setProductImage(
-                                                        item.getProduct().getImages().get(0).getImageName());// lấy ảnh
-                                                                                                             // đầu
-                                                                                                             // tiên
+                                                        (item.getProduct().getImages() != null
+                                                                        && !item.getProduct().getImages().isEmpty())
+                                                                                        ? item.getProduct().getImages()
+                                                                                                        .get(0)
+                                                                                                        .getImageName()
+                                                                                        : null);
                                         productOrderDTO.setPriceProduct(item.getPrice());
                                         productOrderDTO.setQuantityProduct(item.getQuantity());
                                         productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
@@ -175,17 +169,24 @@ public class OrderSellerService {
                         } else {
                                 checkShopId.setNoted(cancelReason);
                                 if (checkShopId.getOrderPayment().getId() == 3) {
-                                        String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với Shop "
-                                                        + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
-                                                        + checkShopId.getShop().getUser().getEmail();
-                                        getUserEmailCancelReason(orderId, setNoted);
+                                        // String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với
+                                        // Shop "
+                                        // + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
+                                        // + checkShopId.getShop().getUser().getEmail();
+                                        getUserEmailNoted(orderId,
+                                                        checkShopId.getShop().getUser().getEmail());
                                 }
 
                         }
                 }
                 if (orderStatusId == 3) {
                         updateProductQuantities(token, orderId);
+                        checkShopId.setDeliveredAt(new Date());
                 }
+                if (orderStatusId == 4) {
+                        checkShopId.setDeliveredAt(new Date());
+                }
+
                 checkShopId.setOrderStatus(getByStatusToOrder(orderStatusId));
                 return orderMapper.toDTO(orderJPA.save(checkShopId));
         }
@@ -224,7 +225,7 @@ public class OrderSellerService {
                         }
                 } else if (currentStatus == 4) {
                         if (newOrderStatusId == 5) {
-                                return false;
+                                return true;
                         }
                 }
 
@@ -239,11 +240,14 @@ public class OrderSellerService {
                 return true;
         }
 
-        public boolean getUserEmailToast(Integer orderId, String cancelReason) {
+        public boolean getUserEmailNoted(Integer orderId, String shopMail) {
                 Order order = getById(orderId);
                 String mail = order.getUser().getEmail();
-                String setSubject = ("Đơn hàng #" + "" + order.getId() + " " + "của bạn đã được cập nhật lại");
-                emailUtil.sendMailCancelReason(mail, setSubject, cancelReason);
+                String shopPhone = "0965199249";
+                String orderNumber = ("#" + orderId);
+                String setSubject = ("Thông báo hoàn tiền cho đơn hàng " + "" + orderNumber + " "
+                                + "của bạn đã bị hủy");
+                emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, shopMail, shopPhone);
                 return true;
         }
 
@@ -319,6 +323,42 @@ public class OrderSellerService {
 
                 }
                 return false;
+        }
+
+        @Scheduled(initialDelay = 0, fixedRate = 3000) // chạy ngay lập tức, sau đó mỗi 60s
+        public void autoUpdateFrom3To4() {
+                Date now = new Date();
+                List<Order> orders = orderJPA.findDeliveredOrdersByStatus(3);
+                for (Order order : orders) {
+                        if (order.getDeliveredAt() != null) {
+                                long formatSecond = now.getTime() - order.getDeliveredAt().getTime();
+                                if (formatSecond > 3600) {
+                                        OrderStatus status = orderStatusJPA.findById(4)
+                                                        .orElseThrow(() -> new IllegalArgumentException(
+                                                                        "Không tìm thấy trạng thái 'Đang giao'"));
+                                        order.setOrderStatus(status);
+                                        orderJPA.save(order);
+                                }
+                        }
+                }
+        }
+
+        @Scheduled(initialDelay = 3000, fixedRate = 3000) // chạy sau 30s, rồi mỗi 60s
+        public void autoUpdateFrom4To5() {
+                Date now = new Date();
+                List<Order> orders = orderJPA.findDeliveredOrdersByStatus(4);
+                for (Order order : orders) {
+                        if (order.getDeliveredAt() != null) {
+                                long formatSecond = now.getTime() - order.getDeliveredAt().getTime();
+                                if (formatSecond > 6000) {
+                                        OrderStatus status = orderStatusJPA.findById(5)
+                                                        .orElseThrow(() -> new IllegalArgumentException(
+                                                                        "Không tìm thấy trạng thái 'Đã giao'"));
+                                        order.setOrderStatus(status);
+                                        orderJPA.save(order);
+                                }
+                        }
+                }
         }
 
 }

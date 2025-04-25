@@ -6,7 +6,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
-import { Loading } from "../../utils/Loading";
+import Loading from "../../utils/Loading";
 
 const OrdersSeller = () => {
   const navigate = useNavigate();
@@ -123,7 +123,8 @@ const OrdersSeller = () => {
     { id: "2", label: "Đã hủy" },
     { id: "3", label: "Đã duyệt" },
     { id: "4", label: "Đang giao" },
-    { id: "5", label: "Đã nhận" },
+    { id: "5", label: "Đã giao" },
+    { id: "6", label: "Đã nhận" },
   ];
 
   const getStatusNameFromId = (statusId) => {
@@ -131,12 +132,14 @@ const OrdersSeller = () => {
       case "1":
         return "Chờ duyệt";
       case "2":
-        return "Đã hủy";
+        return "Hủy";
       case "3":
         return "Đã duyệt";
       case "4":
         return "Đang giao";
       case "5":
+        return "Đã giao";
+      case "6":
         return "Đã nhận";
       default:
         return "";
@@ -214,6 +217,7 @@ const OrdersSeller = () => {
           cancelReason: newStatus === 2 ? cancelReason : "",
         }
       );
+      setIsLoading(true);
       const { message, status } = response.data;
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString());
@@ -233,6 +237,8 @@ const OrdersSeller = () => {
       );
       closeCancelModal();
       fetchOrders(currentPage, activeTab);
+    } finally {
+      setIsLoading(false );
     }
   };
 
@@ -267,6 +273,7 @@ const OrdersSeller = () => {
       showErrorToast("Lý do hủy không được để trống");
       return;
     }
+    setIsLoading(true);
     try {
       const response = await axiosInstance.put(
         `/seller/order/update/${orderToCancel}`,
@@ -478,10 +485,8 @@ const OrdersSeller = () => {
         </div>
       </div>
 
-      {/* Hiển thị số lượng đơn hàng */}
       <div className="mb-4 text-sm text-gray-600">{displayText}</div>
 
-      {/* Orders List */}
       <div
         className={`space-y-6 transition-opacity duration-500 ${
           isTransitioning ? "opacity-0" : "opacity-100"
@@ -662,21 +667,6 @@ const OrdersSeller = () => {
                   {order.orderStatusName === "Đã duyệt" && (
                     <>
                       <button
-                        onClick={() => updateOrderStatus(order.id, 4)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1.5"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                        </svg>
-                        <span>Đang giao</span>
-                      </button>
-                      <button
                         onClick={() => openCancelModal(order.id)}
                         className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
                       >
@@ -748,9 +738,9 @@ const OrdersSeller = () => {
           setCurrentPage={handlePageChange}
         />
       )}
-
+      {isLoading && <Loading />}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Hủy đơn hàng
