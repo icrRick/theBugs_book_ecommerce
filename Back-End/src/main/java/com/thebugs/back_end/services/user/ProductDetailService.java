@@ -43,14 +43,18 @@ public class ProductDetailService {
 
     public List<RelatedProductDTO> getRelatedProducts(String productCode) {
         List<RelatedProductDTO> relatedProducts = productJPA.findRelatedProducts(productCode);
-
+    
         for (RelatedProductDTO dto : relatedProducts) {
             List<String> authorNames = productJPA.findAuthorNamesByProductId(dto.getId());
             dto.setAuthorNames(authorNames);
+    
+            List<String> images = productJPA.findImageNamesByProductId(dto.getId());
+            dto.setImages(images); // ✅ bổ sung phần lấy ảnh
         }
-
+    
         return relatedProducts.stream()
                 .limit(5)
                 .collect(Collectors.toList());
     }
+    
 }

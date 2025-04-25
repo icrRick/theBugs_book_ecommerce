@@ -16,17 +16,19 @@ public class RelatedProductDTO {
     private Double discountPrice;
     private Double discountPercentage;
     private Double avgRating;
+    private List<String> images;
 
     public RelatedProductDTO(Integer id, String product_code, String productName,
-            double price, Double discountPrice, Double discountPercentage, Double avgRating) {
-        this.id = id;
-        this.product_code = product_code;
-        this.productName = productName;
-        this.price = price;
-        this.discountPrice = discountPrice;
-        this.discountPercentage = discountPercentage;
-        this.avgRating = avgRating;
-    }
+    double price, Double discountPrice, Double discountPercentage, Double avgRating) {
+this.id = id;
+this.product_code = product_code;
+this.productName = productName;
+this.price = price;
+this.discountPrice = discountPrice;
+this.discountPercentage = discountPercentage;
+this.avgRating = avgRating;
+}
+
 
     // Add setter for authorNames if Lombok not used
     public void setAuthorNames(List<String> authorNames) {

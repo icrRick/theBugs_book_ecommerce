@@ -239,29 +239,31 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
 
         @Query("SELECT COUNT(g) FROM Genre g WHERE ?1 IS NULL OR ?1 = '' OR g.name LIKE %?1%")
         int countfindProductByName(String keyword);
-
         @Query("SELECT new com.thebugs.back_end.dto.RelatedProductDTO(" +
-                        "p.id, " +
-                        "p.product_code, " +
-                        "p.name, " +
-                        "p.price, " +
-                        "(p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)), " +
-                        "COALESCE(pr.promotionValue, 0), " +
-                        "COALESCE(AVG(r.rate), 0)) " +
-                        "FROM Product p " +
-                        "LEFT JOIN p.productGenres pg " +
-                        "LEFT JOIN p.promotionProducts pp " +
-                        "LEFT JOIN pp.promotion pr " +
-                        "LEFT JOIN p.orderItems oi " +
-                        "LEFT JOIN oi.reviews r " +
-                        "WHERE (pr.active = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE OR pr.id IS NULL) "
-                        +
-                        "AND pg.genre.id IN (SELECT pg2.genre.id FROM ProductGenre pg2 WHERE pg2.product.product_code = :productCode) "
-                        +
-                        "AND p.product_code != :productCode " +
-                        "GROUP BY p.id, p.product_code, p.name, p.price, pr.promotionValue " +
-                        "ORDER BY (p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)) DESC")
-        List<RelatedProductDTO> findRelatedProducts(@Param("productCode") String productCode);
+        "p.id, " +
+        "p.product_code, " +
+        "p.name, " +
+        "p.price, " +
+        "(p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)), " +
+        "COALESCE(pr.promotionValue, 0), " +
+        "COALESCE(AVG(r.rate), 0)) " +  // <-- Không còn images
+        "FROM Product p " +
+        "LEFT JOIN p.productGenres pg " +
+        "LEFT JOIN p.promotionProducts pp " +
+        "LEFT JOIN pp.promotion pr " +
+        "LEFT JOIN p.orderItems oi " +
+        "LEFT JOIN oi.reviews r " +
+        "WHERE (pr IS NULL OR (pr.active = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE)) " +
+        "AND pg.genre.id IN (" +
+        "   SELECT pg2.genre.id FROM ProductGenre pg2 WHERE pg2.product.product_code = :productCode" +
+        ") " +
+        "AND p.product_code != :productCode " +
+        "GROUP BY p.id, p.product_code, p.name, p.price, pr.promotionValue " +
+        "ORDER BY (p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)) DESC")
+ List<RelatedProductDTO> findRelatedProducts(@Param("productCode") String productCode);
+ 
+
+ 
 
         @Query("SELECT p.product_code FROM Product p WHERE p.id = :productId")
         String findProductCodeById(@Param("productId") Integer productId);

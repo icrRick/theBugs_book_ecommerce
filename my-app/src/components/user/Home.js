@@ -333,7 +333,7 @@ const Home = () => {
       </section>
 
       {/* Flash Sale Section - Shop Specific */}
-      <section className="mb-12 overflow-hidden">
+      {/* <section className="mb-12 overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl p-6 md:p-8 shadow-xl">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
@@ -465,7 +465,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Danh mục */}
       <section className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}>
@@ -798,7 +798,7 @@ const Home = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="mb-12">
+      {/* <section className="mb-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Khách hàng nói gì về chúng tôi</h2>
@@ -846,32 +846,9 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* Đăng ký nhận thông báo */}
-      <section>
-        <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-8 md:p-12 shadow-2xl">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Đăng ký nhận thông báo</h2>
-              <p className="text-white/90 mb-8">Nhận thông tin về sách mới và khuyến mãi đặc biệt qua email</p>
-              <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-                <input
-                  type="email"
-                  placeholder="Nhập email của bạn"
-                  className="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white shadow-lg"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-white text-emerald-700 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-300 shadow-lg transform hover:scale-105"
-                >
-                  Đăng ký
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
+   
     </div>
   )
 }

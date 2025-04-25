@@ -56,7 +56,7 @@ const ProductDetail = () => {
           discountPrice: apiProduct.discountedPrice,
           images: apiProduct.images.map((image, index) => ({
             id: index + 1,
-            image: `/images/${image}`,
+            image: `${image}`,
           })),
           brand: apiProduct.publisher,
           rating: apiProduct.rate,
@@ -113,12 +113,14 @@ const ProductDetail = () => {
           throw new Error(`HTTP error! Status: ${similarResponse.status}`);
         }
         const similarData = await similarResponse.json();
-
+        console.log("Similar products data:", similarData);
+        
         if (similarData.status && similarData.data) {
-          const mappedSimilarProducts = similarData.data.map((item) => ({
+          const mappedSimilarProducts = similarData.data.map((item) => (
+            {
             id: item.id,
             name: item.productName,
-            image: item.images && item.images.length > 0 ? `/images/${item.images[0]}` : "/placeholder.svg",
+            image: item.images && item.images.length > 0 ? `${item.images[0]}` : "/placeholder.svg",
             author: item.authorNames && item.authorNames.length > 0 ? item.authorNames[0] : "Không rõ",
             price: item.price,
             discountPrice: item.discountPrice,
@@ -428,10 +430,7 @@ const ProductDetail = () => {
                       </span>
                     )}
                 </div>
-                <div className="text-sm text-gray-600">
-                  <i className="bi bi-graph-down-arrow mr-1"></i>
-                  Giá thấp nhất trong 30 ngày qua
-                </div>
+               
               </div>
 
               {/* Số lượng */}
@@ -469,9 +468,7 @@ const ProductDetail = () => {
                   >
                     <i className="bi bi-plus"></i>
                   </button>
-                  <span className="ml-4 text-sm text-gray-600">
-                    Có sẵn: {selectedVariant?.inStock || product.inStock} sản phẩm
-                  </span>
+                 
                 </div>
               </div>
 
@@ -530,10 +527,7 @@ const ProductDetail = () => {
                   </div>
                   <span className="text-gray-600">{product.shop.rate}</span>
                 </div>
-                <div className="flex items-center">
-                  <i className="bi bi-people text-gray-600 mr-1"></i>
-                  <span className="text-gray-600">{product.shop.followers.toLocaleString()} người theo dõi</span>
-                </div>
+                
               </div>
             </div>
           </div>
@@ -545,7 +539,7 @@ const ProductDetail = () => {
             >
               Xem shop
             </Link>
-            <ChatButton shop={product.shop} />
+            {/* <ChatButton shop={product.shop} /> */}
           </div>
         </div>
       </div>
@@ -570,7 +564,7 @@ const ProductDetail = () => {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
-              Thông số kỹ thuật
+              Chi tiết sản phẩm
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
