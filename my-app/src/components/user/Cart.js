@@ -114,6 +114,7 @@ const Cart = () => {
             console.log(error);
         }
     }
+    
     const deleteCartItem = async (productId) => {
         try {
             const response = await axiosInstance.post(`/user/cart/deleteCartItem?productId=${productId}`)

@@ -75,19 +75,19 @@ public class HomeController {
                 }
         }
 
-        @GetMapping("/home/shops/flash-sale")
-        public ResponseEntity<ResponseData> getFlashSaleShops() {
-                ResponseData responseData = new ResponseData();
-                try {
-                        responseData.setStatus(true);
-                        responseData.setMessage("Load cửa hàng flash sale thành công");
-                        responseData.setData(homeService.getFlashSaleShops());
-                        return ResponseEntity.ok(responseData);
-                } catch (IllegalArgumentException e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
-                }
-        }
+        // @GetMapping("/home/shops/flash-sale")
+        // public ResponseEntity<ResponseData> getFlashSaleShops() {
+        //         ResponseData responseData = new ResponseData();
+        //         try {
+        //                 responseData.setStatus(true);
+        //                 responseData.setMessage("Load cửa hàng flash sale thành công");
+        //                 responseData.setData(homeService.getFlashSaleShops());
+        //                 return ResponseEntity.ok(responseData);
+        //         } catch (IllegalArgumentException e) {
+        //                 responseData.setStatus(false);
+        //                 responseData.setMessage("Lỗi: " + e.getMessage());
+        //                 responseData.setData(null);
+        //                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        //         }
+        // }
 }

@@ -82,6 +82,8 @@ const Home = () => {
     try {
       const response = await axios.get(`http://localhost:8080/home/products?page=${page}&filter=${filter}`)
       if (response.data.status) {
+        console.log(response.data);
+        
         const productsData = response.data.data || []
         setProducts(productsData)
         setTotalProducts(productsData.length)
@@ -122,9 +124,9 @@ const Home = () => {
         setGenres(genresData)
 
         // Fetch flash sale shops
-        const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
-        const shopsData = shopsResponse.data.status ? shopsResponse.data.data || [] : []
-        setFlashSaleShops(shopsData)
+        // const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
+        // const shopsData = shopsResponse.data.status ? shopsResponse.data.data || [] : []
+        // setFlashSaleShops(shopsData)
 
         // Mock promotions (since endpoint is commented out)
         const mockPromotions = [
@@ -578,7 +580,7 @@ const Home = () => {
                     <div className="relative">
                       <Link to={`/product-detail/${product.productId}`} className="block">
                         <img
-                          src={getProductImage(product) || "/placeholder.svg"}
+                          src={product?.imageName || "/placeholder.svg"}
                           alt={product.productName}
                           className="w-full aspect-[3/4] object-cover"
                         />
