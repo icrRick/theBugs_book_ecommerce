@@ -189,7 +189,10 @@ const OrdersSeller = () => {
         },
       });
       const { data } = response.data;
+      console.log(response);
+      
       if (response.status === 200) {
+
         setOrders(data.objects || []);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));

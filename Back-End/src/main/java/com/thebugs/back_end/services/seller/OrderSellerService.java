@@ -343,7 +343,7 @@ public class OrderSellerService {
                 }
         }
 
-        @Scheduled(initialDelay = 3000, fixedRate = 3000) // chạy sau 30s, rồi mỗi 60s
+        @Scheduled(initialDelay = 3000, fixedRate = 10000) // chạy sau 30s, rồi mỗi 60s
         public void autoUpdateFrom4To5() {
                 Date now = new Date();
                 List<Order> orders = orderJPA.findDeliveredOrdersByStatus(4);
