@@ -325,40 +325,4 @@ public class OrderSellerService {
                 return false;
         }
 
-        @Scheduled(initialDelay = 0, fixedRate = 3000) // chạy ngay lập tức, sau đó mỗi 60s
-        public void autoUpdateFrom3To4() {
-                Date now = new Date();
-                List<Order> orders = orderJPA.findDeliveredOrdersByStatus(3);
-                for (Order order : orders) {
-                        if (order.getDeliveredAt() != null) {
-                                long formatSecond = now.getTime() - order.getDeliveredAt().getTime();
-                                if (formatSecond > 3600) {
-                                        OrderStatus status = orderStatusJPA.findById(4)
-                                                        .orElseThrow(() -> new IllegalArgumentException(
-                                                                        "Không tìm thấy trạng thái 'Đang giao'"));
-                                        order.setOrderStatus(status);
-                                        orderJPA.save(order);
-                                }
-                        }
-                }
-        }
-
-        @Scheduled(initialDelay = 3000, fixedRate = 10000) // chạy sau 30s, rồi mỗi 60s
-        public void autoUpdateFrom4To5() {
-                Date now = new Date();
-                List<Order> orders = orderJPA.findDeliveredOrdersByStatus(4);
-                for (Order order : orders) {
-                        if (order.getDeliveredAt() != null) {
-                                long formatSecond = now.getTime() - order.getDeliveredAt().getTime();
-                                if (formatSecond > 6000) {
-                                        OrderStatus status = orderStatusJPA.findById(5)
-                                                        .orElseThrow(() -> new IllegalArgumentException(
-                                                                        "Không tìm thấy trạng thái 'Đã giao'"));
-                                        order.setOrderStatus(status);
-                                        orderJPA.save(order);
-                                }
-                        }
-                }
-        }
-
 }
