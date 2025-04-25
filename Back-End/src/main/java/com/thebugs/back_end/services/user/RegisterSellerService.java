@@ -282,8 +282,8 @@ public class RegisterSellerService {
         shop.setShop_slug(bean.getShop_slug());
         shop.setDescription(bean.getDescription());
         shop.setActive(true);
-        shop.setApprove(false);
-        shop.setStatus(true);
+        shop.setApprove(null);
+        shop.setStatus(null);
         return shop;
     }
 

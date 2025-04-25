@@ -109,7 +109,7 @@ const SellerRegistration = () => {
                   })
             );
             axiosInstance
-                  .post("api/users/register-seller", formDataToSend, {
+                  .post("/api/users/register-seller", formDataToSend, {
                         headers: {
                               "Content-Type": "multipart/form-data",
                         },
