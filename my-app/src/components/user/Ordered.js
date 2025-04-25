@@ -194,7 +194,7 @@ const Ordered = () => {
           keyword: keyword || undefined,
           page: page,
           size: pageSize,
-        },
+        }, 
       })
       .then((response) => {
         console.log(response);
@@ -305,6 +305,7 @@ const Ordered = () => {
     }
     setIsLoading(true);
     try {
+      setIsLoading(true);
       const response = await axiosInstance.put(
         `/user/order/update/${orderToCancel}`,
         {
@@ -333,6 +334,8 @@ const Ordered = () => {
       console.error("Error cancelling order:", error);
       showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng");
       closeCancelModal();
+    } finally {
+      setIsLoading(false);
     }
   };
 

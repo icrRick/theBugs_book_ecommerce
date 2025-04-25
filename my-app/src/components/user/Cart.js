@@ -39,7 +39,7 @@ const Cart = () => {
     // Debounce pendingUpdate với delay 400ms
     const debouncedUpdate = useDebounce(pendingUpdate, 400);
 
-    // Theo dõi thay đổi của debouncedUpdate để gọi API
+
     useEffect(() => {
         if (debouncedUpdate) {
             const { productId, quantity } = debouncedUpdate;
@@ -61,6 +61,7 @@ const Cart = () => {
             return;
         }
         setPendingUpdate({ productId, quantity });
+        
     };
 
 
@@ -92,7 +93,20 @@ const Cart = () => {
         try {
             const response = await axiosInstance.post(`/user/cart/saveCartItem?productId=${productId}&quantity=${quantity}`);
             if (response.status === 200 && response.data.status === true) {
-                fetchCartItems();
+                setCart(prevCart => {
+                    return prevCart.map(shop => ({
+                        ...shop,
+                        products: shop.products.map(product => {
+                            if (product.productId === productId) {
+                                return {
+                                    ...product,
+                                    productQuantity: quantity
+                                };
+                            }
+                            return product;
+                        })
+                    }));
+                });
             } else {
                 console.log(response.data.message);
             }
@@ -100,6 +114,7 @@ const Cart = () => {
             console.log(error);
         }
     }
+    
     const deleteCartItem = async (productId) => {
         try {
             const response = await axiosInstance.post(`/user/cart/deleteCartItem?productId=${productId}`)
@@ -525,20 +540,6 @@ const Cart = () => {
                                         {formatCurrency(calculateTotalAmount(cart, selectedVouchers))}
                                     </span>
                                 </div>
-                                <div className="flex items-center space-x-2 mt-1">
-                                    <span className="text-sm text-gray-600">
-                                        Giảm giá trực tiếp:
-                                    </span>
-                                    <span className="text-sm font-medium text-green-600">
-                                        -{formatCurrency(cart.reduce((total, shop) =>
-                                            total + shop.products.reduce((shopTotal, product) =>
-                                                product.checked && product.productPromotionValue > 0
-                                                    ? shopTotal + (product.productPrice * product.productPromotionValue / 100 * product.productQuantity)
-                                                    : shopTotal
-                                                , 0)
-                                            , 0))}
-                                    </span>
-                                </div>
                             </div>
                         </div>
                         <div className="flex flex-col px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
@@ -558,31 +559,36 @@ const Cart = () => {
                     </div>
                 </div>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center py-12">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-24 w-24 text-gray-400 mb-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                    </svg>
-                    <h3 className="text-xl font-medium text-gray-900 mb-2">Giỏ hàng của bạn đang trống</h3>
-                    <p className="text-gray-500 mb-6">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+                <div className="w-full h-full flex flex-col items-center justify-center py-16 px-4">
+                    <div className="relative">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-32 w-32 text-gray-300 mb-6 transform hover:scale-105 transition-transform duration-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-800 mb-3">Giỏ hàng của bạn đang trống</h3>
+                    <p className="text-gray-500 text-center max-w-md mb-8">Hãy khám phá và thêm những cuốn sách yêu thích vào giỏ hàng của bạn</p>
                     <button
                         onClick={() => navigate('/')}
-                        className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200"
+                        className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
                     >
-                        Tiếp tục mua sắm
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                        </svg>
+                        <span>Tiếp tục mua sắm</span>
                     </button>
                 </div>
-
             )}
 
             {/* Voucher Modal */}

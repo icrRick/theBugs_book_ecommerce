@@ -67,7 +67,7 @@ public class Seller_ProductCRUDService {
         String code = generateNextProductCode(product.getShop().getShop_slug(), maxProductId);
 
         product.setProduct_code(code);
-        product.setCreatedAt(new Date());
+        product.setCreatedAt(new Date().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
         try {
             Product savedProduct = g_ProductJPA.save(product);
             if (savedProduct != null && savedProduct.getId() != null) {
@@ -83,7 +83,8 @@ public class Seller_ProductCRUDService {
         } catch (Exception e) {
             statusCode = 500;
             status = false;
-            IrRickUtil.addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+            IrRickUtil.addBreakLineForMessage(message,
+                    "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
         } finally {
             result.put("status", status);
             result.put("message", message.toString());
@@ -125,7 +126,8 @@ public class Seller_ProductCRUDService {
         } catch (Exception e) {
             statusCode = 500;
             status = false;
-            IrRickUtil.addBreakLineForMessage(message, "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+            IrRickUtil.addBreakLineForMessage(message,
+                    "ERROR: Lỗi khi lưu sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
         } finally {
             result.put("status", status);
             result.put("message", message.toString());
@@ -203,8 +205,6 @@ public class Seller_ProductCRUDService {
     }
 
     // util function
-
-    
 
     public String generateNextProductCode(String rawPrefix, String maxProductCode) {
         // Chuyển prefix thành chữ hoa và thêm _P

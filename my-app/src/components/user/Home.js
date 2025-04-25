@@ -20,13 +20,31 @@ const Home = () => {
     minutes: 30,
     seconds: 0,
   })
+  const genreColors = [
+    "from-blue-500/50 to-transparent",
+    "from-green-500/50 to-transparent",
+    "from-red-500/50 to-transparent",
+    "from-purple-500/50 to-transparent",
+    "from-yellow-500/50 to-transparent",
+    "from-pink-500/50 to-transparent",
+    "from-indigo-500/50 to-transparent",
+    "from-teal-500/50 to-transparent",
+    "from-orange-500/50 to-transparent",
+    "from-cyan-500/50 to-transparent",
+    "from-gray-500/50 to-transparent",
+    "from-lime-500/50 to-transparent",
+  ]
   const [isVisible, setIsVisible] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingProducts, setLoadingProducts] = useState(false)
   const [featuredAuthors, setFeaturedAuthors] = useState([])
   const [genres, setGenres] = useState([])
   const [products, setProducts] = useState([])
   const [promotions, setPromotions] = useState([])
   const [flashSaleShops, setFlashSaleShops] = useState([])
+  const [productLimit, setProductLimit] = useState(20)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
 
   // Effect for countdown timer
   useEffect(() => {
@@ -58,37 +76,57 @@ const Home = () => {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Fetch data from API
+  // Fetch products based on active tab
+  const fetchProducts = async (filter = "", page = 1) => {
+    setLoadingProducts(true)
+    try {
+      const response = await axios.get(`http://localhost:8080/home/products?page=${page}&filter=${filter}`)
+      if (response.data.status) {
+        console.log(response.data);
+        
+        const productsData = response.data.data || []
+        setProducts(productsData)
+        setTotalProducts(productsData.length)
+      } else {
+        console.error("Error fetching products:", response.data.message)
+        setProducts([])
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error)
+      setProducts([])
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
+  // Effect to fetch products when tab changes
   useEffect(() => {
-    const fetchData = async () => {
+    fetchProducts(activeTab)
+    setProductLimit(20) // Reset product limit when changing tabs
+  }, [activeTab])
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchInitialData = async () => {
       setLoading(true)
       try {
-        // Fetch products
-        const productsResponse = await axios.get("http://localhost:8080/home/products?page=1&filter=")
-        const productsData = productsResponse.data.data.map(product => ({
-          id: product.productId,
-          name: product.productName,
-          price: product.productPrice,
-          images: [{ image_name: product.productImage || "/placeholder.svg" }],
-          authors: product.authorName ? [{ name: product.authorName }] : [],
-          promotions: product.promotionValue ? [{ promotion_value: product.promotionValue }] : [],
-          reviews: product.rate ? [{ rate: product.rate }] : [],
-          is_new: product.isNew,
-          discount: product.discount,
-          is_bestseller: product.promotionValue || product.isNew // Giả định bestseller
-        }))
+        // Fetch products based on active tab
+        await fetchProducts(activeTab)
 
         // Fetch authors
-        const authorsResponse = await axios.get("http://localhost:8080/home/authors")
-        const authorsData = authorsResponse.data.data
+        const authorsResponse = await axios.get("http://localhost:8080/home/authors?limit=6")
+        const authorsData = authorsResponse.data.status ? authorsResponse.data.data || [] : []
+        setFeaturedAuthors(authorsData)
 
         // Fetch genres
         const genresResponse = await axios.get("http://localhost:8080/home/genres")
-        const genresData = genresResponse.data.data
+        const genresData = genresResponse.data.status ? genresResponse.data.data || [] : []
+        setGenres(genresData)
 
         // Fetch flash sale shops
-        const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
-        const shopsData = shopsResponse.data.data
+        // const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
+        // const shopsData = shopsResponse.data.status ? shopsResponse.data.data || [] : []
+        // setFlashSaleShops(shopsData)
 
         // Mock promotions (since endpoint is commented out)
         const mockPromotions = [
@@ -114,66 +152,41 @@ const Home = () => {
             backgroundColor: "bg-gradient-to-r from-orange-500 to-red-600",
           },
         ]
-
-        setProducts(productsData)
-        setFeaturedAuthors(authorsData)
-        setGenres(genresData)
-        setFlashSaleShops(shopsData)
         setPromotions(mockPromotions)
-        setLoading(false)
       } catch (error) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching initial data:", error)
+        setFeaturedAuthors([])
+        setGenres([])
+        setFlashSaleShops([])
+        setProducts([])
+        setPromotions([])
+      } finally {
         setLoading(false)
       }
     }
 
-    fetchData()
+    fetchInitialData()
   }, [])
 
-  // Helper function to get product image
   const getProductImage = (product) => {
-    if (!product.images || product.images.length === 0) {
-      return "/placeholder.svg"
-    }
-    return product.images[0].image_name
+    return product.productImage || "/placeholder.svg"
   }
 
-  // Helper function to calculate discounted price
   const calculateDiscountedPrice = (product) => {
-    if (!product.promotions || product.promotions.length === 0) {
-      return product.price
+    const price = product.price || 0
+    if (!product.promotionValue) {
+      return price
     }
-    const discount = product.promotions[0].promotion_value
-    return product.price - (product.price * discount) / 100
+    return price - (price * product.promotionValue) / 100
   }
 
   // Helper function to get average rating
   const getAverageRating = (product) => {
-    if (!product.reviews || product.reviews.length === 0) {
-      return 0
-    }
-    const sum = product.reviews.reduce((total, review) => total + review.rate, 0)
-    return (sum / product.reviews.length).toFixed(1)
+    return product.rate || 0
   }
 
-  // Filter products based on tab
-  const filteredProducts = () => {
-    switch (activeTab) {
-      case "popular":
-        return products.filter((product) => product.is_bestseller)
-      case "new":
-        return products.filter((product) => product.is_new)
-      case "sale":
-        return products
-          .filter((product) => product.promotions && product.promotions.length > 0)
-          .sort((a, b) => {
-            const discountA = a.promotions[0].promotion_value
-            const discountB = b.promotions[0].promotion_value
-            return discountB - discountA
-          })
-      default:
-        return products
-    }
+  const handleLoadMore = () => {
+    setProductLimit((prevLimit) => prevLimit + 20)
   }
 
   // Mock data for banner
@@ -390,58 +403,64 @@ const Home = () => {
                 autoplay={{ delay: 3000 }}
                 className="flash-sale-swiper"
               >
-                {flashSaleShops.map((shop) => (
-                  <SwiperSlide key={shop.id}>
-                    <Link to={`/shop-detail/${shop.id}`} className="block">
-                      <div className="bg-white rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative group">
-                        <div className="relative">
-                          <img
-                            src={shop.banner || "/placeholder.svg"}
-                            alt={shop.name}
-                            className="w-full h-32 object-cover"
-                          />
-                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/70 to-transparent"></div>
-                          <div className="absolute bottom-0 left-0 p-4 w-full">
-                            <div className="flex items-center">
-                              <img
-                                src={shop.logo || "/placeholder.svg"}
-                                alt={`${shop.name} logo`}
-                                className="w-12 h-12 rounded-full border-2 border-white mr-3"
-                              />
-                              <div>
-                                <h3 className="font-bold text-white">{shop.name}</h3>
-                                <p className="text-white/90 text-sm">{shop.products} sản phẩm</p>
+                {flashSaleShops.length > 0 ? (
+                  flashSaleShops.map((shop) => (
+                    <SwiperSlide key={shop.id}>
+                      <Link to={`/shop-detail/${shop.id}`} className="block">
+                        <div className="bg-white rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative group">
+                          <div className="relative">
+                            <img
+                              src={shop.banner || "/placeholder.svg"}
+                              alt={shop.name}
+                              className="w-full h-32 object-cover"
+                            />
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <div className="absolute bottom-0 left-0 p-4 w-full">
+                              <div className="flex items-center">
+                                <img
+                                  src={shop.logo || "/placeholder.svg"}
+                                  alt={`${shop.name} logo`}
+                                  className="w-12 h-12 rounded-full border-2 border-white mr-3"
+                                />
+                                <div>
+                                  <h3 className="font-bold text-white">{shop.name}</h3>
+                                  <p className="text-white/90 text-sm">{shop.products || 0} sản phẩm</p>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="p-4">
-                          <div className="flex justify-between items-center">
-                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                              Flash Sale
-                            </span>
-                            <span className="text-red-600 font-bold">{shop.discount}</span>
+                          <div className="p-4">
+                            <div className="flex justify-between items-center">
+                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                Flash Sale
+                              </span>
+                              <span className="text-red-600 font-bold">{shop.maxDiscount || 0}%</span>
+                            </div>
+                            <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-300 flex items-center justify-center">
+                              Xem ngay
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 ml-1"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </button>
                           </div>
-                          <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-300 flex items-center justify-center">
-                            Xem ngay
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 ml-1"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                    </SwiperSlide>
+                  ))
+                ) : (
+                  <SwiperSlide>
+                    <div className="text-center text-gray-600 py-8">Không có cửa hàng flash sale hiện tại.</div>
                   </SwiperSlide>
-                ))}
+                )}
               </Swiper>
             </div>
           </div>
@@ -473,28 +492,33 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {genres.map((genre) => (
-              <Link to={`/search?category=${genre.id}`} key={genre.id} className="group">
-                <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
-                  <div className="relative h-40 overflow-hidden">
-                    <img
-                      src={genre.url_image || "/placeholder.svg"}
-                      alt={genre.name}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-t ${genre.color} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
-                    ></div>
-                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                      <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{genre.name}</h3>
+            {genres.length > 0 ? (
+              genres.map((genre, index) => (
+                <Link to={`/search?category=${genre.id}`} key={genre.id} className="group">
+                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
+                    <div className="relative h-40 overflow-hidden">
+                      <img
+                        src={genre.urlImage || "/placeholder.svg"}
+                        alt={genre.name}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-t ${genreColors[index % genreColors.length]
+                          } opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
+                      ></div>
+                      <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{genre.name}</h3>
+                      </div>
+                    </div>
+                    <div className="p-3 text-center">
+                      <span className="text-sm text-gray-600">{genre.count} sách</span>
                     </div>
                   </div>
-                  <div className="p-3 text-center">
-                    <span className="text-sm text-gray-600">{genre.count} sách</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <div className="text-center text-gray-600 py-8 col-span-full">Không có danh mục sách hiện tại.</div>
+            )}
           </div>
         </div>
       </section>
@@ -507,113 +531,179 @@ const Home = () => {
               Sách nổi bật
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-           
+            <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setActiveTab("popular")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "popular" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
+                  }`}
+              >
+                Phổ biến
+              </button>
+              <button
+                onClick={() => setActiveTab("new")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "new" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
+                  }`}
+              >
+                Mới
+              </button>
+              <button
+                onClick={() => setActiveTab("sale")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "sale" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
+                  }`}
+              >
+                Giảm giá
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {filteredProducts().map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
-              >
-                <div className="relative">
-                  <Link to={`/product-detail/${product.id}`} className="block">
-                    <img
-                      src={getProductImage(product) || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full aspect-[3/4] object-cover"
-                    />
-                    {product.is_new && (
-                      <div className="absolute top-2 left-2 bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-medium">
-                        Mới
-                      </div>
-                    )}
-                    {product.is_bestseller && (
-                      <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-md text-xs font-medium">
-                        Bán chạy
-                      </div>
-                    )}
-                  </Link>
-
-                  <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      className="p-2 rounded-full bg-white/80 hover:bg-white shadow-md text-gray-400 hover:text-rose-500 transition-all duration-300 transform hover:scale-110"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      className="p-2 rounded-full bg-white/80 hover:bg-emerald-500 shadow-md text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                      </svg>
-                    </button>
+          <div className="flex flex-col">
+            {loadingProducts ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                {[...Array(10)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden h-64 animate-pulse">
+                    <div className="h-40 bg-gray-200"></div>
+                    <div className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </div>
                   </div>
-                </div>
-                <Link to={`/product-detail/${product.id}`} className="block">
-                  <div className="p-4">
-                    <h3 className="font-medium text-gray-800 mb-1 line-clamp-2 h-12">{product.name}</h3>
-                    {product.authors && product.authors.length > 0 && (
-                      <p className="text-sm text-gray-500 mb-2">{product.authors[0].name}</p>
-                    )}
-                    <div className="flex items-center mb-2">
-                      <div className="flex text-amber-400">
-                        {[...Array(5)].map((_, index) => (
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                {products.slice(0, productLimit).map((product) => (
+                  <div
+                    key={product.productId}
+                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+                  >
+                    <div className="relative">
+                      <Link to={`/product-detail/${product.productId}`} className="block">
+                        <img
+                          src={product?.imageName || "/placeholder.svg"}
+                          alt={product.productName}
+                          className="w-full aspect-[3/4] object-cover"
+                        />
+                        {product.isNew && (
+                          <div className="absolute top-2 left-2 bg-emerald-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+                            Mới
+                          </div>
+                        )}
+                        {product.promotionValue > 0 && (
+                          <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+                            -{product.promotionValue}%
+                          </div>
+                        )}
+                      </Link>
+
+                      <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          className="p-2 rounded-full bg-white/80 hover:bg-white shadow-md text-gray-400 hover:text-rose-500 transition-all duration-300 transform hover:scale-110"
+                          onClick={(e) => e.preventDefault()}
+                        >
                           <svg
-                            key={index}
                             xmlns="http://www.w3.org/2000/svg"
-                            className={`h-4 w-4 ${index < Math.floor(getAverageRating(product)) ? "fill-current" : "stroke-current fill-none"}`}
-                            viewBox="0 0 24 24"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
                           >
                             <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                              fillRule="evenodd"
+                              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                              clipRule="evenodd"
                             />
                           </svg>
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-500 ml-1">({getAverageRating(product)})</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        {product.promotions && product.promotions.length > 0 ? (
-                          <>
-                            <span className="text-emerald-600 font-bold">
-                              {calculateDiscountedPrice(product).toLocaleString()}đ
-                            </span>
-                            <span className="text-gray-400 text-sm line-through ml-2">
-                              {product.price.toLocaleString()}đ
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-emerald-600 font-bold">{product.price.toLocaleString()}đ</span>
-                        )}
+                        </button>
+                        <button
+                          className="p-2 rounded-full bg-white/80 hover:bg-emerald-500 shadow-md text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110"
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
+                    <Link to={`/product-detail/${product.productId}`} className="block">
+                      <div className="p-4 flex flex-col h-[140px]">
+                        <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 min-h-[3rem] flex items-start">
+                          {product.productName}
+                        </h3>
+                        <div className="flex items-center mb-2">
+                          <div className="flex text-amber-400">
+                            {[...Array(5)].map((_, index) => (
+                              <svg
+                                key={index}
+                                xmlns="http://www.w3.org/2000/svg"
+                                className={`h-4 w-4 ${index < Math.floor(getAverageRating(product))
+                                  ? "fill-current"
+                                  : "stroke-current fill-none"
+                                  }`}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                />
+                              </svg>
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-500 ml-1">({getAverageRating(product)})</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {product.promotionValue > 0 ? (
+                              <>
+                                <span className="text-emerald-600 font-bold">
+                                  {calculateDiscountedPrice(product)?.toLocaleString?.() || "0"}đ
+                                </span>
+                                <span className="text-gray-400 text-sm line-through ml-2">
+                                  {product.price?.toLocaleString?.() || "0"}đ
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-emerald-600 font-bold">
+                                {product.price?.toLocaleString?.() || "0"}đ
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
                   </div>
-                </Link>
+                ))}
               </div>
-            ))}
+            )}
+
+            {products.length > productLimit && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={handleLoadMore}
+                  className="px-6 py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-medium rounded-lg transition-colors duration-300 flex items-center shadow-sm hover:shadow"
+                >
+                  Xem thêm
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 ml-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -683,21 +773,26 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {featuredAuthors.map((author) => (
-              <Link to={`/author/${author.id}`} key={author.id} className="group">
-                <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl text-center p-4">
-                  <div className="relative mx-auto w-24 h-24 mb-4">
-                    <img
-                      src={author.url_image || "/placeholder.svg"}
-                      alt={author.name}
-                      className="w-full h-full object-cover rounded-full border-2 border-emerald-100 transform group-hover:scale-105 transition-transform duration-300"
-                    />
+            {featuredAuthors.length > 0 ? (
+              featuredAuthors.map((author) => (
+                <Link to={`/author/${author.id}`} key={author.id} className="group">
+                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl text-center p-4 h-48">
+                    <div className="relative mx-auto w-24 h-24 mb-4">
+                      <img
+                        src={author.urlImage || "/placeholder.svg"}
+                        alt={author.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover rounded-full border-2 border-emerald-100 transform group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <h3 className="font-medium text-gray-800 mb-1 truncate max-w-full">{author.name}</h3>
+                    <p className="text-sm text-gray-500">{author.bookCount} cuốn sách</p>
                   </div>
-                  <h3 className="font-medium text-gray-800 mb-1">{author.name}</h3>
-                  <p className="text-sm text-gray-500">{author.book_count} cuốn sách</p>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <div className="text-center text-gray-600 py-8 col-span-full">Không có tác giả nổi bật hiện tại.</div>
+            )}
           </div>
         </div>
       </section>

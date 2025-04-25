@@ -37,10 +37,16 @@ public class Review {
     private double rate;
     @Column(nullable = false)
     private String content;
+    @Column(nullable = true)
+    private String reply;
     @Temporal(TemporalType.DATE)
     @Column(nullable = false)
     private Date createdAt;
     @Temporal(TemporalType.DATE)
+    @Column(nullable = true)
+    private Date replyAt;
+    @Temporal(TemporalType.DATE)
     @Column(nullable = false)
     private Date updatedAt;
+
 }

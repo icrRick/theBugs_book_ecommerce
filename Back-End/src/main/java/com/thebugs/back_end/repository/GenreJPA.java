@@ -34,5 +34,5 @@ public interface GenreJPA extends JpaRepository<Genre, Integer> {
                         "LEFT JOIN ProductGenre pg ON g.id = pg.genre.id " +
                         "GROUP BY g.id, g.name, g.urlImage " +
                         "ORDER BY COUNT(pg.product.id) DESC")
-        List<HomeGenreDTO> findAllGenres();
+        List<HomeGenreDTO> findTopGenres(Pageable pageable);
 }

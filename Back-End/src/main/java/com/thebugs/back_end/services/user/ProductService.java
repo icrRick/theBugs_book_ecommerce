@@ -9,7 +9,7 @@ import com.thebugs.back_end.repository.ProductJPA;
 
 @Service
 public class ProductService {
-    
+
     @Autowired
     private ProductJPA productJPA;
 
@@ -17,18 +17,29 @@ public class ProductService {
         return productJPA.getProItemDTO(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy productId: " + productId));
     }
+
     public Product getProductById(Integer productId) {
         return productJPA.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy productId: " + productId));
     }
-    
+
+    public Product getProductByProductCode(String productCode) {
+        return productJPA.getProductByProductCode(productCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy productcode: " + productCode));
+    }
+
+    public Product getProductByProductCode1(String productCode) {
+        return productJPA.getProductByProductCode(productCode)
+                .orElse(null);
+    }
+
     public Product updateProductQuantity(Integer productId, Integer quantity) {
-        Product product=getProductById(productId);
+        Product product = getProductById(productId);
         if (product.getQuantity() < quantity) {
             throw new IllegalArgumentException("Số lượng sản phẩm không đủ");
         }
         product.setQuantity(product.getQuantity() - quantity);
         return productJPA.save(product);
     }
-    
+
 }

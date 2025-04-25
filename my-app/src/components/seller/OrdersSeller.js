@@ -127,6 +127,20 @@ const OrdersSeller = () => {
     { id: "6", label: "Đã nhận" },
   ];
 
+  const debouncedUpdateParams = useCallback(
+    debounce((nextKeyword, nextUserName) => {
+      const params = new URLSearchParams();
+      if (nextKeyword) params.set("keyword", nextKeyword);
+      if (activeTab) params.set("status", activeTab);
+      if (nextUserName) params.set("userName", nextUserName);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
+      params.set("page", 1); // reset về trang 1 khi search
+      setSearchParams(params);
+    }, 400),
+    [activeTab, filters.startDate, filters.endDate]
+  );
+  
   const getStatusNameFromId = (statusId) => {
     switch (statusId) {
       case "1":
@@ -146,19 +160,6 @@ const OrdersSeller = () => {
     }
   };
 
-  const debouncedUpdateParams = useCallback(
-    debounce((nextKeyword, nextUserName) => {
-      const params = new URLSearchParams();
-      if (nextKeyword) params.set("keyword", nextKeyword);
-      if (activeTab) params.set("status", activeTab);
-      if (nextUserName) params.set("userName", nextUserName);
-      if (filters.startDate) params.set("startDate", filters.startDate);
-      if (filters.endDate) params.set("endDate", filters.endDate);
-      params.set("page", 1);
-      setSearchParams(params);
-    }, 400),
-    [activeTab, filters.startDate, filters.endDate]
-  );
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -188,7 +189,10 @@ const OrdersSeller = () => {
         },
       });
       const { data } = response.data;
+      console.log(response);
+      
       if (response.status === 200) {
+
         setOrders(data.objects || []);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));

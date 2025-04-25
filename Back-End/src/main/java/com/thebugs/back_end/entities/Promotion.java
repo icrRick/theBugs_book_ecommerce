@@ -3,6 +3,7 @@ package com.thebugs.back_end.entities;
 import java.util.Date;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -51,6 +52,6 @@ public class Promotion {
     private boolean active;
     @Column(nullable = false)
     private boolean flashSale;
-    @OneToMany(mappedBy = "promotion")
+    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
     private List<PromotionProduct> promotionProducts;
 }

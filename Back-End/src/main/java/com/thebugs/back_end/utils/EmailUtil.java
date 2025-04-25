@@ -1,11 +1,16 @@
 package com.thebugs.back_end.utils;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
+import com.thebugs.back_end.services.user.EmailVerifierService;
+
 import jakarta.mail.internet.MimeMessage;
 
 @Service
@@ -13,6 +18,9 @@ public class EmailUtil {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private EmailVerifierService emailVerifierService;
 
     public boolean sendEmailForgotpassword(String toEmail, String token, int userId) {
         try {
@@ -224,6 +232,303 @@ public class EmailUtil {
         }
     }
 
+    public boolean sendEmailApprove(String toEmail, String title, String ma) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Thông báo");
+            helper.setText(approveContent(title, ma), true);
+            helper.setFrom("lehqpc07896@fpt.edu.vn");
+            mailSender.send(message);
+            System.out.println("✅ HTML email sent to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean sendEmailReject(String toEmail, String title, String ma, List<String> reasons) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Thông báo");
+            helper.setText(rejectContent(title, ma, reasons), true);
+            helper.setFrom("lehqpc07896@fpt.edu.vn");
+            mailSender.send(message);
+            System.out.println("✅ HTML email sent to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean sendEmailRejectReprot(String toEmail, String title, String ma, String reason, String url) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Thông báo");
+            helper.setText(rejectReport(title, ma, reason, url), true);
+            helper.setFrom("lehqpc07896@fpt.edu.vn");
+            mailSender.send(message);
+            System.out.println("✅ HTML email sent to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public String approveContent(String title, String ma) {
+        return """
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                padding: 30px;
+                            }
+                            .container {
+                                max-width: 600px;
+                                margin: auto;
+                                background-color: #ffffff;
+                                padding: 25px;
+                                border-radius: 10px;
+                                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                            }
+                            .header {
+                                font-size: 22px;
+                                font-weight: bold;
+                                color: #2d8f2d;
+                                margin-bottom: 15px;
+                                text-align: center;
+                            }
+                            .content {
+                                font-size: 16px;
+                                color: #333333;
+                                line-height: 1.6;
+                                margin-bottom: 25px;
+                            }
+                            .footer {
+                                font-size: 14px;
+                                color: #888888;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">Thông báo phê duyệt "%s"</div>
+                            <div class="content">
+                                Kính gửi Quý khách,<br><br>
+                                Chúng tôi xin thông báo rằng nội dung <strong>%s</strong> (Mã: <strong>%s</strong>) của Quý khách đã được
+                                <span style="color: green;"><strong>phê duyệt thành công</strong></span> sau quá trình kiểm duyệt theo quy định của hệ thống.<br><br>
+                                Nội dung sẽ được hiển thị công khai (nếu áp dụng) và có hiệu lực ngay sau thời điểm xác nhận này.<br><br>
+                                Cảm ơn Quý khách đã tin tưởng và đồng hành cùng chúng tôi.
+                            </div>
+                        <div class="footer">
+                    Trân trọng,<br>
+                    — Đội ngũ kiểm duyệt nội dung<br>
+                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
+                </div>
+                        </div>
+                    </body>
+                </html>
+                """
+                .formatted(title, title, ma);
+    }
+
+    public String rejectContent(String title, String ma, List<String> reasons) {
+        // Chuyển List<String> thành một chuỗi HTML liệt kê các lý do
+        StringBuilder reasonsHtml = new StringBuilder();
+        for (String r : reasons) {
+            reasonsHtml.append("<li>").append(r).append("</li>");
+        }
+
+        return """
+                                <html>
+                                    <head>
+                                        <meta charset="UTF-8">
+                                        <style>
+                                            body {
+                                                font-family: Arial, sans-serif;
+                                                background-color: #f4f4f4;
+                                                padding: 20px;
+                                            }
+                                            .container {
+                                                background-color: #ffffff;
+                                                padding: 25px;
+                                                border-radius: 8px;
+                                                max-width: 600px;
+                                                margin: auto;
+                                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                            }
+                                            .header {
+                                                font-size: 22px;
+                                                font-weight: bold;
+                                                color: #e74c3c;
+                                                margin-bottom: 15px;
+                                                text-align: center;
+                                            }
+                                            .content {
+                                                font-size: 16px;
+                                                color: #333333;
+                                                line-height: 1.6;
+                                            }
+                                            .item-name {
+                                                font-weight: bold;
+                                                color: #2c3e50;
+                                            }
+                                            .reason-box {
+                                                background-color: #fff3f3;
+                                                padding: 15px;
+                                                border-left: 4px solid #e74c3c;
+                                                margin: 15px 0;
+                                                font-style: italic;
+                                            }
+                                            .footer {
+                                                margin-top: 30px;
+                                                font-size: 14px;
+                                                color: #888888;
+                                                text-align: center;
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="container">
+                                            <div class="header">%s chưa được duyệt</div>
+                                            <div class="content">
+                                                Xin chào bạn,<br><br>
+                                                Chúng tôi xin thông báo rằng <span class="item-name">%s</span> (Mã: <strong>%s</strong>) hiện chưa được duyệt trên hệ thống vì một số lý do sau:<br>
+                                                <div class="reason-box">
+                                                    <ul>%s</ul>
+                                                </div>
+                                                Nếu cần hỗ trợ thêm, bạn có thể liên hệ với đội ngũ kiểm duyệt bất kỳ lúc nào.
+                                            </div>
+                                           <div class="footer">
+                    Trân trọng,<br>
+                    — Đội ngũ kiểm duyệt nội dung<br>
+                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
+                </div>
+
+                                        </div>
+                                    </body>
+                                </html>
+                                """
+                .formatted(title, title, ma, reasonsHtml.toString());
+    }
+
+    public String rejectReport(String title, String ma, String reason, String url) {
+        return """
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                background-color: #f0f2f5;
+                                margin: 0;
+                                padding: 40px;
+                            }
+                            .container {
+                                max-width: 650px;
+                                margin: auto;
+                                background-color: #ffffff;
+                                padding: 30px 40px;
+                                border-radius: 12px;
+                                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+                                color: #333333;
+                            }
+                            .header {
+                                font-size: 24px;
+                                font-weight: 700;
+                                color: #e74c3c;
+                                margin-bottom: 20px;
+                                text-align: center;
+                            }
+                            .content {
+                                font-size: 16px;
+                                line-height: 1.6;
+                                margin-bottom: 30px;
+                            }
+                            .reason {
+                                background-color: #fce4e4;
+                                padding: 15px;
+                                border-left: 5px solid #e74c3c;
+                                border-radius: 5px;
+                                margin: 20px 0;
+                                color: #c0392b;
+                                font-style: italic;
+                            }
+                            .btn {
+                                display: inline-block;
+                                padding: 12px 20px;
+                                background-color: #27ae60;
+                                color: white;
+                                text-decoration: none;
+                                border-radius: 6px;
+                                font-weight: bold;
+                                transition: background-color 0.3s ease;
+                            }
+                            .btn:hover {
+                                background-color: #1e8449;
+                            }
+                            .footer {
+                                text-align: center;
+                                font-size: 14px;
+                                color: #888888;
+                                margin-top: 30px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">Thông báo cấm nội dung "%s"</div>
+
+                            <div class="content">
+                                Kính gửi Quý khách,<br><br>
+                                Sau quá trình kiểm tra và đánh giá, chúng tôi xin thông báo rằng nội dung <strong>%s</strong> (Mã: <strong>%s</strong>) đã bị
+                                <span style="color: red;"><strong>cấm hoạt động</strong></span> trên hệ thống do vi phạm các quy định và chính sách của nền tảng.<br>
+
+                                <div class="reason">
+                                    Lý do: %s
+                                </div>
+
+                                Quý khách có thể xem thêm thông tin chi tiết hoặc gửi phản hồi qua liên kết sau:<br><br>
+                                <a class="btn" href="%s" target="_blank">Xem chi tiết</a>
+                            </div>
+                            <div class="footer">
+                    Trân trọng,<br>
+                    — Đội ngũ kiểm duyệt nội dung<br>
+                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
+                </div>
+                        </div>
+                    </body>
+                </html>
+                """
+                .formatted(title, title, ma, reason, url);
+    }
+
+    public boolean checkEmail(String email) {
+
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        if (!Pattern.matches(emailRegex, email)) {
+            throw new IllegalArgumentException("Email không đúng định dạng");
+        }
+
+        if (!emailVerifierService.isEmailValid(email)) {
+            throw new IllegalArgumentException("Email không tồn tại");
+        }
+
+        return true;
+    }
+
     public void sendMailRefundContactRequest(String setTo, String setSubject, String orderNumber, String shopEmail,
             String shopPhone) {
         MimeMessage message = mailSender.createMimeMessage();
@@ -401,5 +706,4 @@ public class EmailUtil {
             e.printStackTrace();
         }
     }
-
 }

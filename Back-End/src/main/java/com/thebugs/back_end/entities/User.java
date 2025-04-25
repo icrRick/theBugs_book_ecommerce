@@ -47,7 +47,7 @@ public class User {
     @Column(name = "cccd")
     private String cccd;
     @Column(name = "verify")
-    private boolean verify;
+    private Boolean verify;
     @Column(name = "dob")
     @Temporal(TemporalType.DATE)
     private Date dob;
@@ -74,7 +74,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<ReportProduct> reportProducts;
-    
+
     @OneToMany(mappedBy = "user")
     private List<ReportShop> reportShops;
 

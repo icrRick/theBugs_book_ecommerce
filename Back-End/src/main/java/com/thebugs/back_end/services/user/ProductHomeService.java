@@ -1,22 +1,19 @@
 package com.thebugs.back_end.services.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.thebugs.back_end.dto.HomeAuthorDTO;
-import com.thebugs.back_end.dto.HomeGenreDTO;
-import com.thebugs.back_end.dto.HomeProductDTO;
-import com.thebugs.back_end.dto.HomePromotionDTO;
+import com.thebugs.back_end.dto.*;
 import com.thebugs.back_end.repository.AuthorJPA;
 import com.thebugs.back_end.repository.GenreJPA;
 import com.thebugs.back_end.repository.ProductHomeRepository;
 import com.thebugs.back_end.repository.PromotionProductJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 
-import com.thebugs.back_end.dto.FlashSaleShopDTO;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductHomeService {
@@ -38,50 +35,44 @@ public class ProductHomeService {
 
         public List<HomeProductDTO> getProducts(String filter, Pageable pageable) {
                 List<HomeProductDTO> products;
-                products = productRepository.getHomeProducts(pageable).getContent();
+                LocalDate currentDate = LocalDate.now();
+                LocalDate thirtyDaysAgo = currentDate.minusDays(30);
 
                 if (filter != null) {
                         switch (filter.toLowerCase()) {
                                 case "popular":
-                                        products = products.stream()
-                                                        .filter(p -> p.getRate() >= 4.0)
-                                                        .collect(Collectors.toList());
+                                        products = productRepository.findPopularProducts(pageable, thirtyDaysAgo);
                                         break;
                                 case "new":
-                                        products = products.stream()
-                                                        .filter(p -> Boolean.TRUE.equals(p.getIsNew()))
-                                                        .collect(Collectors.toList());
+                                        products = productRepository.findNewProducts(pageable, thirtyDaysAgo);
                                         break;
                                 case "sale":
-                                        products = products.stream()
-                                                        .filter(p -> p.getPromotionValue() != null
-                                                                        && p.getPromotionValue() > 0)
-                                                        .collect(Collectors.toList());
+                                        products = productRepository.findSaleProducts(pageable, thirtyDaysAgo);
                                         break;
                                 default:
+                                        products = productRepository.getHomeProducts(pageable, thirtyDaysAgo)
+                                                        .getContent();
                                         break;
                         }
+                } else {
+                        products = productRepository.getHomeProducts(pageable, thirtyDaysAgo).getContent();
                 }
-
-                if (products.isEmpty()) {
-                        throw new IllegalArgumentException("Không tìm thấy sản phẩm cho bộ lọc: " + filter);
+                for (HomeProductDTO product : products) {
+                        List<String> authorNames = productRepository.findAuthorNamesByProductId(product.getProductId());
+                        product.setAuthorNames(authorNames);
                 }
                 return products;
         }
 
         public List<HomeAuthorDTO> getFeaturedAuthors() {
-                List<HomeAuthorDTO> authors = authorRepository.findFeaturedAuthors();
-                if (authors.isEmpty()) {
-                        throw new IllegalArgumentException("Không tìm thấy tác giả nổi bật");
-                }
+                Pageable pageable = PageRequest.of(0, 6);
+                List<HomeAuthorDTO> authors = authorRepository.findFeaturedAuthors(pageable);
                 return authors;
         }
 
         public List<HomeGenreDTO> getGenres() {
-                List<HomeGenreDTO> genres = genreRepository.findAllGenres();
-                if (genres.isEmpty()) {
-                        throw new IllegalArgumentException("Không tìm thấy danh mục sách");
-                }
+                Pageable pageable = PageRequest.of(0, 12);
+                List<HomeGenreDTO> genres = genreRepository.findTopGenres(pageable);
                 return genres;
         }
 
@@ -100,4 +91,5 @@ public class ProductHomeService {
                 }
                 return shops;
         }
+
 }
