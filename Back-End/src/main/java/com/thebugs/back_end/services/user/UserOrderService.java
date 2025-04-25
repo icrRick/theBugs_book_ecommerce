@@ -111,12 +111,14 @@ public class UserOrderService {
         } else {
             checkShopId.setNoted(cancelReason);
             if (checkShopId.getOrderPayment().getId() == 3) {
-                String setSubject = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với nhân viên để được hỗ trợ hoàn tiền "
-                        + checkShopId.getShop().getUser().getEmail();
-                getUserEmailCancelReason(orderId, setSubject);
+                // String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với
+                // Shop "
+                // + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
+                // + checkShopId.getShop().getUser().getEmail();
+                getUserEmailNoted(orderId, checkShopId.getShop().getUser().getEmail());
             }
         }
-        if (orderStatusId == 4) {
+        if (orderStatusId == 5) {
             checkShopId.setDeliveredAt(new Date());
         }
 
@@ -132,17 +134,28 @@ public class UserOrderService {
         return true;
     }
 
+    public boolean getUserEmailNoted(Integer orderId, String shopMail) {
+        Order order = getById(orderId);
+        String mail = order.getUser().getEmail();
+        String shopPhone = "0965199249";
+        String orderNumber = ("#" + orderId);
+        String setSubject = ("Thông báo hoàn tiền cho đơn hàng" + " " + orderNumber + " "
+                + "của bạn đã bị hủy");
+        emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, shopMail, shopPhone);
+        return true;
+    }
+
     @Scheduled(cron = "0 0 0 * * ?")
     public void autoConfirmReceived() {
         Date now = new Date();
-        List<Order> orders = orderJPA.findDeliveredOrdersByStatus(4);
+        List<Order> orders = orderJPA.findDeliveredOrdersByStatus(5);
 
         for (Order order : orders) {
             if (order.getDeliveredAt() == null) {
                 long formatSecond = (now.getTime() - order.getDeliveredAt().getTime());
                 long checkDay = formatSecond / (1000 * 60 * 60 * 24);
                 if (checkDay >= 7) {
-                    OrderStatus status = orderStatusJPA.findById(5)
+                    OrderStatus status = orderStatusJPA.findById(6)
                             .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy trạng thái 'Đã nhận'"));
                     order.setOrderStatus(status);
                     orderJPA.save(order);
@@ -181,8 +194,8 @@ public class UserOrderService {
                 return true;
 
             }
-        } else if (currentStatus == 4) {
-            if (newOrderStatusId == 5) {
+        } else if (currentStatus == 5) {
+            if (newOrderStatusId == 6) {
                 return true;
             }
         } else {

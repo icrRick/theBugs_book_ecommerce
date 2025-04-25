@@ -34,8 +34,10 @@ public class ReviewService { // Không cần abstract nếu là service cụ th�
     // return reviewContents.isEmpty() ? null : reviewContents.get(0);
     // }
 
-    // createReview product by Tam
 
+
+
+    // createReview product by Tam
     public boolean createReview(ReviewBean reviewBean, String authorizationHeader) {
         OrderItem orderItem = orderItemService.getOrderItemById(reviewBean.getOrderItemId());
         User user = userService.getUserToken(authorizationHeader);
@@ -44,7 +46,7 @@ public class ReviewService { // Không cần abstract nếu là service cụ th�
         if (reviewOptional.isPresent()) {
             throw new IllegalArgumentException("Đã có đánh giá của bạn cho sản phẩm này");
         }
-        if (orderItem.getOrder().getOrderStatus().getId() != 5) {
+        if (orderItem.getOrder().getOrderStatus().getId() != 6) {
             throw new IllegalArgumentException("Chỉ có thể đánh giá khi đơn hàng đã nhận được hàng");
         }
         if (reviewBean.getRating() < 1 || reviewBean.getRating() > 5) {
@@ -66,5 +68,4 @@ public class ReviewService { // Không cần abstract nếu là service cụ th�
                 userId).isPresent();
     }
 
-   
 }

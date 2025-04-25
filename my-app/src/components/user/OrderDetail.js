@@ -105,7 +105,7 @@ const OrderDetail = () => {
     }
   };
 
-  if (!loading && item === null) {
+  if (!loading && item === null && <Loading />) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
