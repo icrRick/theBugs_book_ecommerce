@@ -188,39 +188,35 @@ const Ordered = () => {
   const fetchAllOrders = async (keyword = "", page = 1) => {
     setIsLoading(true);
     showErrorToast(null);
-    try {
-      const response = await axiosInstance.get("/user/order", {
+    axiosInstance
+      .get("/user/order", {
         params: {
           keyword: keyword || undefined,
           page: page,
           size: pageSize,
         },
-      });
-      console.log("RESPONSE");
-      console.log(response);
-      const { data, message } = response.data;
-      if (response.status === 200) {
-        const ordersList = data.objects || [];
-        setAllOrders(ordersList);
-        setOrders(ordersList);
-        setTotalOrders(data.totalItems || 0);
-        setTotalPages(Math.ceil(data.totalItems / pageSize));
-        setTabCounts(calculateTabCounts(ordersList));
-      } else {
-        console.error("Không thể tải đơn hàng:", message);
-        showErrorToast(message || "Không thể tải danh sách đơn hàng.");
+      })
+      .then((response) => {
+        console.log(response);
+        setAllOrders(response.data.data.objects);
+        setOrders(response.data.data.objects);
+        setTotalOrders(response.data.data.totalItems || 0);
+        setTotalPages(Math.ceil(response.data.data.totalItems / pageSize));
+        setTabCounts(calculateTabCounts(response.data.data.objects));
+      })
+      .catch((error) => {
+        console.log(error);
+
+        // showErrorToast(
+        //   error.response.data.message || "Không thể tải danh sách đơn hàng."
+        // );
         setAllOrders([]);
         setOrders([]);
         setTabCounts({});
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      setAllOrders([]);
-      setOrders([]);
-      setTabCounts({});
-    } finally {
-      setIsLoading(false);
-    }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const searchOrders = async (keyword = "", page = 1) => {
@@ -608,7 +604,7 @@ const Ordered = () => {
                 </div>
               </div>
             ))
-        ) : filteredOrders.length > 0 ? (
+        ) : filteredOrders?.length > 0 ? (
           filteredOrders.map((order) => (
             <div
               key={order.id}
