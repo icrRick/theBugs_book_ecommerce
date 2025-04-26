@@ -15,4 +15,6 @@ public class ShopInfor_Bean {
   private Integer wardId;
   private Integer districtId;
   private Integer provinceId;
+  private String phoneNumber;
+  private String email;
 }
