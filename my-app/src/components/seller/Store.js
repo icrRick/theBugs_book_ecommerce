@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast } from "react-toastify";
@@ -161,27 +161,23 @@ const Store = () => {
       [name]: value,
     }));
   };
-
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    if (files && files[0]) {
-      setStoreData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }));
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (name === "logo") {
-          setPreviewLogo(e.target.result);
-        } else if (name === "banner") {
-          setPreviewBanner(e.target.result);
-        }
-      };
-      reader.readAsDataURL(files[0]);
+  useEffect(() => {
+    console.log("Preview Logo: ", previewLogo);
+  }, [previewLogo]);
+  const handleBannerChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreviewBanner(file);
     }
   };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreviewLogo(file);
+    }
+  };
+
   // Giả lập API call để lấy danh sách tỉnh/thành phố
   const fetchProvinces = async () => {
     setLoading((prev) => ({ ...prev, provinces: true }));
@@ -328,7 +324,7 @@ const Store = () => {
       bannerUrl: storeData.bannerUrl || "",
     };
     console.log("shopInfoData", shopInfoData);
-    
+
     try {
       const formDataToSend = new FormData();
 
@@ -339,14 +335,16 @@ const Store = () => {
           type: "application/json",
         })
       );
+      console.log("LOGO ");
+      console.log(previewLogo);
 
       // Append file nếu có thay đổi
-      if (storeData.logo instanceof File) {
-        formDataToSend.append("logo", storeData.logo);
+      if (previewLogo) {
+        formDataToSend.append("logo", previewLogo);
       }
 
-      if (storeData.banner instanceof File) {
-        formDataToSend.append("banner", storeData.banner);
+      if (previewBanner) {
+        formDataToSend.append("banner", previewBanner);
       }
 
       const response = await axiosInstance.put(
@@ -363,7 +361,7 @@ const Store = () => {
       if (data.status) {
         showSuccessToast(data.message);
         setIsEditing(false);
-        setOriginalData({ ...storeData });
+        fetchShopData();
       }
     } catch (error) {
       console.error("Error updating shop info:", error);
@@ -443,6 +441,7 @@ const Store = () => {
 
         {/* Store Banner and Logo */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+          {/* Banner */}
           <div className="relative h-56 md:h-72 bg-gradient-to-r from-gray-100 to-gray-200">
             {previewBanner ? (
               <img
@@ -465,10 +464,9 @@ const Store = () => {
                 <label className="inline-flex items-center justify-center p-3 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
                   <input
                     type="file"
-                    name="banner"
-                    onChange={handleFileChange}
-                    className="hidden"
                     accept="image/*"
+                    className="hidden"
+                    onChange={handleBannerChange}
                   />
                   <svg
                     className="w-5 h-5 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"
@@ -488,6 +486,7 @@ const Store = () => {
             )}
           </div>
 
+          {/* Logo */}
           <div className="px-6 py-5 flex flex-col md:flex-row md:items-center">
             <div className="relative -mt-20 md:-mt-16 mb-4 md:mb-0 md:mr-6">
               <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white overflow-hidden bg-white shadow-md">
@@ -511,10 +510,9 @@ const Store = () => {
                   <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
                     <input
                       type="file"
-                      name="logo"
-                      onChange={handleFileChange}
-                      className="hidden"
                       accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
                     />
                     <svg
                       className="w-4 h-4 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"

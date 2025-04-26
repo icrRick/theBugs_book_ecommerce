@@ -72,6 +72,8 @@ public class Seller_ShopInforService {
           return new ResponseData(false, "Cập nhật logo thất bại", null, 400);
         }
         shop.setImage(logoUrl);
+      } else {
+        shop.setImage(shopBean.getLogoUrl());
       }
       if (banner != null) {
         String bannerUrl = g_ImageService.uploadImage(banner);
@@ -79,11 +81,12 @@ public class Seller_ShopInforService {
           return new ResponseData(false, "Cập nhật banner thất bại", null, 400);
         }
         shop.setBanner(bannerUrl);
+      } else {
+        shop.setBanner(shopBean.getBannerUrl());
       }
 
       shop.setName(shopBean.getName());
-      shop.setImage(shopBean.getLogoUrl());
-      shop.setBanner(shopBean.getBannerUrl());
+
       shop.setDescription(shopBean.getDescription());
       shop.setBankOwnerName(shopBean.getBankOwnerName());
       shop.setBankOwnerNumber(shopBean.getBankOwnerNumber());
