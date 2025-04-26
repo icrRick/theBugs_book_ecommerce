@@ -5,7 +5,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.thebugs.back_end.beans.ShopInfor_Bean;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.seller.Seller_ImageService;
 import com.thebugs.back_end.services.seller.Seller_ShopInforService;
 
 import org.springframework.beans.factory.annotation.Autowired;

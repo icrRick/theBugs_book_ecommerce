@@ -1,141 +1,166 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import axiosInstance from "../../utils/axiosInstance"
-import axios from "axios"
-import { getToken } from "../../utils/cookie"
-import { showErrorToast, showSuccessToast } from "../../utils/Toast"
+import { useState, useEffect, useCallback } from "react";
+import axiosInstance from "../../utils/axiosInstance";
+import axios from "axios";
+import { getToken } from "../../utils/cookie";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 // Custom hook để quản lý địa chỉ
 const useAddressManagement = () => {
-  const [provinces, setProvinces] = useState([])
-  const [districts, setDistricts] = useState([])
-  const [wards, setWards] = useState([])
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
   const [addressNames, setAddressNames] = useState({
     provinceName: "Đang tải...",
     districtName: "Đang tải...",
     wardName: "Đang tải...",
-  })
+  });
   const [loading, setLoading] = useState({
     provinces: false,
     districts: false,
     wards: false,
-  })
+  });
 
   // Fetch tỉnh/thành phố
   const fetchProvinces = useCallback(async () => {
-    setLoading((prev) => ({ ...prev, provinces: true }))
+    setLoading((prev) => ({ ...prev, provinces: true }));
     try {
-      const response = await axios.get("http://localhost:8080/api/users/get-province-infor", {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-      })
-      setProvinces(response.data.data || [])
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-province-infor",
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setProvinces(response.data.data || []);
     } catch (error) {
-      console.error("Error fetching provinces:", error)
+      console.error("Error fetching provinces:", error);
     } finally {
-      setLoading((prev) => ({ ...prev, provinces: false }))
+      setLoading((prev) => ({ ...prev, provinces: false }));
     }
-  }, [])
+  }, []);
 
   // Fetch quận/huyện
   const fetchDistricts = useCallback(async (provinceId) => {
-    if (!provinceId) return
+    if (!provinceId) return;
 
-    setLoading((prev) => ({ ...prev, districts: true }))
+    setLoading((prev) => ({ ...prev, districts: true }));
     try {
-      const response = await axios.get("http://localhost:8080/api/users/get-district-infor", {
-        params: { provinceID: provinceId },
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-      })
-      setDistricts(response.data.data || [])
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-district-infor",
+        {
+          params: { provinceID: provinceId },
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setDistricts(response.data.data || []);
     } catch (error) {
-      console.error("Error fetching districts:", error)
+      console.error("Error fetching districts:", error);
     } finally {
-      setLoading((prev) => ({ ...prev, districts: false }))
+      setLoading((prev) => ({ ...prev, districts: false }));
     }
-  }, [])
+  }, []);
 
   // Fetch phường/xã
   const fetchWards = useCallback(async (districtId) => {
-    if (!districtId) return
+    if (!districtId) return;
 
-    setLoading((prev) => ({ ...prev, wards: true }))
+    setLoading((prev) => ({ ...prev, wards: true }));
     try {
-      const response = await axios.get("http://localhost:8080/api/users/get-ward-infor", {
-        params: { districtID: districtId },
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-      })
-      setWards(response.data.data || [])
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-ward-infor",
+        {
+          params: { districtID: districtId },
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setWards(response.data.data || []);
     } catch (error) {
-      console.error("Error fetching wards:", error)
+      console.error("Error fetching wards:", error);
     } finally {
-      setLoading((prev) => ({ ...prev, wards: false }))
+      setLoading((prev) => ({ ...prev, wards: false }));
     }
-  }, [])
+  }, []);
 
   // Fetch tên địa chỉ
-  const fetchAddressNames = useCallback(async (provinceId, districtId, wardId) => {
-    try {
-      const names = {
-        provinceName: "Chưa cập nhật",
-        districtName: "Chưa cập nhật",
-        wardName: "Chưa cập nhật",
-      }
+  const fetchAddressNames = useCallback(
+    async (provinceId, districtId, wardId) => {
+      try {
+        const names = {
+          provinceName: "Chưa cập nhật",
+          districtName: "Chưa cập nhật",
+          wardName: "Chưa cập nhật",
+        };
 
-      // Fetch tên tỉnh
-      if (provinceId) {
-        const provinceRes = await axios.get("http://localhost:8080/api/users/get-province-infor", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        })
-        const province = provinceRes.data.data.find((p) => p.ProvinceID === provinceId)
-        if (province) {
-          names.provinceName = province.ProvinceName
+        // Fetch tên tỉnh
+        if (provinceId) {
+          const provinceRes = await axios.get(
+            "http://localhost:8080/api/users/get-province-infor",
+            {
+              headers: { Authorization: `Bearer ${getToken()}` },
+            }
+          );
+          const province = provinceRes.data.data.find(
+            (p) => p.ProvinceID === provinceId
+          );
+          if (province) {
+            names.provinceName = province.ProvinceName;
+          }
         }
-      }
 
-      // Fetch tên quận/huyện
-      if (provinceId && districtId) {
-        const districtRes = await axios.get("http://localhost:8080/api/users/get-district-infor", {
-          params: { provinceID: provinceId },
-          headers: { Authorization: `Bearer ${getToken()}` },
-        })
-        const district = districtRes.data.data.find((d) => d.DistrictID === districtId)
-        if (district) {
-          names.districtName = district.DistrictName
+        // Fetch tên quận/huyện
+        if (provinceId && districtId) {
+          const districtRes = await axios.get(
+            "http://localhost:8080/api/users/get-district-infor",
+            {
+              params: { provinceID: provinceId },
+              headers: { Authorization: `Bearer ${getToken()}` },
+            }
+          );
+          const district = districtRes.data.data.find(
+            (d) => d.DistrictID === districtId
+          );
+          if (district) {
+            names.districtName = district.DistrictName;
+          }
         }
-      }
 
-      // Fetch tên phường/xã
-      if (districtId && wardId) {
-        const wardRes = await axios.get("http://localhost:8080/api/users/get-ward-infor", {
-          params: { districtID: districtId },
-          headers: { Authorization: `Bearer ${getToken()}` },
-        })
-        const ward = wardRes.data.data.find((w) => w.WardCode === wardId)
-        if (ward) {
-          names.wardName = ward.WardName
+        // Fetch tên phường/xã
+        if (districtId && wardId) {
+          const wardRes = await axios.get(
+            "http://localhost:8080/api/users/get-ward-infor",
+            {
+              params: { districtID: districtId },
+              headers: { Authorization: `Bearer ${getToken()}` },
+            }
+          );
+          const ward = wardRes.data.data.find((w) => w.WardCode === wardId);
+          if (ward) {
+            names.wardName = ward.WardName;
+          }
         }
-      }
 
-      setAddressNames(names)
-    } catch (error) {
-      console.error("Error fetching address names:", error)
-      setAddressNames({
-        provinceName: "Lỗi khi tải",
-        districtName: "Lỗi khi tải",
-        wardName: "Lỗi khi tải",
-      })
-    }
-  }, [])
+        setAddressNames(names);
+      } catch (error) {
+        console.error("Error fetching address names:", error);
+        setAddressNames({
+          provinceName: "Lỗi khi tải",
+          districtName: "Lỗi khi tải",
+          wardName: "Lỗi khi tải",
+        });
+      }
+    },
+    []
+  );
 
   return {
     provinces,
@@ -148,13 +173,13 @@ const useAddressManagement = () => {
     fetchWards,
     fetchAddressNames,
     setAddressNames,
-  }
-}
+  };
+};
 
 const Store = () => {
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [storeData, setStoreData] = useState({
     name: "",
@@ -171,11 +196,11 @@ const Store = () => {
     bankOwnerNumber: "",
     bankProvideName: "",
     shopSlug: "",
-  })
+  });
 
-  const [previewLogo, setPreviewLogo] = useState(null)
-  const [previewBanner, setPreviewBanner] = useState(null)
-  const [originalData, setOriginalData] = useState({})
+  const [previewLogo, setPreviewLogo] = useState(null);
+  const [previewBanner, setPreviewBanner] = useState(null);
+  const [originalData, setOriginalData] = useState({});
 
   const {
     provinces,
@@ -188,125 +213,132 @@ const Store = () => {
     fetchWards,
     fetchAddressNames,
     setAddressNames,
-  } = useAddressManagement()
+  } = useAddressManagement();
 
   // Fetch shop data
   const fetchShopData = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await axiosInstance.get("/api/seller/me")
-      const data = response.data.data
+      const response = await axiosInstance.get("/api/seller/me");
+      const data = response.data.data;
 
-      setStoreData(data)
-      setOriginalData(data)
-      setPreviewLogo(data.logoUrl)
-      setPreviewBanner(data.bannerUrl)
+      setStoreData(data);
+      setOriginalData(data);
+      setPreviewLogo(data.logoUrl);
+      setPreviewBanner(data.bannerUrl);
 
       // Fetch địa chỉ nếu có
       if (data.provinceId || data.districtId || data.wardId) {
-        fetchAddressNames(data.provinceId, data.districtId, data.wardId)
+        fetchAddressNames(data.provinceId, data.districtId, data.wardId);
       } else {
         setAddressNames({
           provinceName: "Chưa cập nhật",
           districtName: "Chưa cập nhật",
           wardName: "Chưa cập nhật",
-        })
+        });
       }
     } catch (error) {
-      console.error("Error fetching shop data:", error)
-      showErrorToast("Không thể tải thông tin cửa hàng")
+      console.error("Error fetching shop data:", error);
+      showErrorToast("Không thể tải thông tin cửa hàng");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [fetchAddressNames, setAddressNames])
+  }, [fetchAddressNames, setAddressNames]);
 
   // Initial data load
   useEffect(() => {
-    fetchShopData()
-  }, [fetchShopData])
+    fetchShopData();
+  }, [fetchShopData]);
 
   // Load address data when editing
   useEffect(() => {
     if (isEditing) {
-      fetchProvinces()
+      fetchProvinces();
 
       if (storeData.provinceId) {
-        fetchDistricts(storeData.provinceId)
+        fetchDistricts(storeData.provinceId);
       }
 
       if (storeData.districtId) {
-        fetchWards(storeData.districtId)
+        fetchWards(storeData.districtId);
       }
     }
-  }, [isEditing, storeData.provinceId, storeData.districtId, fetchProvinces, fetchDistricts, fetchWards])
+  }, [
+    isEditing,
+    storeData.provinceId,
+    storeData.districtId,
+    fetchProvinces,
+    fetchDistricts,
+    fetchWards,
+  ]);
 
   // Handle form input changes
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setStoreData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   // Handle file uploads
   const handleBannerChange = (e) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files[0]) {
-      setPreviewBanner(files[0])
+      setPreviewBanner(files[0]);
     }
-  }
+  };
 
   const handleLogoChange = (e) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files[0]) {
-      setPreviewLogo(files[0])
+      setPreviewLogo(files[0]);
     }
-  }
+  };
 
   // Handle address changes
   const handleAddressChange = (field, value) => {
     setStoreData((prev) => ({
       ...prev,
       [field]: value,
-    }))
+    }));
 
     // Reset dependent fields
     if (field === "provinceId" && value) {
-      fetchDistricts(value)
+      fetchDistricts(value);
       setStoreData((prev) => ({
         ...prev,
         districtId: "",
         wardId: "",
-      }))
+      }));
     } else if (field === "districtId" && value) {
-      fetchWards(value)
+      fetchWards(value);
       setStoreData((prev) => ({
         ...prev,
         wardId: "",
-      }))
+      }));
     }
-  }
+  };
 
   const handleProvinceChange = (e) => {
-    const provinceId = Number.parseInt(e.target.value, 10)
-    handleAddressChange("provinceId", provinceId)
-  }
+    const provinceId = Number.parseInt(e.target.value, 10);
+    handleAddressChange("provinceId", provinceId);
+  };
 
   const handleDistrictChange = (e) => {
-    const districtId = e.target.value
-    handleAddressChange("districtId", districtId)
-  }
+    const districtId = e.target.value;
+    handleAddressChange("districtId", districtId);
+  };
 
   const handleWardChange = (e) => {
-    const wardId = e.target.value
-    handleAddressChange("wardId", wardId)
-  }
+    const wardId = e.target.value;
+    handleAddressChange("wardId", wardId);
+  };
 
   // Submit form
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     // Build shop info data
     const shopInfoData = {
@@ -323,59 +355,63 @@ const Store = () => {
       provinceId: storeData.provinceId || "",
       logoUrl: storeData.logoUrl || "",
       bannerUrl: storeData.bannerUrl || "",
-    }
+    };
 
     try {
-      const formDataToSend = new FormData()
+      const formDataToSend = new FormData();
 
       // Append shop info as JSON blob
       formDataToSend.append(
         "shopInfo",
         new Blob([JSON.stringify(shopInfoData)], {
           type: "application/json",
-        }),
-      )
+        })
+      );
 
       // Append files if changed
       if (previewLogo instanceof File) {
-        formDataToSend.append("logo", previewLogo)
+        formDataToSend.append("logo", previewLogo);
       }
 
       if (previewBanner instanceof File) {
-        formDataToSend.append("banner", previewBanner)
+        formDataToSend.append("banner", previewBanner);
       }
 
-      const response = await axiosInstance.put("/api/seller/store", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
+      const response = await axiosInstance.put(
+        "/api/seller/store",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      const data = response.data
+      const data = response.data;
       if (data.status) {
-        showSuccessToast(data.message || "Cập nhật thành công")
-        setIsEditing(false)
-        fetchShopData()
+        showSuccessToast(data.message || "Cập nhật thành công");
+        setIsEditing(false);
+        fetchShopData();
       }
     } catch (error) {
-      console.error("Error updating shop info:", error)
+      console.error("Error updating shop info:", error);
       if (error.response) {
-        showErrorToast(error.response.data.message || "Cập nhật thất bại")
+        showErrorToast(error.response.data.message || "Cập nhật thất bại");
       } else {
-        showErrorToast("Đã xảy ra lỗi khi cập nhật")
+        showErrorToast("Đã xảy ra lỗi khi cập nhật");
       }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Cancel editing
   const handleCancel = () => {
-    setStoreData({ ...originalData })
-    setPreviewLogo(originalData.logoUrl)
-    setPreviewBanner(originalData.bannerUrl)
-    setIsEditing(false)
-  }
+    setStoreData({ ...originalData });
+    setPreviewLogo(originalData.logoUrl);
+    setPreviewBanner(originalData.bannerUrl);
+    setIsEditing(false);
+  };
 
   // Loading state
   if (isLoading) {
@@ -386,7 +422,7 @@ const Store = () => {
           <p className="mt-4 text-gray-600">Đang tải thông tin cửa hàng...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -395,8 +431,12 @@ const Store = () => {
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Thông tin cửa hàng</h1>
-            <p className="text-gray-500 mt-1">Quản lý thông tin và hình ảnh cửa hàng của bạn</p>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Thông tin cửa hàng
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Quản lý thông tin và hình ảnh cửa hàng của bạn
+            </p>
           </div>
 
           {!isEditing ? (
@@ -467,7 +507,12 @@ const Store = () => {
                       viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
                     </svg>
                     Lưu thay đổi
                   </>
@@ -483,7 +528,11 @@ const Store = () => {
           <div className="relative h-56 md:h-72 bg-gradient-to-r from-gray-100 to-gray-200">
             {previewBanner ? (
               <img
-                src={previewBanner instanceof File ? URL.createObjectURL(previewBanner) : previewBanner}
+                src={
+                  previewBanner instanceof File
+                    ? URL.createObjectURL(previewBanner)
+                    : previewBanner
+                }
                 alt="Ảnh bìa cửa hàng"
                 className="w-full h-full object-cover transition-opacity duration-300"
               />
@@ -496,7 +545,12 @@ const Store = () => {
             {isEditing && (
               <div className="absolute bottom-4 right-4">
                 <label className="inline-flex items-center justify-center p-3 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
-                  <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleBannerChange}
+                  />
                   <svg
                     className="w-5 h-5 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"
                     fill="none"
@@ -521,7 +575,11 @@ const Store = () => {
               <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white overflow-hidden bg-white shadow-md transition-transform duration-300 hover:scale-105">
                 {previewLogo ? (
                   <img
-                    src={previewLogo instanceof File ? URL.createObjectURL(previewLogo) : previewLogo}
+                    src={
+                      previewLogo instanceof File
+                        ? URL.createObjectURL(previewLogo)
+                        : previewLogo
+                    }
                     alt="Logo cửa hàng"
                     className="w-full h-full object-cover"
                   />
@@ -533,7 +591,12 @@ const Store = () => {
 
                 {isEditing && (
                   <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
-                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
                     <svg
                       className="w-4 h-4 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"
                       fill="none"
@@ -616,7 +679,9 @@ const Store = () => {
               <div className="space-y-6">
                 {/* Email */}
                 <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email liên hệ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email liên hệ <span className="text-red-500">*</span>
+                  </label>
                   {isEditing ? (
                     <input
                       type="email"
@@ -649,7 +714,9 @@ const Store = () => {
 
                 {/* Phone */}
                 <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -682,7 +749,9 @@ const Store = () => {
 
                 {/* Address */}
                 <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Địa chỉ chi tiết <span className="text-red-500">*</span>
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -737,7 +806,10 @@ const Store = () => {
                         >
                           <option value="">-- Chọn Tỉnh/Thành phố --</option>
                           {provinces?.map((province) => (
-                            <option key={province.ProvinceID} value={province.ProvinceID}>
+                            <option
+                              key={province.ProvinceID}
+                              value={province.ProvinceID}
+                            >
                               {province.ProvinceName}
                             </option>
                           ))}
@@ -820,7 +892,10 @@ const Store = () => {
                         >
                           <option value="">-- Chọn Quận/Huyện --</option>
                           {districts.map((district) => (
-                            <option key={district.DistrictID} value={district.DistrictID}>
+                            <option
+                              key={district.DistrictID}
+                              value={district.DistrictID}
+                            >
                               {district.DistrictName}
                             </option>
                           ))}
@@ -1013,7 +1088,7 @@ const Store = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Store
+export default Store;
