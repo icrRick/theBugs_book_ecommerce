@@ -46,4 +46,13 @@ public class Seller_ImageService {
 
         return images;
     }
+
+    protected String uploadImage(MultipartFile realImage) {
+        try {
+            return CloudinaryUpload.uploadImage(realImage);
+        } catch (Exception e) {
+            System.out.println("Lỗi Image nè: " + e.getMessage());
+            return null;
+        }
+    }
 }

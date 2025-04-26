@@ -1,14 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useAuth } from "../../contexts/AuthContext"
-import axiosInstance from "../../utils/axiosInstance"
-import { toast } from "react-toastify"
+import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import axiosInstance from "../../utils/axiosInstance";
+import { toast } from "react-toastify";
+import { set } from "lodash";
+import axios from "axios";
+import { getToken } from "../../utils/cookie";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 const Store = () => {
-  const { currentUser } = useAuth()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
+  const { currentUser } = useAuth();
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [addressNames, setAddressNames] = useState({
+    provinceName: "Đang tải...",
+    districtName: "Đang tải...",
+    wardName: "Đang tải...",
+  });
+
+  const [loading, setLoading] = useState({
+    provinces: false,
+    districts: false,
+    wards: false,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [storeData, setStoreData] = useState({
     name: "",
     description: "",
@@ -22,120 +40,356 @@ const Store = () => {
     banner: null,
     returnPolicy: "",
     shippingPolicy: "",
-  })
-  const [previewLogo, setPreviewLogo] = useState("")
-  const [previewBanner, setPreviewBanner] = useState("")
-  const [originalData, setOriginalData] = useState({})
+  });
+  const [previewLogo, setPreviewLogo] = useState("");
+  const [previewBanner, setPreviewBanner] = useState("");
+  const [originalData, setOriginalData] = useState({});
 
   useEffect(() => {
-    const fetchStoreData = async () => {
-      try {
-        setIsLoading(true)
-        // Replace with your actual API endpoint
-        const response = await axiosInstance.get("/seller/store")
-        const data = response.data
-
-        setStoreData(data)
-        setOriginalData(data)
-
-        if (data.logo) setPreviewLogo(data.logo)
-        if (data.banner) setPreviewBanner(data.banner)
-
-        setIsLoading(false)
-      } catch (error) {
-        console.error("Error fetching store data:", error)
-        toast.error("Không thể tải thông tin cửa hàng")
-        setIsLoading(false)
+    fetchShopData();
+  }, []);
+  useEffect(() => {
+    console.log(previewLogo);
+  }, [previewLogo]);
+  useEffect(() => {
+    if (isEditing) {
+      fetchProvinces();
+      if (storeData.provinceId) {
+        fetchDistricts(storeData.provinceId);
+      }
+      if (storeData.districtId) {
+        fetchWards(storeData.districtId);
       }
     }
+  }, [isEditing, storeData.provinceId, storeData.districtId]);
+  const fetchAddressNames = async (provinceId, districtId, wardId) => {
+    try {
+      // Fetch tên tỉnh
+      if (provinceId) {
+        const provinceRes = await axios.get(
+          "http://localhost:8080/api/users/get-province-infor",
+          { headers: { Authorization: `Bearer ${getToken()}` } }
+        );
+        const province = provinceRes.data.data.find(
+          (p) => p.ProvinceID === provinceId
+        );
+        if (province) {
+          setAddressNames((prev) => ({
+            ...prev,
+            provinceName: province.ProvinceName,
+          }));
+        }
+      }
 
-    fetchStoreData()
-  }, [])
+      // Fetch tên quận/huyện
+      if (districtId) {
+        const districtRes = await axios.get(
+          "http://localhost:8080/api/users/get-district-infor",
+          {
+            params: { provinceID: provinceId },
+            headers: { Authorization: `Bearer ${getToken()}` },
+          }
+        );
+        const district = districtRes.data.data.find(
+          (d) => d.DistrictID === districtId
+        );
+        if (district) {
+          setAddressNames((prev) => ({
+            ...prev,
+            districtName: district.DistrictName,
+          }));
+        }
+      }
+
+      // Fetch tên phường/xã
+      if (wardId) {
+        const wardRes = await axios.get(
+          "http://localhost:8080/api/users/get-ward-infor",
+          {
+            params: { districtID: districtId },
+            headers: { Authorization: `Bearer ${getToken()}` },
+          }
+        );
+        const ward = wardRes.data.data.find((w) => w.WardCode === wardId);
+        if (ward) {
+          setAddressNames((prev) => ({ ...prev, wardName: ward.WardName }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching address names:", error);
+      setAddressNames({
+        provinceName: "Lỗi khi tải",
+        districtName: "Lỗi khi tải",
+        wardName: "Lỗi khi tải",
+      });
+    }
+  };
+  const fetchShopData = () => {
+    setIsLoading(true);
+    axiosInstance
+      .get("/api/seller/me")
+      .then((response) => {
+        const data = response.data.data;
+        setStoreData(data);
+        setOriginalData(data);
+        setPreviewLogo(data.logoUrl);
+        setPreviewBanner(data.bannerUrl);
+
+        // Fetch tên địa phương nếu có ID
+        if (data.provinceId || data.districtId || data.wardId) {
+          fetchAddressNames(data.provinceId, data.districtId, data.wardId);
+        } else {
+          setAddressNames({
+            provinceName: "Chưa cập nhật",
+            districtName: "Chưa cập nhật",
+            wardName: "Chưa cập nhật",
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setStoreData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleFileChange = (e) => {
-    const { name, files } = e.target
+    const { name, files } = e.target;
     if (files && files[0]) {
       setStoreData((prev) => ({
         ...prev,
         [name]: files[0],
-      }))
+      }));
 
       // Create preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
         if (name === "logo") {
-          setPreviewLogo(e.target.result)
+          setPreviewLogo(e.target.result);
         } else if (name === "banner") {
-          setPreviewBanner(e.target.result)
+          setPreviewBanner(e.target.result);
         }
-      }
-      reader.readAsDataURL(files[0])
+      };
+      reader.readAsDataURL(files[0]);
     }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
+  };
+  // Giả lập API call để lấy danh sách tỉnh/thành phố
+  const fetchProvinces = async () => {
+    setLoading((prev) => ({ ...prev, provinces: true }));
     try {
-      setIsLoading(true)
-
-      const formData = new FormData()
-
-      // Append all text fields
-      Object.keys(storeData).forEach((key) => {
-        if (key !== "logo" && key !== "banner") {
-          formData.append(key, storeData[key])
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-province-infor",
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
         }
-      })
+      );
 
-      // Append files only if they were changed
-      if (storeData.logo && storeData.logo instanceof File) {
-        formData.append("logo", storeData.logo)
-      }
-
-      if (storeData.banner && storeData.banner instanceof File) {
-        formData.append("banner", storeData.banner)
-      }
-
-      // Replace with your actual API endpoint
-      await axiosInstance.put("/seller/store", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-
-      toast.success("Cập nhật thông tin cửa hàng thành công")
-      setIsEditing(false)
-      setOriginalData({ ...storeData })
+      console.log("Provinces:", response);
+      setProvinces(response.data.data);
     } catch (error) {
-      console.error("Error updating store:", error)
-      toast.error("Không thể cập nhật thông tin cửa hàng")
+      console.error("Error fetching provinces:", error);
     } finally {
-      setIsLoading(false)
+      setLoading((prev) => ({ ...prev, provinces: false }));
     }
-  }
+  };
+
+  // Giả lập API call để lấy danh sách quận/huyện
+  const fetchDistricts = async (provinceId) => {
+    setLoading((prev) => ({ ...prev, districts: true }));
+    try {
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-district-infor",
+        {
+          params: {
+            provinceID: provinceId,
+          },
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Provinces:", response.data);
+      setDistricts(response.data.data);
+    } catch (error) {
+      console.error("Error fetching provinces:", error);
+    } finally {
+      setLoading((prev) => ({ ...prev, districts: false }));
+    }
+  };
+
+  // Giả lập API call để lấy danh sách phường/xã
+  const fetchWards = async (districtId) => {
+    setLoading((prev) => ({ ...prev, wards: true }));
+    try {
+      const response = await axios.get(
+        "http://localhost:8080/api/users/get-ward-infor",
+        {
+          params: {
+            districtID: districtId,
+          },
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setWards(response.data.data);
+    } catch (error) {
+      console.error("Error fetching wards:", error);
+    } finally {
+      setLoading((prev) => ({ ...prev, wards: false }));
+    }
+  };
+  const handleAddressChange = (field, value, displayValue = "") => {
+    setStoreData((prev) => ({
+      ...prev,
+      [field]: value,
+      [`${field.replace("Id", "Name")}`]: displayValue,
+    }));
+
+    // Fetch districts when province changes
+    if (field === "provinceId" && value) {
+      fetchDistricts(value);
+      // Reset district and ward when province changes
+      setStoreData((prev) => ({
+        ...prev,
+        districtId: "",
+        districtName: "",
+        wardId: "",
+        wardName: "",
+      }));
+      setDistricts([]);
+      setWards([]);
+    }
+
+    // Fetch wards when district changes
+    if (field === "districtId" && value) {
+      fetchWards(value);
+      // Reset ward when district changes
+      setStoreData((prev) => ({
+        ...prev,
+        wardId: "",
+        wardName: "",
+      }));
+      setWards([]);
+    }
+  };
+  // Xử lý thay đổi tỉnh/thành phố
+  const handleProvinceChange = (e) => {
+    const provinceId = Number.parseInt(e.target.value, 10); // Chuyển sang number
+    const provinceName = e.target.options[e.target.selectedIndex].text;
+    handleAddressChange("provinceId", provinceId, provinceName);
+  };
+
+  // Xử lý thay đổi quận/huyện
+  const handleDistrictChange = (e) => {
+    const districtId = e.target.value;
+    const districtName = e.target.options[e.target.selectedIndex].text;
+    handleAddressChange("districtId", districtId, districtName);
+  };
+
+  // Xử lý thay đổi phường/xã
+  const handleWardChange = (e) => {
+    const wardId = e.target.value;
+    const wardName = e.target.options[e.target.selectedIndex].text;
+    handleAddressChange("wardId", wardId, wardName);
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Build object giống bean
+    const shopInfoData = {
+      name: storeData.name || "",
+      description: storeData.description || "",
+      bankOwnerName: storeData.bankOwnerName || "",
+      bankOwnerNumber: storeData.bankOwnerNumber || "",
+      bankProvideName: storeData.bankProvideName || "",
+      addressDetail: storeData.addressDetail || "",
+      wardId: storeData.wardId || 0,
+      districtId: storeData.districtId || 0,
+      provinceId: storeData.provinceId || 0,
+      logoUrl: storeData.logoUrl || "",
+      bannerUrl: storeData.bannerUrl || "",
+    };
+    console.log("shopInfoData", shopInfoData);
+    
+    try {
+      const formDataToSend = new FormData();
+
+      // Đưa object text vào blob json
+      formDataToSend.append(
+        "shopInfo",
+        new Blob([JSON.stringify(shopInfoData)], {
+          type: "application/json",
+        })
+      );
+
+      // Append file nếu có thay đổi
+      if (storeData.logo instanceof File) {
+        formDataToSend.append("logo", storeData.logo);
+      }
+
+      if (storeData.banner instanceof File) {
+        formDataToSend.append("banner", storeData.banner);
+      }
+
+      const response = await axiosInstance.put(
+        "/api/seller/store",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const data = response.data;
+      if (data.status) {
+        showSuccessToast(data.message);
+        setIsEditing(false);
+        setOriginalData({ ...storeData });
+      }
+    } catch (error) {
+      console.error("Error updating shop info:", error);
+      if (error.response) {
+        showErrorToast(error.response.data.message || error.message);
+      } else {
+        showErrorToast(error.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCancel = () => {
-    setStoreData({ ...originalData })
-    if (originalData.logo) setPreviewLogo(originalData.logo)
-    if (originalData.banner) setPreviewBanner(originalData.banner)
-    setIsEditing(false)
-  }
+    setStoreData({ ...originalData });
+    if (originalData.logo) setPreviewLogo(originalData.logo);
+    if (originalData.banner) setPreviewBanner(originalData.banner);
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -143,7 +397,9 @@ const Store = () => {
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-800">Thông tin cửa hàng</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Thông tin cửa hàng
+          </h1>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -190,7 +446,11 @@ const Store = () => {
           <div className="relative h-56 md:h-72 bg-gradient-to-r from-gray-100 to-gray-200">
             {previewBanner ? (
               <img
-                src={previewBanner instanceof File ? URL.createObjectURL(previewBanner) : previewBanner}
+                src={
+                  previewBanner instanceof File
+                    ? URL.createObjectURL(previewBanner)
+                    : previewBanner
+                }
                 alt="Store banner"
                 className="w-full h-full object-cover"
               />
@@ -203,7 +463,13 @@ const Store = () => {
             {isEditing && (
               <div className="absolute bottom-4 right-4">
                 <label className="inline-flex items-center justify-center p-3 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
-                  <input type="file" name="banner" onChange={handleFileChange} className="hidden" accept="image/*" />
+                  <input
+                    type="file"
+                    name="banner"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
                   <svg
                     className="w-5 h-5 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"
                     fill="none"
@@ -227,7 +493,11 @@ const Store = () => {
               <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white overflow-hidden bg-white shadow-md">
                 {previewLogo ? (
                   <img
-                    src={previewLogo instanceof File ? URL.createObjectURL(previewLogo) : previewLogo}
+                    src={
+                      previewLogo instanceof File
+                        ? URL.createObjectURL(previewLogo)
+                        : previewLogo
+                    }
                     alt="Store logo"
                     className="w-full h-full object-cover"
                   />
@@ -239,7 +509,13 @@ const Store = () => {
 
                 {isEditing && (
                   <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md cursor-pointer hover:bg-gray-50 transition-all duration-200 group">
-                    <input type="file" name="logo" onChange={handleFileChange} className="hidden" accept="image/*" />
+                    <input
+                      type="file"
+                      name="logo"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/*"
+                    />
                     <svg
                       className="w-4 h-4 text-gray-500 group-hover:text-emerald-500 transition-colors duration-200"
                       fill="none"
@@ -273,13 +549,17 @@ const Store = () => {
                   storeData.name || "Chưa cập nhật tên cửa hàng"
                 )}
               </h2>
-              {!isEditing && <p className="text-gray-500 mt-1">{storeData.email || "Chưa cập nhật email"}</p>}
+              {!isEditing && (
+                <p className="text-gray-500 mt-1">
+                  {storeData.shopSlug || "Chưa cập nhật email"}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Store Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols gap-8">
           {/* Main Information */}
           <div className="md:col-span-2">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -290,7 +570,9 @@ const Store = () => {
               <div className="space-y-6">
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email liên hệ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email liên hệ
+                  </label>
                   {isEditing ? (
                     <input
                       type="email"
@@ -301,91 +583,138 @@ const Store = () => {
                       placeholder="Nhập email liên hệ"
                     />
                   ) : (
-                    <p className="text-gray-800">{storeData.email || "Chưa cập nhật"}</p>
+                    <p className="text-gray-800">
+                      {storeData.email || "Chưa cập nhật"}
+                    </p>
                   )}
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số điện thoại
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="phone"
-                      value={storeData.phone || ""}
+                      value={storeData.phoneNumber || ""}
                       onChange={handleChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
                       placeholder="Nhập số điện thoại"
                     />
                   ) : (
-                    <p className="text-gray-800">{storeData.phone || "Chưa cập nhật"}</p>
+                    <p className="text-gray-800">
+                      {storeData.phoneNumber || "Chưa cập nhật"}
+                    </p>
                   )}
                 </div>
 
                 {/* Address */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Địa chỉ
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
                       name="address"
-                      value={storeData.address || ""}
+                      value={storeData.addressDetail || ""}
                       onChange={handleChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
                       placeholder="Nhập địa chỉ cửa hàng"
                     />
                   ) : (
-                    <p className="text-gray-800">{storeData.address || "Chưa cập nhật"}</p>
+                    <p className="text-gray-800">
+                      {storeData.addressDetail || "Chưa cập nhật"}
+                    </p>
                   )}
                 </div>
 
                 {/* Location */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Tỉnh/Thành phố */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Tỉnh/Thành phố <span className="text-red-500">*</span>
+                    </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        name="city"
-                        value={storeData.city || ""}
-                        onChange={handleChange}
+                      <select
+                        name="provinceId"
+                        value={storeData?.provinceId ?? ""}
+                        onChange={handleProvinceChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                        placeholder="Nhập tỉnh/thành phố"
-                      />
+                        disabled={loading.provinces}
+                      >
+                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                        {provinces?.map((province) => (
+                          <option
+                            key={province.ProvinceID}
+                            value={province.ProvinceID}
+                          >
+                            {province.ProvinceName}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
-                      <p className="text-gray-800">{storeData.city || "Chưa cập nhật"}</p>
+                      <p className="text-gray-800">
+                        {addressNames.provinceName}
+                      </p>
                     )}
                   </div>
 
+                  {/* Quận/Huyện */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Quận/Huyện <span className="text-red-500">*</span>
+                    </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        name="district"
-                        value={storeData.district || ""}
-                        onChange={handleChange}
+                      <select
+                        name="districtId"
+                        value={storeData?.districtId || ""}
+                        onChange={handleDistrictChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                        placeholder="Nhập quận/huyện"
-                      />
+                        disabled={!storeData.provinceId || loading.districts}
+                      >
+                        <option value="">-- Chọn Quận/Huyện --</option>
+                        {districts.map((district) => (
+                          <option
+                            key={district.DistrictID}
+                            value={district.DistrictID}
+                          >
+                            {district.DistrictName}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
-                      <p className="text-gray-800">{storeData.district || "Chưa cập nhật"}</p>
+                      <p className="text-gray-800">
+                        {addressNames.districtName}
+                      </p>
                     )}
                   </div>
 
+                  {/* Phường/Xã */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                      Phường/Xã <span className="text-red-500">*</span>
+                    </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        name="ward"
-                        value={storeData.ward || ""}
-                        onChange={handleChange}
+                      <select
+                        name="wardId"
+                        value={storeData?.wardId || ""}
+                        onChange={handleWardChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                        placeholder="Nhập phường/xã"
-                      />
+                        disabled={!storeData.districtId || loading.wards}
+                      >
+                        <option value="">-- Chọn Phường/Xã --</option>
+                        {wards.map((ward) => (
+                          <option key={ward.WardCode} value={ward.WardCode}>
+                            {ward.WardName}
+                          </option>
+                        ))}
+                      </select>
                     ) : (
-                      <p className="text-gray-800">{storeData.ward || "Chưa cập nhật"}</p>
+                      <p className="text-gray-800">{addressNames.wardName}</p>
                     )}
                   </div>
                 </div>
@@ -393,7 +722,9 @@ const Store = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-800 mb-6 pb-2 border-b border-gray-100">Mô tả cửa hàng</h3>
+              <h3 className="text-lg font-medium text-gray-800 mb-6 pb-2 border-b border-gray-100">
+                Mô tả cửa hàng
+              </h3>
 
               {isEditing ? (
                 <textarea
@@ -413,76 +744,10 @@ const Store = () => {
               )}
             </div>
           </div>
-
-          {/* Policies */}
-          <div className="md:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-              <h3 className="text-lg font-medium text-gray-800 mb-6 pb-2 border-b border-gray-100">
-                Chính sách cửa hàng
-              </h3>
-
-              <div className="space-y-6">
-                {/* Return Policy */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chính sách đổi trả</label>
-                  {isEditing ? (
-                    <textarea
-                      name="returnPolicy"
-                      value={storeData.returnPolicy || ""}
-                      onChange={handleChange}
-                      rows="4"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                      placeholder="Nhập chính sách đổi trả của cửa hàng"
-                    ></textarea>
-                  ) : (
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800 text-sm whitespace-pre-line">
-                        {storeData.returnPolicy || "Chưa cập nhật chính sách đổi trả."}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Shipping Policy */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chính sách vận chuyển</label>
-                  {isEditing ? (
-                    <textarea
-                      name="shippingPolicy"
-                      value={storeData.shippingPolicy || ""}
-                      onChange={handleChange}
-                      rows="4"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                      placeholder="Nhập chính sách vận chuyển của cửa hàng"
-                    ></textarea>
-                  ) : (
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-gray-800 text-sm whitespace-pre-line">
-                        {storeData.shippingPolicy || "Chưa cập nhật chính sách vận chuyển."}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Tips */}
-            {isEditing && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-800 mb-2">Mẹo cập nhật thông tin</h4>
-                <ul className="text-xs text-blue-700 space-y-1 list-disc pl-4">
-                  <li>Thêm logo và ảnh bìa để tăng nhận diện thương hiệu</li>
-                  <li>Mô tả cửa hàng nên ngắn gọn, súc tích và hấp dẫn</li>
-                  <li>Chính sách đổi trả và vận chuyển rõ ràng giúp tăng niềm tin của khách hàng</li>
-                </ul>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Store
-
+export default Store;
