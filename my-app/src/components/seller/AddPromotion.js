@@ -1,43 +1,80 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+
 import axiosInstance from "../../utils/axiosInstance";
 import {
   showErrorToast,
   showInfoToast,
   showSuccessToast,
 } from "../../utils/Toast";
+import { set } from "lodash";
 
 const AddPromotion = () => {
   const navigate = useNavigate();
+  const [discountedPrice, setDiscountedPrice] = useState();
   const [products, setProducts] = useState([]);
-  const [defaultQuantity, setDefaultQuantity] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [formData, setFormData] = useState({
     promotionValue: "",
     startDate: "",
     endDate: "",
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [newProductId, setNewProductId] = useState();
+  const [newProductQuantity, setNewProductQuantity] = useState(1);
+  const [defaultQuantity, setDefaultQuantity] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+  const [isFetching, setIsFetching] = useState(false);
 
-  // Fetch products when page changes
+  // Fetch products when component mounts
   useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
+
+  const fetchProducts = () => {
+    console.log("Fetching products...");
+    
     axiosInstance
       .get("/api/seller/promotion/products", {
         params: {
           pageNumber: currentPage,
+          pageSize: itemsPerPage,
         },
       })
       .then((response) => {
-        setProducts(response.data.data.content || response.data.data);
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          ...response.data.data.content,
+        ]);
+
         setTotalPages(response.data.data.totalPages || 1);
+        console.log(response.data.data.content);
       })
       .catch((error) => {
         showErrorToast(error.response.data.message);
-      });
-  }, [currentPage]);
+      }).finally(() => {
+        setIsFetching(false);
+      })
+  };
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (
+      scrollTop + clientHeight >= scrollHeight - 10 &&
+      currentPage < totalPages &&
+      !isFetching
+    ) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const findProductPrice = (productId) => {
+    const product = products.find((p) => p.id === Number(productId));
+    return product ? product.price : null;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,6 +82,20 @@ const AddPromotion = () => {
       ...prev,
       [name]: value,
     }));
+  };
+  const calculateDiscountedPrice = (originalPrice) => {
+    if (!originalPrice || !formData.promotionValue) {
+      return originalPrice;
+    }
+
+    const discount = Number(formData.promotionValue);
+
+    if (isNaN(discount) || discount < 0 || discount > 100) {
+      return originalPrice;
+    }
+
+    const discountedPrice = Math.round(originalPrice * (1 - discount / 100));
+    return discountedPrice;
   };
 
   const handleCheckPromotionConflict = (e) => {
@@ -71,40 +122,70 @@ const AddPromotion = () => {
     setSelectedProducts(validSelected);
   };
 
-  const handleProductSelect = (productId) => {
-    const product = products.find((p) => p.id === productId);
+  const handleAddProduct = () => {
+    if (!newProductId) {
+      showErrorToast("Vui lòng chọn sản phẩm");
+      return;
+    }
+    console.log("newProductId");
+    console.log(newProductId);
 
-    if (product.currentPromotionDTO) {
+    const product = products.find((p) => p.id === Number(newProductId));
+    console.log("product", product);
+
+    if (!product) {
+      showErrorToast("Không tìm thấy sản phẩm");
+      return;
+    }
+
+    // Kiểm tra xem sản phẩm đã được chọn chưa
+    if (selectedProducts.some((item) => item.id === newProductId)) {
+      showErrorToast(`Sản phẩm "${product.name}" đã được chọn`);
+      return;
+    }
+
+    // Kiểm tra xung đột khuyến mãi
+    if (product.currentPromotionDTO && formData.startDate) {
       const currentEndDate = new Date(product.currentPromotionDTO.endDate);
       const newStartDate = new Date(formData.startDate);
 
       if (newStartDate < currentEndDate) {
         showErrorToast(
-          `Sản phẩm "${product.name}" đang có khuyến mãi đến ngày ${product.currentPromotionDTO.endDate}`
+          <>
+            Sản phẩm "{product.name}" đang có khuyến mãi từ ngày <br></br>
+            {product.currentPromotionDTO.startDate} đến ngày{" "}
+            {product.currentPromotionDTO.endDate}
+          </>
         );
         return;
       }
     }
 
-    setSelectedProducts((prev) => {
-      const exists = prev.find((item) => item.id === productId);
-      if (exists) {
-        return prev.filter((item) => item.id !== productId);
-      }
-      return [
-        ...prev,
-        {
-          id: productId,
-          name: product.name,
-          quantity: defaultQuantity,
-          isPromotionActive: product.currentPromotionDTO?.isActive || false,
-        },
-      ];
-    });
+    // Thêm sản phẩm vào danh sách đã chọn
+    setSelectedProducts((prev) => [
+      ...prev,
+      {
+        id: newProductId,
+        name: product.name,
+        quantity: newProductQuantity,
+        price: product.price,
+        isPromotionActive: product.currentPromotionDTO?.isActive || false,
+      },
+    ]);
+
+    // Reset form thêm sản phẩm
+    setNewProductId("");
+    setNewProductQuantity(defaultQuantity);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (selectedProducts.length === 0) {
+      showErrorToast("Vui lòng chọn ít nhất một sản phẩm");
+      return;
+    }
+
     const dataToSend = {
       promotionValue: Number(formData.promotionValue),
       startDate: formData.startDate,
@@ -126,37 +207,12 @@ const AddPromotion = () => {
       });
   };
 
-  const calculateDiscountedPrice = (product) => {
-    const currentPromotionDTO = product.currentPromotionDTO;
-    const newPromotionValue = parseFloat(formData.promotionValue);
-
-    if (!currentPromotionDTO && !newPromotionValue) return product.price;
-    if (currentPromotionDTO && !newPromotionValue)
-      return product.price * (1 - currentPromotionDTO.value / 100);
-    if (!currentPromotionDTO && newPromotionValue)
-      return product.price * (1 - newPromotionValue / 100);
-
-    const currentDiscount = currentPromotionDTO.value / 100;
-    const newDiscount = newPromotionValue / 100;
-    const maxDiscount = Math.max(currentDiscount, newDiscount);
-
-    return product.price * (1 - maxDiscount);
-  };
-
   const handleRemoveSelected = (productId) => {
     const removed = selectedProducts.find((item) => item.id === productId);
     if (removed) {
       showInfoToast(`Đã xóa sản phẩm "${removed.name}" khỏi danh sách.`);
     }
     setSelectedProducts((prev) => prev.filter((item) => item.id !== productId));
-  };
-
-  const handleDefaultQuantityChange = (e) => {
-    const quantity = e.target.value;
-    setDefaultQuantity(quantity);
-    setSelectedProducts((prev) =>
-      prev.map((item) => ({ ...item, quantity: Number(quantity) }))
-    );
   };
 
   const handleQuantityChange = (id, value) => {
@@ -167,19 +223,34 @@ const AddPromotion = () => {
     );
   };
 
-  const paginate = (pageNumber) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
+  const handleDefaultQuantityChange = (e) => {
+    const value = Number(e.target.value);
+    if (value > 0) {
+      setDefaultQuantity(value);
+      setNewProductQuantity(value);
+    }
   };
 
-  // Get selected products info with updated data
+  const availableProducts = products
+    .filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.id === product.id)
+    )
+    .filter(
+      (product) => !selectedProducts.some((item) => item.id === product.id)
+    );
+  const productOptions = availableProducts.map((product) => ({
+    value: product.id,
+    label: product.name,
+  }));
+
+  // Lấy thông tin chi tiết của sản phẩm đã chọn
   const selectedProductsInfo = selectedProducts.map((selected) => {
-    const product = products.find((p) => p.id === selected.id);
+    const product = products.find((p) => p.id === selected.id) || {};
     return {
       ...selected,
-      ...product,
-      quantity: selected.quantity,
-      isPromotionActive: product?.currentPromotionDTO?.isActive || false,
+      price: product.price || selected.price,
+      currentPromotionDTO: product.currentPromotionDTO,
     };
   });
 
@@ -213,9 +284,11 @@ const AddPromotion = () => {
                     value={formData.promotionValue}
                     onChange={(e) => {
                       const value = e.target.value;
+
                       if (
                         value === "" ||
-                        (parseInt(value) >= 0 && parseInt(value) <= 100)
+                        (Number.parseInt(value) >= 0 &&
+                          Number.parseInt(value) <= 100)
                       ) {
                         handleInputChange(e);
                       }
@@ -262,254 +335,269 @@ const AddPromotion = () => {
                   required
                 />
               </div>
-
-              {/* Form buttons */}
-              <div className="col-span-1 md:col-span-3 flex justify-end gap-4 mt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/seller/promotions")}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={selectedProducts.length === 0}
-                  className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-                    ${
-                      selectedProducts.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    }`}
-                >
-                  Thêm Khuyến Mãi
-                </button>
-              </div>
             </div>
 
-            {/* Selected products */}
-            {selectedProductsInfo.length > 0 && (
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-800 mb-3">
-                  Sản Phẩm Đã Chọn ({selectedProductsInfo.length})
-                </h3>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số Lượng Mặc Định
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={defaultQuantity}
-                    onChange={handleDefaultQuantityChange}
-                    className="block w-16 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProductsInfo.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center bg-white rounded-md shadow-sm px-3 py-2 text-sm"
-                    >
-                      <span className="text-gray-700">{product.name}</span>
-                      <span className="mx-2 text-gray-400">|</span>
-                      <span className="text-green-600 font-medium">
-                        <span className="text-green-600 font-medium">
-                          {product.price
-                            ? product.price.toLocaleString("vi-VN")
-                            : "0"}
-                          đ
-                        </span>
-                      </span>
-                      <span className="mx-2 text-gray-400">|</span>
-                      <span className="ml-3 text-gray-500 text-xs">SL:</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={product.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(product.id, e.target.value)
-                        }
-                        className="ml-3 w-16 border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSelected(product.id)}
-                        className="ml-2 text-gray-400 hover:text-red-500 focus:outline-none"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Bảng sản phẩm đã chọn */}
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                Sản Phẩm Áp Dụng Khuyến Mãi ({selectedProducts.length})
+              </h3>
 
-            {/* Product list */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Danh Sách Sản Phẩm
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Đã chọn {selectedProductsInfo.length} sản phẩm
-                </p>
-              </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sản phẩm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Chọn
+                    <tr className="border-b border-gray-200">
+                      <th className="px-4 py-3 text-center font-medium text-gray-500 w-12 border-r border-gray-200">
+                        STT
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tên Sản Phẩm
+                      <th className="px-4 py-3 text-left font-medium text-gray-500 border-r border-gray-200">
+                        Tên sản phẩm
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Giá Gốc
+                      <th className="px-4 py-3 text-center font-medium text-gray-500 border-r border-gray-200">
+                        Giá gốc
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Khuyến Mãi Hiện Tại
+                      <th className="px-4 py-3 text-center font-medium text-gray-500 border-r border-gray-200">
+                        Giá sau khi giảm
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Giá Sau Giảm
+                      <th className="px-4 py-3 text-center font-medium text-gray-500 w-32 border-r border-gray-200">
+                        Số lượng
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-gray-500 w-24">
+                        Hành động
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {products.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                    {selectedProductsInfo.map((product, index) => (
+                      <tr
+                        key={product.id}
+                        className="hover:bg-gray-50 border-b border-gray-200"
+                      >
+                        <td className="px-4 py-3 text-center text-gray-500 border-r border-gray-200">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-left font-medium text-gray-900 border-r border-gray-200">
+                          {product.name}
+                        </td>
+
+                        <td className="px-4 py-3 text-center text-green-600 font-medium border-r border-gray-200">
+                          {product.price
+                            ? product.price.toLocaleString("vi-VN")
+                            : "0"}
+                          đ
+                        </td>
+                        <td className="px-4 py-3 text-center text-red-600 font-medium border-r border-gray-200">
+                          {product.price
+                            ? calculateDiscountedPrice(
+                                product.price
+                              ).toLocaleString("vi-VN")
+                            : "0"}
+                          đ
+                        </td>
+                        <td className="px-4 py-3 text-center border-r border-gray-200">
                           <input
-                            type="checkbox"
-                            checked={selectedProducts.some(
-                              (item) => item.id === product.id
-                            )}
-                            onChange={() => handleProductSelect(product.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            type="number"
+                            min="1"
+                            value={product.quantity}
+                            onChange={(e) =>
+                              handleQuantityChange(product.id, e.target.value)
+                            }
+                            className="w-20 border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {product.name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            <span className="text-green-600 font-medium">
-                              {product.price
-                                ? product.price.toLocaleString("vi-VN")
-                                : "0"}
-                              đ
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {product.currentPromotionDTO?.value ? (
-                            <div className="text-sm">
-                              <p className="text-blue-600">
-                                {product.currentPromotionDTO.value}%
-                              </p>
-                              <p className="text-gray-500 text-xs">
-                                Ngày bắt đầu:{" "}
-                                {product.currentPromotionDTO.startDate}
-                              </p>
-                              <p className="text-gray-500 text-xs">
-                                Ngày kết thúc:{" "}
-                                {product.currentPromotionDTO.endDate}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">
-                              Không có
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-green-600 font-medium">
-                            {calculateDiscountedPrice(product).toLocaleString(
-                              "vi-VN"
-                            )}
-                            đ
-                          </div>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSelected(product.id)}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            Xóa
+                          </button>
                         </td>
                       </tr>
                     ))}
+
+                    {/* Hàng thêm sản phẩm mới */}
+                    <tr className="bg-gray-50">
+                      <td className="px-4 py-3 text-center border-r border-gray-200">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Select
+                          name="product"
+                          options={productOptions}
+                          value={
+                            productOptions.find(
+                              (option) => option.value === newProductId
+                            ) || null
+                          }
+                          onChange={(selected) => {
+                            setNewProductId(selected ? selected.value : "");
+                          }}
+                          onMenuScrollToBottom={handleScroll}
+                          className="basic-single-select w-full"
+                          classNamePrefix="select"
+                          placeholder="-- Chọn sản phẩm --"
+                          isSearchable
+                          menuPortalTarget={document.body} // <-- thêm dòng này
+                          menuPosition="fixed" // <-- và dòng này
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: "45px",
+                              width: "100%",
+                              borderRadius: "0.5rem",
+                              border: "1px solid #ccc",
+                              boxShadow: "none",
+                              backgroundColor: "#fff",
+                              "&:hover": {
+                                borderColor: "#2563eb",
+                              },
+                              zIndex: 100, // <-- nếu muốn chắc chắn nó nằm trên bảng
+                            }),
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 9999, // <-- bắt buộc: đảm bảo menu nằm trên tất cả
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              borderRadius: "0.5rem",
+                              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                              backgroundColor: "#fff",
+                            }),
+                            option: (
+                              base,
+                              { isFocused, isSelected, isActive }
+                            ) => ({
+                              ...base,
+                              backgroundColor: isActive
+                                ? "#ff4d4d"
+                                : isFocused
+                                ? "#cfe4ff"
+                                : "#fff",
+                              "&:active": {
+                                backgroundColor: "#B2D4FF",
+                              },
+                              color: "black",
+                            }),
+                          }}
+                        />
+
+                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center  text-green-600 border-r font-medium border-gray-200">
+                        {findProductPrice(newProductId)?.toLocaleString(
+                          "vi-VN"
+                        )}{" "}
+                        đ
+                      </td>
+                      <td className="px-4 py-3 text-center  text-red-600 border-r font-medium border-gray-200">
+                        {calculateDiscountedPrice(
+                          findProductPrice(newProductId)
+                        )?.toLocaleString("vi-VN")}{" "}
+                        đ{/* Cột giá để trống */}
+                      </td>
+                      <td className="px-4 py-3 text-center border-r border-gray-200">
+                        <input
+                          type="number"
+                          min="1"
+                          value={newProductQuantity}
+                          onChange={(e) =>
+                            setNewProductQuantity(Number(e.target.value))
+                          }
+                          className="w-20 border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={handleAddProduct}
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          Thêm
+                        </button>
+                      </td>
+                    </tr>
                   </tbody>
+                  <tfoot className="bg-gray-100">
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-4 py-3 text-right text-sm font-medium text-gray-700 border-r border-gray-200"
+                      >
+                        Số lượng mặc định:
+                      </td>
+
+                      <td className="px-4 py-3 text-center border-r border-gray-200">
+                        <input
+                          type="number"
+                          min="1"
+                          value={defaultQuantity}
+                          onChange={handleDefaultQuantityChange}
+                          className="w-20 border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                      </td>
+
+                      <td className="px-4 py-3 text-center text-xs text-gray-500">
+                        Áp dụng cho sản phẩm mới
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
-          </form>
 
-          {/* Pagination - Đặt bên ngoài form để tránh submit */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-4 space-x-2">
+            {/* Form buttons */}
+            <div className="flex justify-end gap-4">
               <button
                 type="button"
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                }`}
+                onClick={() => navigate("/seller/promotions")}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Trước
+                Hủy
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => paginate(page)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium ${
-                      currentPage === page
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
               <button
-                type="button"
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                }`}
+                type="submit"
+                disabled={selectedProducts.length === 0}
+                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                  ${
+                    selectedProducts.length === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  }`}
               >
-                Sau
+                Thêm Khuyến Mãi
               </button>
             </div>
-          )}
+          </form>
         </div>
       </div>
     </div>
