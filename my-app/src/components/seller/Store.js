@@ -427,7 +427,7 @@ const Store = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
+      <div className="py-8 px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
