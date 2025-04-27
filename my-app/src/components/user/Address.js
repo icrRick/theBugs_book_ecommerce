@@ -137,14 +137,7 @@ const Address = () => {
                         </svg>
                       </button>
                     </div>
-                    {!address.isDefault && (
-                      <button
-                        onClick={() => handleSetDefault(address.id)}
-                        className="mt-2 px-3 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Đặt làm mặc định
-                      </button>
-                    )}
+                  
                   </div>
                 </div>
               </div>

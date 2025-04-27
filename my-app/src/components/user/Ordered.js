@@ -203,6 +203,7 @@ const Ordered = () => {
         setTotalOrders(response.data.data.totalItems || 0);
         setTotalPages(Math.ceil(response.data.data.totalItems / pageSize));
         setTabCounts(calculateTabCounts(response.data.data.objects));
+      
       })
       .catch((error) => {
         console.log(error);
@@ -238,6 +239,7 @@ const Ordered = () => {
         setOrders(ordersList);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));
+        //setTabCounts(calculateTabCounts(ordersList));
       } else {
         console.error("Failed to search orders:", message);
         setOrders([]);

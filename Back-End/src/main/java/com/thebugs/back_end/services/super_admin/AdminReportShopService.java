@@ -102,7 +102,7 @@ public class AdminReportShopService {
 
                 boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(
                         emailShop, "Cửa hàng", ReportShop.getShop().getShop_slug(),
-                        ReportShop.getNote(), ReportShop.getUrl());
+                        ReportShop.getNote(), null);
 
                 if (!checksendEmail || !checksendEmailShop) {
                     System.err.println(

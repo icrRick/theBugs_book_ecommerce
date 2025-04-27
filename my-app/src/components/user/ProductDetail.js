@@ -664,9 +664,7 @@ const ProductDetail = () => {
                     : product.description,
                 }}
               ></div>
-              {!showFullDescription && (
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
-              )}
+            
               <div className="text-center mt-4">
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}

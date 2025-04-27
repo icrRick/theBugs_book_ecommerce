@@ -30,6 +30,9 @@ public class OrderItem {
 
     @Column(nullable = false)
     private double price;
+    
+    @Column(nullable = false)
+    private double olPrice;
 
     @OneToMany(mappedBy = "orderItem")
     private List<Review> reviews;

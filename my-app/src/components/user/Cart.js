@@ -5,6 +5,8 @@ import axiosInstance from "../../utils/axiosInstance";
 import { formatCurrency } from "../../utils/Format";
 import { cookie, getListProductIds, setListProductIds, setListVoucherIds } from '../../utils/cookie'
 import { showErrorToast } from "../../utils/Toast";
+import { s_deleteCartItem, s_getCartItems, s_saveCartItem } from "../service/cartItemService";
+import Loading from "../../utils/Loading";
 
 
 const useDebounce = (value, delay) => {
@@ -28,7 +30,7 @@ const Cart = () => {
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [selectedShopId, setSelectedShopId] = useState(null);
     const [cart, setCart] = useState([]);
-
+    const [isLoading, setIsLoading] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -52,7 +54,7 @@ const Cart = () => {
         if (quantity < 1) {
             cart.forEach(shop => {
                 shop.products.forEach(product => {
-                    if (product.productId === productId) {
+                    if (product.id === productId) {
                         setSelectedItem(product);
                         setShowDeleteModal(true);
                     }
@@ -61,7 +63,7 @@ const Cart = () => {
             return;
         }
         setPendingUpdate({ productId, quantity });
-        
+
     };
 
 
@@ -70,15 +72,17 @@ const Cart = () => {
     );
 
     const fetchCartItems = async () => {
+        setIsLoading(true);
         try {
-            const response = await axiosInstance.get('/user/cart/getCartItems');
-            if (response.status === 200 && response.data.status === true) {
-                setCart(response.data.data.map(item => ({
+            const response = await s_getCartItems();
+            if (response) {
+                setCart(response.map(item => ({
                     ...item,
                     checked: false,
-                    ...item.products.map(product => ({
+                    products: item.products.map(product => ({
                         ...product,
-                        checked: false
+                        checked: product?.status === true || product?.active === false ? false : product.checked || false,
+                        disabled: product?.status === true || product?.active === false
                     }))
                 })));
             } else {
@@ -86,18 +90,20 @@ const Cart = () => {
             }
         } catch (error) {
             console.log(error);
+        } finally {
+            setIsLoading(false);
         }
     }
 
     const saveCartItem = async (productId, quantity) => {
         try {
-            const response = await axiosInstance.post(`/user/cart/saveCartItem?productId=${productId}&quantity=${quantity}`);
-            if (response.status === 200 && response.data.status === true) {
+            const response = await s_saveCartItem(productId, quantity);
+            if (response) {
                 setCart(prevCart => {
                     return prevCart.map(shop => ({
                         ...shop,
                         products: shop.products.map(product => {
-                            if (product.productId === productId) {
+                            if (product.id === productId) {
                                 return {
                                     ...product,
                                     productQuantity: quantity
@@ -114,11 +120,11 @@ const Cart = () => {
             console.log(error);
         }
     }
-    
+
     const deleteCartItem = async (productId) => {
         try {
-            const response = await axiosInstance.post(`/user/cart/deleteCartItem?productId=${productId}`)
-            if (response.status === 200 && response.data.status === true) {
+            const response = await s_deleteCartItem(productId);
+            if (response) {
                 setShowDeleteModal(false);
                 setSelectedItem(null);
                 fetchCartItems();
@@ -131,6 +137,25 @@ const Cart = () => {
     }
 
     const handleCheckAll = () => {
+        // Kiểm tra xem tất cả sản phẩm trong giỏ hàng có bị disabled không
+        const allProductsDisabled = cart.every(shop =>
+            shop.products.every(product => product?.status === true || product?.active === false)
+        );
+
+        // Nếu tất cả sản phẩm đều bị disabled thì không cho check
+        if (allProductsDisabled) {
+            setCart(cart.map(shop => ({
+                ...shop,
+                checked: false,
+                products: shop.products.map(product => ({
+                    ...product,
+                    checked: false,
+                    disabled: true
+                }))
+            })));
+            return;
+        }
+
         const hasCheckedItems = cart.some(shop =>
             shop.checked && shop.products.some(product => product.checked)
         );
@@ -140,7 +165,8 @@ const Cart = () => {
             checked: !hasCheckedItems,
             products: shop.products.map(product => ({
                 ...product,
-                checked: !hasCheckedItems
+                checked: !hasCheckedItems && !(product?.status === true || product?.active === false),
+                disabled: product?.status === true || product?.active === false
             }))
         })));
     };
@@ -150,7 +176,8 @@ const Cart = () => {
             if (shop.shopId === shopId) {
                 const updatedProducts = shop.products.map(product => ({
                     ...product,
-                    checked: product.productId === productId ? !product.checked : product.checked
+                    checked: product.id === productId ? !product.checked : product.checked,
+                    disabled: product?.status === true || product?.active === false
                 }));
                 const hasCheckedProducts = updatedProducts.some(product => product.checked);
                 return {
@@ -168,13 +195,32 @@ const Cart = () => {
     const handleCheckShop = (shopId) => {
         setCart(cart.map(shop => {
             if (shop.shopId === shopId) {
+                // Kiểm tra xem tất cả sản phẩm trong shop có bị disabled không
+                const allProductsDisabled = shop.products.every(product =>
+                    product?.status === true || product?.active === false
+                );
+
+                // Nếu tất cả sản phẩm đều bị disabled thì không cho check shop
+                if (allProductsDisabled) {
+                    return {
+                        ...shop,
+                        checked: false,
+                        products: shop.products.map(product => ({
+                            ...product,
+                            checked: false,
+                            disabled: true
+                        }))
+                    };
+                }
+
                 const newCheckedState = !shop.checked;
                 return {
                     ...shop,
                     checked: newCheckedState,
                     products: shop.products.map(product => ({
                         ...product,
-                        checked: newCheckedState
+                        checked: newCheckedState && !(product?.status === true || product?.active === false),
+                        disabled: product?.status === true || product?.active === false
                     }))
                 };
             }
@@ -186,10 +232,10 @@ const Cart = () => {
 
     const calculateShopTotal = (shop) => {
         return shop.products.reduce((total, product) => {
-            if (product.productPromotionValue > 0) {
-                return total + (product.productPrice * (1 - product.productPromotionValue / 100) * product.productQuantity);
+            if (product.promotionValue > 0) {
+                return total + (product.price * (1 - product.promotionValue / 100) * product.productQuantity);
             }
-            return total + (product.productPrice * product.productQuantity);
+            return total + (product.price * product.productQuantity);
         }, 0);
     };
 
@@ -221,30 +267,83 @@ const Cart = () => {
         fetchCartItems();
     }, []);
 
-    const handlePayment = () => {
-        // Lấy tất cả productId đã được checked từ tất cả các shop
-        const productIds = cart.flatMap(shop =>
-            shop.products
-                .filter(product => product.checked)
-                .map(product => product.productId)
-        );
-        console.log("voucher da chon ", selectedVouchers);
+    const handlePayment = async () => {
+        try {
+            // Fetch lại dữ liệu giỏ hàng mới nhất
+            const response = await s_getCartItems();
+            if (!response) {
+                console.log("Không thể lấy thông tin giỏ hàng");
+                return;
+            }
 
-        const voucherIds = Object.values(selectedVouchers)
-            .filter(voucher => voucher !== null)
-            .map(voucher => voucher.id);
+            // Cập nhật state cart với dữ liệu mới
+            const updatedCart = response.map(shop => {
+                // Cập nhật trạng thái sản phẩm
+                const updatedProducts = shop.products.map(product => ({
+                    ...product,
+                    checked: (product.status === true || product.active === false) ? false : product.checked || false,
+                    disabled: (product.status === true || product.active === false)
+                }));
 
-        const productIdsArray = productIds.map(id => parseInt(id));
-        const voucherIdsArray = voucherIds.map(id => parseInt(id));
+                // Kiểm tra xem có sản phẩm nào được checked không
+                const hasCheckedProducts = updatedProducts.some(product => product.checked);
 
-        setListProductIds(JSON.stringify(productIdsArray));
-        setListVoucherIds(JSON.stringify(voucherIdsArray));
-        if (productIdsArray.length === 0) {
-            showErrorToast("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
-            return;
+                return {
+                    ...shop,
+                    checked: hasCheckedProducts,
+                    products: updatedProducts
+                };
+            });
+            setCart(updatedCart);
+
+            // Kiểm tra và lấy danh sách sản phẩm đã chọn và bị disabled
+            const disabledProducts = updatedCart.flatMap(shop =>
+                shop.products.filter(product =>
+                    product.checked && product.disabled
+                ).map(product => ({
+                    name: product.name,
+                    shopName: shop.shopName
+                }))
+            );
+
+            // Nếu có sản phẩm bị disabled thì hiển thị thông báo và cập nhật trạng thái
+            if (disabledProducts.length > 0) {
+                const productNames = disabledProducts.map(p => `"${p.name}" của shop "${p.shopName}"`).join(", ");
+                showErrorToast(`Không thể thanh toán các sản phẩm đã ngừng bán: ${productNames}`);
+                return;
+            }
+
+            // Lấy tất cả productId đã được checked và không bị disabled
+            const productIds = updatedCart.flatMap(shop =>
+                shop.products
+                    .filter(product =>
+                        product.checked && !product.disabled
+                    )
+                    .map(product => product.id)
+            );
+
+            if (productIds.length === 0) {
+                showErrorToast("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+                return;
+            }
+
+            console.log("voucher da chon ", selectedVouchers);
+
+            const voucherIds = Object.values(selectedVouchers)
+                .filter(voucher => voucher !== null)
+                .map(voucher => voucher.id);
+
+            const productIdsArray = productIds.map(id => parseInt(id));
+            const voucherIdsArray = voucherIds.map(id => parseInt(id));
+
+            setListProductIds(JSON.stringify(productIdsArray));
+            setListVoucherIds(JSON.stringify(voucherIdsArray));
+
+            navigate('/payment');
+        } catch (error) {
+            console.error("Lỗi khi xử lý thanh toán:", error);
+            showErrorToast("Có lỗi xảy ra khi xử lý thanh toán");
         }
-
-        navigate('/payment');
     }
 
     const calculateTotalItems = (cart) => {
@@ -256,9 +355,9 @@ const Cart = () => {
     const calculateShopTotalWithVoucher = (shop, selectedVouchers) => {
         const shopTotalAmount = shop.products.reduce((total, product) => {
             if (product.checked) {
-                const price = product.productPromotionValue > 0
-                    ? product.productPrice * (1 - product.productPromotionValue / 100)
-                    : product.productPrice;
+                const price = product.promotionValue > 0
+                    ? product.price * (1 - product.promotionValue / 100)
+                    : product.price;
                 return total + (price * product.productQuantity);
             }
             return total;
@@ -276,6 +375,7 @@ const Cart = () => {
 
     return (
         <>
+            {isLoading && <Loading />}
             {cart.length > 0 ? (
                 <div className="w-full h-full">
                     <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
@@ -302,7 +402,9 @@ const Cart = () => {
                             <div className="w-8 flex justify-center">
                                 <input
                                     type="checkbox"
+                                    id="checkAll"
                                     checked={isAllChecked}
+                                    disabled={cart.every(shop => shop.products.every(product => product?.status === true || product?.active === false))}
                                     onChange={handleCheckAll}
                                     className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                 />
@@ -310,9 +412,9 @@ const Cart = () => {
                             <div className="flex-1 pl-2">
                                 {
                                     calculateTotalItems(cart) > 0 ? (
-                                        <span className="font-medium text-gray-700">Đã chọn {calculateTotalItems(cart)} sản phẩm</span>
+                                        <label htmlFor="checkAll" className="font-medium text-gray-700">Đã chọn {calculateTotalItems(cart)} sản phẩm</label>
                                     ) : (
-                                        <span className="font-medium text-gray-700">Chưa có sản phẩm được chọn</span>
+                                        <label htmlFor="checkAll" className="font-medium text-gray-700">Chưa có sản phẩm được chọn</label>
                                     )
                                 }
                             </div>
@@ -343,29 +445,31 @@ const Cart = () => {
                                     <input
                                         type="checkbox"
                                         checked={shop.checked}
+                                        disabled={shop.products.every(product => product?.status === true || product?.active === false)}
                                         onChange={() => handleCheckShop(shop.shopId)}
                                         className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
                                     />
                                 </div>
-                                <Link to={`/shop/${shop.shopId}`} className="font-medium text-gray-800 text-sm hover:text-blue-600 transition-colors duration-200 cursor-pointer">{shop.shopName || "Chưa có tên shop"}</Link>
+                                <Link to={`/shop/${shop.shopSlug}`} className="font-medium text-gray-800 text-sm hover:text-blue-600 transition-colors duration-200 cursor-pointer pl-2">{shop.shopName || "Chưa có tên shop"}</Link>
                             </div>
 
                             {/* Danh sách sản phẩm của shop */}
                             {shop.products.map((product) => (
-                                <div key={product.productId} className="flex items-center p-4 border-b border-gray-200">
+                                <div key={product.id} className="flex items-center p-4 border-b border-gray-200">
                                     <div className="w-8 flex justify-center">
                                         <input
                                             type="checkbox"
                                             checked={product.checked}
-                                            onChange={() => handleCheckProduct(shop.shopId, product.productId)}
+                                            disabled={product?.status === true || product?.active === false}
+                                            onChange={() => handleCheckProduct(shop.shopId, product.id)}
                                             className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                         />
                                     </div>
                                     <div className="flex-1 pl-2 flex">
                                         <div className="w-20 h-20 mr-4 relative overflow-hidden group">
                                             <img
-                                                src={product.productImage || "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80"}
-                                                alt={product.productName || "Chưa có tên sản phẩm"}
+                                                src={product?.image || "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80"}
+                                                alt={product?.name || "Chưa có tên sản phẩm"}
                                                 className="w-full h-full object-cover rounded-lg transition-transform duration-300"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
@@ -376,7 +480,14 @@ const Cart = () => {
                                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300 rounded-lg"></div>
                                         </div>
                                         <div className="flex flex-col">
-                                            <h3 className="font-medium text-gray-800 text-sm hover:text-blue-600 transition-colors duration-200 cursor-pointer">{product.productName || "Chưa có tên sản phẩm"}</h3>
+                                            <h3 className="font-medium text-gray-800 text-sm ">{product?.name || "Chưa có tên sản phẩm"}</h3>
+                                            {
+                                                product?.status === true || product?.active === false && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1">
+                                                        Sản phẩm đã ngừng bán
+                                                    </span>
+                                                )
+                                            }
                                             <div className="mt-1 space-y-1">
                                                 {product?.genres?.length > 0 ? (
                                                     <p className="text-xs text-gray-600 flex items-center">
@@ -410,7 +521,7 @@ const Cart = () => {
                                     <div className="w-32 flex justify-center">
                                         <div className="flex items-center">
                                             <button
-                                                onClick={() => handleQuantityChange(product.productId, product.productQuantity - 1)}
+                                                onClick={() => handleQuantityChange(product.id, product.productQuantity - 1)}
                                                 className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l hover:bg-gray-100 transition-colors"
                                             >
                                                 -
@@ -419,7 +530,7 @@ const Cart = () => {
                                                 {product.productQuantity}
                                             </div>
                                             <button
-                                                onClick={() => handleQuantityChange(product.productId, product.productQuantity + 1)}
+                                                onClick={() => handleQuantityChange(product.id, product.productQuantity + 1)}
                                                 className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r hover:bg-gray-100 transition-colors"
                                             >
                                                 +
@@ -429,14 +540,14 @@ const Cart = () => {
                                     <div className="w-32 flex flex-col items-center">
 
                                         {
-                                            product.productPromotionValue > 0 ? (
+                                            product.promotionValue > 0 ? (
                                                 <>
-                                                    <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
-                                                    <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
+                                                    <span className="text-red-600 font-medium">{formatCurrency(product.price * (1 - product.promotionValue / 100))}</span>
+                                                    <span className="text-gray-400 line-through">{formatCurrency(product.price)}</span>
 
                                                 </>
                                             ) : (
-                                                <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+                                                <span className="text-red-600 font-medium">{formatCurrency(product.price)}</span>
                                             )
                                         }
 
@@ -444,13 +555,13 @@ const Cart = () => {
                                     </div>
                                     <div className="w-32 text-center">
                                         {
-                                            product.productPromotionValue > 0 ? (
+                                            product.promotionValue > 0 ? (
                                                 <span className="text-red-600 font-medium">
-                                                    {formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100) * product.productQuantity)}
+                                                    {formatCurrency(product.price * (1 - product.promotionValue / 100) * product.productQuantity)}
                                                 </span>
                                             ) : (
                                                 <span className="text-red-600 font-medium">
-                                                    {formatCurrency(product.productPrice * product.productQuantity)}
+                                                    {formatCurrency(product.price * product.productQuantity)}
                                                 </span>
                                             )
                                         }
@@ -504,7 +615,7 @@ const Cart = () => {
                                                         <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
                                                             <span className="text-sm font-medium">
                                                                 Mã: {selectedVouchers[shop.shopId].codeVoucher} <span className="text-red-600 font-medium">(-{formatCurrency(calculateVoucherDiscount(
-                                                                    shop.products.reduce((total, product) => total + (product.productPrice * product.productQuantity), 0),
+                                                                    shop.products.reduce((total, product) => total + (product.price * product.productQuantity), 0),
                                                                     selectedVouchers[shop.shopId]
                                                                 ))})</span>
                                                             </span>
@@ -519,7 +630,7 @@ const Cart = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
+
                                             </>
                                         )
                                     }
@@ -707,7 +818,7 @@ const Cart = () => {
                             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                 <button
                                     type="button"
-                                    onClick={() => deleteCartItem(selectedItem.productId)}
+                                    onClick={() => deleteCartItem(selectedItem.id)}
                                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                                 >
                                     Xóa

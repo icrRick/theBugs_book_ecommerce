@@ -37,6 +37,7 @@ public class AdminRevenueShopController {
             Pageable pageable = PageRequest.of(page - 1, 10);
             map.put("arrayList",  adminRevenueShopService.getShopRevenueList(startDate, endDate, pageable));
             map.put("totalItems", adminRevenueShopService.total(startDate, endDate));
+            map.put("totalRevenue", adminRevenueShopService.getTotalRevenue(startDate, endDate));
             return ResponseEntityUtil.OK("Load thành công", map);
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());

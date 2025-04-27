@@ -8,7 +8,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.thebugs.back_end.entities.OrderItem;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.PromotionProduct;
 import com.thebugs.back_end.repository.OrderItemJPA;
@@ -31,13 +30,14 @@ public class ProItemMapper {
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", product.getId());
+        map.put("status", product.getStatus());
+        map.put("active", product.isActive());
         map.put("name", product.getName());
         map.put("price", product.getPrice());
         map.put("quantity", product.getQuantity());
         map.put("weight", product.getWeight());
         map.put("productCode", product.getProduct_code());
-        map.put("image", product.getImages() != null ? product.getImages().getLast().getImageName()
-                : ReplaceName.generatePlaceholderUrl(product.getName()));
+        map.put("image", product.getImages().getLast().getImageName()!=null ?  product.getImages().getLast().getImageName() : ReplaceName.generatePlaceholderUrl(product.getName()));
 
         map.put("shopSlug", product.getShop().getShop_slug());
         map.put("shopName", product.getShop().getName());

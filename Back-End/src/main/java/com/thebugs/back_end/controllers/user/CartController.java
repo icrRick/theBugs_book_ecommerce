@@ -24,17 +24,11 @@ public class CartController {
 
     @GetMapping("/getCartItems")
     public ResponseEntity<ResponseData> getCartItems(@RequestHeader("Authorization") String authorizationHeader) {
-        ResponseData responseData = new ResponseData();
         try {
-            responseData.setStatus(true);
-            responseData.setMessage("Lấy danh sách sản phẩm trong giỏ hàng thành công!");
-            responseData.setData(cartItemService.getCartItems(authorizationHeader));
-            return ResponseEntity.ok(responseData);
+            return ResponseEntityUtil.OK("Lấy danh sách sản phẩm trong giỏ hàng thành công!",
+                    cartItemService.getCartItems(authorizationHeader));
         } catch (Exception e) {
-            responseData.setStatus(false);
-            responseData.setMessage("Lỗi khi lấy danh sách sản phẩm trong giỏ hàng! " + e.getMessage());
-            responseData.setData(null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+            return ResponseEntityUtil.badRequest("Lỗi khi lấy danh sách sản phẩm trong giỏ hàng! " + e.getMessage());
         }
     }
 

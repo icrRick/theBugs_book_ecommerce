@@ -86,7 +86,7 @@ const ShopDetail = () => {
   const handleFilter = async (id, page) => {
     try {
       const requestBody = {
-        "productName": searchQuery,
+        "productName": searchQuery || "",
         "minPrice": minPrice,
         "maxPrice": maxPrice,
         "sortType": sortBy,
@@ -506,4 +506,4 @@ const ShopDetail = () => {
   )
 }
 
-export default ShopDetail
+export default ShopDetail;

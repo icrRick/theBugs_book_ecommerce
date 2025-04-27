@@ -6,13 +6,14 @@ import com.thebugs.back_end.beans.PaymentBean;
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderItem;
+import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.Shop;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.entities.Voucher;
+import com.thebugs.back_end.mappers.ProItemMapper;
 import com.thebugs.back_end.services.seller.ShopService;
 import com.thebugs.back_end.services.seller.VoucherService;
 import com.thebugs.back_end.services.super_admin.PublisherService;
-
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,8 +62,11 @@ public class PaymentService {
     @Autowired
     private OrderPaymentService orderPaymentService;
 
+    @Autowired
+    private ProItemMapper proItemMapper;
+
     public List<Integer> createOrder(String authorizationHeader, List<CartBean> cartBeans) {
-        List<Integer> orderIdIntegers = new ArrayList<>();  
+        List<Integer> orderIdIntegers = new ArrayList<>();
         if (cartBeans == null || cartBeans.isEmpty()) {
             throw new IllegalArgumentException("Giỏ hàng không được null hoặc rỗng");
         }
@@ -71,7 +75,6 @@ public class PaymentService {
             Order order = new Order();
             order.setUser(user);
             order.setShop(shopService.getShopById(cartBean2.getShopId()));
-
 
             order.setCustomerInfo(cartBean2.getCustomerInfo());
             if (cartBean2.getVoucherId() != null) {
@@ -83,22 +86,24 @@ public class PaymentService {
             order.setCreatedAt(new Date());
             order.setNoted(null);
             order.setOrderStatus(orderStatusService.getOrderStatusById(1));
-            
+
             if (cartBean2.getPaymentMethod().equals("Thanh toán tiền mặt khi nhận hàng")) {
-               order.setOrderPayment(orderPaymentService.findByOrderPayment(1));
-            }else{
+                order.setOrderPayment(orderPaymentService.findByOrderPayment(1));
+            } else {
                 order.setOrderPayment(orderPaymentService.findByOrderPayment(4));
             }
             Order savedOrder = orderService.saveOrder(order);
             orderIdIntegers.add(savedOrder.getId());
             for (CartItemBean cartItemBean : cartBean2.getCartItems()) {
                 OrderItem orderItem = new OrderItem();
+                Product product = productService.getProductById(cartItemBean.getProductId());
                 orderItem.setOrder(savedOrder);
-                orderItem.setProduct(productService.getProductById(cartItemBean.getProductId()));
+                orderItem.setProduct(product);
                 orderItem.setQuantity(cartItemBean.getQuantity());
-                orderItem.setPrice(cartItemBean.getPrice());
+                orderItem.setOlPrice(cartItemBean.getOlPrice());//Gia gia ban dau
+                orderItem.setPrice(cartItemBean.getPrice());// Gia da giam
                 orderItemService.saveOrderItem(orderItem);
-                productService.updateProductQuantity(cartItemBean.getProductId(), cartItemBean.getQuantity());
+                // productService.updateProductQuantity(cartItemBean.getProductId(), cartItemBean.getQuantity());
                 cartItemService.deleteCartItem(authorizationHeader, cartItemBean.getProductId());
             }
         }
@@ -115,22 +120,13 @@ public class PaymentService {
             Integer shopId = shop.getId();
             String shopName = shop.getName();
 
-            ProItemDTO proItemDTO = productService.getProItemDTO(productId);
-            if (proItemDTO != null) {
-                Map<String, Object> productMap = new LinkedHashMap<>();
-                productMap.put("productId", proItemDTO.getProductId());
-                productMap.put("productName", proItemDTO.getProductName());
-                productMap.put("productPrice", proItemDTO.getProductPrice());
-                productMap.put("productImage", proItemDTO.getProductImage());
-                productMap.put("productWeight", proItemDTO.getWeight());
-                productMap.put("productRate", proItemDTO.getRate());
-                productMap.put("productPromotionValue", proItemDTO.getPromotionValue());
+            Map<String, Object> productMap = (Map<String, Object>) proItemMapper
+                    .toDTO(productService.getProductById(productId));
+            if (productMap != null) {
                 productMap.put("productQuantity", cartItemQuantity);
-                productMap.put("authors", productAuthorService.getAuthorsByProductId(productId));
-                productMap.put("genres", productGenreService.getGenresByProductId(productId));
-                productMap.put("publisher",
-                        publisherService.getPublisherDTO(productService.getProductById(productId).getPublisher()));
-
+                productMap.put("authors", productAuthorService.getAuthorsByProductId(productService.getProductById(productId).getId()));
+                productMap.put("genres", productGenreService.getGenresByProductId(productService.getProductById(productId).getId()));
+                productMap.put("publisher", publisherService.getPublisherDTO(productService.getProductById(productId).getPublisher()));
                 shopMap.computeIfAbsent(shopId, id -> {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);

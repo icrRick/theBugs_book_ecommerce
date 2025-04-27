@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { showSuccessToast } from '../../utils/Toast';
 const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const {logout} = useAuth();
+  const { logout, userInfo } = useAuth();
   const handleLogoutClick = () => {
     setIsModalOpen(true);
   };
@@ -41,13 +41,7 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Notifications */}
-            <button className="p-2 text-gray-500 rounded-lg hover:bg-gray-50">
-              <span className="sr-only">Thông báo</span>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </button>
+          
 
             {/* User Menu */}
             <div className="relative">
@@ -67,20 +61,20 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
               <div className={`${userMenuOpen ? '' : 'hidden'} absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-gray-200`}>
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-700">
-                    Admin User
+                    {userInfo?.fullName || 'Không có tên'}
                   </p>
                   <p className="text-sm text-gray-500 truncate">
-                    admin@example.com
+                    {userInfo?.email || 'Không có email'}
                   </p>
                 </div>
                 <div className="py-1">
-                  <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <Link to={'/account/profile'} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     <svg className="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                       <path fillRule="evenodd" d="M10 0C4.477 0 0 4.477 0 10c0 5.523 4.477 10 10 10s10-4.477 10-10C20 4.477 15.523 0 10 0zm0 18a8 8 0 100-16 8 8 0 000 16z" />
                     </svg>
                     Thông tin cá nhân
-                  </a>
+                  </Link>
 
                   <a href="#" className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50" onClick={handleLogoutClick}>
                     <svg className="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">

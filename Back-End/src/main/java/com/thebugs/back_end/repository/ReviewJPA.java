@@ -76,14 +76,14 @@ public interface ReviewJPA extends JpaRepository<Review, Integer> {
     @Query("""
         SELECT AVG(r.rate)
         FROM Review r
-        WHERE r.orderItem.order.shop.id = :shopId
+        WHERE r.orderItem.product.shop.id = :shopId
     """)
-    double getAverageRatingByShop(@Param("shopId") Integer shopId);
+    double getAverageRateByShopId(@Param("shopId") Integer shopId);
     
     @Query("""
         SELECT COUNT(r)
         FROM Review r
-        WHERE r.orderItem.order.shop.id = :shopId
+        WHERE r.orderItem.product.shop.id = :shopId
     """)
     int countReviewByShopId(@Param("shopId") Integer shopId);
 
