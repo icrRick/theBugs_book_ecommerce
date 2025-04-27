@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.dto.ProductDetailDTO;
 import com.thebugs.back_end.dto.RelatedProductDTO;
+import com.thebugs.back_end.dto.SearchProductDTO;
 import com.thebugs.back_end.dto.Seller_ProductPromotionDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.entities.Product;
@@ -85,100 +86,91 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                             WHERE s.id = ?1 AND (promo.active = true OR promo IS NULL)
                         """)
         Page<Seller_ProductPromotionDTO> getPromotions(Integer shopId, Pageable pageable);
+
         // search product by code tam
 
-        // @Query("SELECT new com.thebugs.back_end.dto.SearchProductDTO(" +
-        // "p.id, p.name, g.genre.name, " +
-        // "COALESCE(i.imageName,
-        // 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
-        // "
-        // +
-        // "COALESCE(pr.promotionValue, 0), " +
-        // "CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END, "
-        // +
-        // "p.price, " +
-        // "COALESCE(ROUND(AVG(r.rate), 1), 0), " +
-        // "CAST(COUNT(DISTINCT o.id) AS integer), " +
-        // "s.name) " +
-        // "FROM Product p " +
-        // "LEFT JOIN ProductGenre pg ON pg.product.id = p.id " +
-        // "LEFT JOIN Genre g ON pg.genre.id = g.id " +
-        // "LEFT JOIN OrderItem o ON o.product.id = p.id " +
-        // "LEFT JOIN Review r ON r.orderItem.id = o.id " +
-        // "LEFT JOIN PromotionProduct pp ON pp.product.id = p.id " +
-        // "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id " +
-        // "LEFT JOIN Image i ON i.product.id = p.id " +
-        // "LEFT JOIN Shop s ON p.shop.id = s.id " +
-        // "WHERE p.active = true " +
-        // "AND (:keyword IS NULL OR :keyword = '' OR LOWER(p.name) LIKE
-        // LOWER(CONCAT('%', :keyword, '%'))) "
-        // +
-        // "AND (:categories IS NULL OR g.name IN :categories) " +
-        // "AND (:ratings IS NULL OR FLOOR(COALESCE(AVG(r.rate), 0)) IN :ratings) " +
-        // "AND (:minPrice IS NULL OR " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END >= :minPrice) "
-        // +
-        // "AND (:maxPrice IS NULL OR " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END <= :maxPrice) "
-        // +
-        // "AND (i.id = (SELECT MAX(i2.id) FROM Image i2 WHERE i2.product.id = p.id) OR
-        // i.imageName IS NULL) "
-        // +
-        // "GROUP BY p.id, p.name, g.genre.name, i.imageName, pr.promotionValue,
-        // p.price, s.name " +
-        // "ORDER BY " +
-        // "CASE WHEN :sortBy = 'price-asc' THEN " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END END ASC, "
-        // +
-        // "CASE WHEN :sortBy = 'price-desc' THEN " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END END DESC, "
-        // +
-        // "CASE WHEN :sortBy = 'rating' THEN COALESCE(AVG(r.rate), 0) END DESC, " +
-        // "CASE WHEN :sortBy = 'bestseller' THEN COUNT(DISTINCT o.id) END DESC")
-        // Page<SearchProductDTO> searchProducts(
-        // @Param("keyword") String keyword,
-        // @Param("categories") String categories,
-        // @Param("ratings") Integer ratings,
+        @Query("""
+                            SELECT new com.thebugs.back_end.dto.SearchProductDTO(
+                                p.id,
+                                p.name,
+                                p.price,
+                                i.imageName,
+                                COALESCE(AVG(r.rate), 0.0),
+                                COALESCE(SUM(oi.quantity), 0),
+                                pr.promotionValue,
+                                COALESCE((p.price - (p.price * pr.promotionValue / 100)), 0.0),
+                                p.product_code,
+                                s.id,
+                                s.name
+
+                            )
+                            FROM Product p
+                            LEFT JOIN p.images i
+                            LEFT JOIN p.promotionProducts pp
+                           LEFT JOIN pp.promotion pr ON pr.id = pp.promotion.id
+                                AND pr.active = true
+                                AND pr.startDate <= CURRENT_DATE
+                                AND pr.expireDate >= CURRENT_DATE
+                            LEFT JOIN p.productGenres pg
+                            LEFT JOIN p.shop s
+                            LEFT JOIN p.orderItems oi
+                            LEFT JOIN oi.reviews r
+                            WHERE p.active = true
+                              AND p.approve = true
+                              AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
+                              AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
+                              AND (:minPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) >= :minPrice)
+                              AND (:maxPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) <= :maxPrice)
+                              AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
+                            GROUP BY p.id, p.name, p.price, i.imageName, pr.promotionValue, p.product_code, s.id, s.name
+                            ORDER BY
+                                CASE :sortBy
+                                    WHEN 'price-asc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
+                                    ELSE 0
+                                END ASC,
+                                CASE :sortBy
+                                    WHEN 'price-desc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
+                                    ELSE 0
+                                END DESC,
+                                CASE :sortBy
+                                    WHEN 'rating' THEN COALESCE(AVG(r.rate), 0.0)
+                                    ELSE 0
+                                END DESC,
+                                CASE :sortBy
+                                    WHEN 'bestseller' THEN COALESCE(SUM(oi.quantity), 0)
+                                    ELSE 0
+                                END DESC,
+                                CASE WHEN :sortBy = 'relevance' OR :sortBy IS NULL THEN p.id END DESC
+                        """)
+        Page<SearchProductDTO> searchProducts(
+                        @Param("productName") String productName,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("genresIds") List<Integer> genresIds,
+                        @Param("sortBy") String sortBy,
+                        Pageable pageable);
+
+        // @Query("""
+        // SELECT COUNT(DISTINCT p.id)
+        // FROM Product p
+        // LEFT JOIN p.productGenres pg
+        // WHERE p.active = true
+        // AND p.approve = true
+        // AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',
+        // :productName, '%')))
+        // AND (:minPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
+        // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
+        // pr.id = pp.promotion.id), 0) / 100)) >= :minPrice)
+        // AND (:maxPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
+        // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
+        // pr.id = pp.promotion.id), 0) / 100)) <= :maxPrice)
+        // AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
+        // """)
+        // long countProductSearch(
+        // @Param("productName") String productName,
         // @Param("minPrice") Double minPrice,
         // @Param("maxPrice") Double maxPrice,
-        // @Param("sortBy") String sortBy,
-        // Pageable pageable);
-
-        // // count product by search
-        // @Query("SELECT COUNT(DISTINCT p.id) " +
-        // "FROM Product p " +
-        // "LEFT JOIN ProductGenre pg ON pg.product.id = p.id " +
-        // "LEFT JOIN Genre g ON pg.genre.id = g.id " +
-        // "LEFT JOIN OrderItem o ON o.product.id = p.id " +
-        // "LEFT JOIN Review r ON r.orderItem.id = o.id " +
-        // "LEFT JOIN PromotionProduct pp ON pp.product.id = p.id " +
-        // "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id " +
-        // "WHERE p.active = true " +
-        // "AND (:keyword IS NULL OR :keyword = '' OR LOWER(p.name) LIKE
-        // LOWER(CONCAT('%', :keyword, '%'))) "
-        // +
-        // "AND (:categories IS NULL OR g.name IN :categories) " +
-        // "AND (:ratings IS NULL OR FLOOR(COALESCE(AVG(r.rate), 0)) IN :ratings) " +
-        // "AND (:minPrice IS NULL OR " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END >= :minPrice) "
-        // +
-        // "AND (:maxPrice IS NULL OR " +
-        // " CASE WHEN pr.promotionValue IS NOT NULL THEN p.price * (1 -
-        // pr.promotionValue / 100) ELSE p.price END <= :maxPrice) "
-        // +
-        // "GROUP BY p.id")
-        // int countSearchProducts(
-        // @Param("keyword") String keyword,
-        // @Param("categories") List<String> categories,
-        // @Param("ratings") Integer ratings,
-        // @Param("minPrice") Double minPrice,
-        // @Param("maxPrice") Double maxPrice);
+        // @Param("genresIds") List<Integer> genresIds);
 
         @Query("SELECT COUNT(s) FROM Product s WHERE s.active = true")
         int countProductByActiveTrue();

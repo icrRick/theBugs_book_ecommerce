@@ -1,5 +1,9 @@
 package com.thebugs.back_end.dto;
 
+import java.util.List;
+
+import com.thebugs.back_end.entities.Genre;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,15 +12,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class SearchProductDTO {
-    private int productId;
-    private String nameProduct;
-    private String categoryProduct;
-    private String imgProduct;
-    private double promotionValueProduct;
-    private double pricePromotionProduct;
-    private double priceProduct;
-    private double ratingProduct;
-    private int soldProduct;
+    private Integer productId;
+    private String productName;
+    private Double price;
+    private String imageName;
+    private Double rate;
+    private Long sold;
+    private Double promotionValue;
+    private Double discountPrice;
+    private String productCode;
+    private Integer shopId;
     private String shopName;
 
 }
