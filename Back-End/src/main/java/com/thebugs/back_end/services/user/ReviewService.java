@@ -68,4 +68,23 @@ public class ReviewService { // Không cần abstract nếu là service cụ th�
                 userId).isPresent();
     }
 
+
+
+    public double getAverageRateByProductId(Integer productId) {
+        return reviewJPA.getAverageRateByProductId(productId);
+    }
+
+    public double getAverageRatingByShopId(Integer shopId) {
+        return reviewJPA.getAverageRatingByShop(shopId);
+    }
+
+    public int countReviewByProductId(Integer productId) {
+        return reviewJPA.countReviewByProductId(productId);
+    }
+    public int countReviewByShopId(Integer shopId) {
+        return reviewJPA.countReviewByShopId(shopId);
+    }
+
+
+
 }

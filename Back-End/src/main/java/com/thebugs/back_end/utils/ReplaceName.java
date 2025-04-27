@@ -37,7 +37,7 @@ public class ReplaceName {
 
         public static String generatePlaceholderUrl(String fullName) {
                 String randomColor = generateRandomColor();
-                return "https://placehold.co/60x60/" + randomColor.substring(1) + "/ffffff?text="
+                return "https://placehold.co/1200x500/" + randomColor.substring(1) + "/ffffff?text="
                                 + getInitials(fullName);
         }
 }

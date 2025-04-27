@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.dto.HomeGenreDTO;
@@ -35,4 +36,11 @@ public interface GenreJPA extends JpaRepository<Genre, Integer> {
                         "GROUP BY g.id, g.name, g.urlImage " +
                         "ORDER BY COUNT(pg.product.id) DESC")
         List<HomeGenreDTO> findTopGenres(Pageable pageable);
+
+        @Query("SELECT DISTINCT g FROM Product p " +
+                        "JOIN p.productGenres pg " +
+                        "JOIN pg.genre g " +
+                        "WHERE p.shop.shop_slug = :shopSlug")
+        List<Genre> findDistinctGenresByShopSlug(@Param("shopSlug") String shopSlug);
+
 }

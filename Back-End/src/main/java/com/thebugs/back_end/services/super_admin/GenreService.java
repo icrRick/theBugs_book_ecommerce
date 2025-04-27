@@ -1,6 +1,7 @@
 package com.thebugs.back_end.services.super_admin;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,5 +92,13 @@ public class GenreService {
                                                 "Không tìm thấy đối tượng có id= " + id));
         }
 
+
+        public List<GenreDTO> findDistinctGenresByShopSlug(String shopSlug) {
+                List<Genre> genres = genreJPA.findDistinctGenresByShopSlug(shopSlug);
+                return genres.stream()
+                             .map(genreMapper::toDTO)
+                             .sorted(Comparator.comparing(GenreDTO::getId).reversed())
+                             .collect(Collectors.toList());
+        }
 
 }

@@ -1,5 +1,6 @@
 package com.thebugs.back_end.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -272,5 +273,83 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                         "JOIN User u ON s.user.id = u.id " +
                         "WHERE p.id = :productId")
         ProductDetailDTO.ShopDTO findShopByProductId(@Param("productId") Integer productId);
+
+        @Query("""
+                            SELECT p FROM Product p
+                            LEFT JOIN p.promotionProducts pp
+                            LEFT JOIN pp.promotion promo
+                            LEFT JOIN p.orderItems o
+                            WHERE p.shop.shop_slug = :shopSlug
+                            AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
+                            AND (:genreIds IS NULL OR EXISTS (
+                                SELECT 1 FROM ProductGenre pg WHERE pg.product = p AND pg.genre.id IN :genreIds
+                            ))
+                            AND (:authorIds IS NULL OR EXISTS (
+                                SELECT 1 FROM ProductAuthor pa WHERE pa.product = p AND pa.author.id IN :authorIds
+                            ))
+                            AND (:minPrice IS NULL OR p.price >= :minPrice)
+                            AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                            AND (:filterDate IS NULL OR p.createdAt >= :filterDate)
+                            GROUP BY p.id
+                            ORDER BY
+                                CASE WHEN :sortType = 'popular' THEN COALESCE(SUM(o.quantity), 0) ELSE 0 END DESC,
+                                CASE WHEN :sortType = 'price_asc' THEN
+                                    CASE
+                                        WHEN COALESCE(promo.promotionValue, 0) > 0
+                                             AND (promo.startDate IS NULL OR promo.startDate <= CURRENT_DATE)
+                                             AND (promo.expireDate IS NULL OR promo.expireDate >= CURRENT_DATE)
+                                        THEN p.price * (1 - promo.promotionValue / 100.0)
+                                        ELSE p.price
+                                    END
+                                ELSE 0 END ASC,
+                                CASE WHEN :sortType = 'price_desc' THEN
+                                    CASE
+                                        WHEN COALESCE(promo.promotionValue, 0) > 0
+                                             AND (promo.startDate IS NULL OR promo.startDate <= CURRENT_DATE)
+                                             AND (promo.expireDate IS NULL OR promo.expireDate >= CURRENT_DATE)
+                                        THEN p.price * (1 - promo.promotionValue / 100.0)
+                                        ELSE p.price
+                                    END
+                                ELSE 0 END DESC
+                        """)
+        Page<Product> filterProductsWithSort(
+                        @Param("shopSlug") String shopSlug,
+                        @Param("productName") String productName,
+                        @Param("genreIds") List<Integer> genreIds,
+                        @Param("authorIds") List<Integer> authorIds,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                   
+                        @Param("sortType") String sortType,
+                        @Param("filterDate") LocalDate filterDate,
+                        Pageable pageable);
+
+        @Query("""
+                            SELECT COUNT(DISTINCT p) FROM Product p
+                            LEFT JOIN p.promotionProducts pp
+                            LEFT JOIN pp.promotion promo
+                            LEFT JOIN p.orderItems o
+                            WHERE p.shop.shop_slug = :shopSlug
+                            AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
+                            AND (:genreIds IS NULL OR EXISTS (
+                                SELECT 1 FROM ProductGenre pg WHERE pg.product = p AND pg.genre.id IN :genreIds
+                            ))
+                            AND (:authorIds IS NULL OR EXISTS (
+                                SELECT 1 FROM ProductAuthor pa WHERE pa.product = p AND pa.author.id IN :authorIds
+                            ))
+                            AND (:minPrice IS NULL OR p.price >= :minPrice)
+                            AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                           AND (:filterDate IS NULL OR p.createdAt >= :filterDate)
+                        """)
+        int countFilteredProducts(
+                        @Param("shopSlug") String shopSlug,
+                        @Param("productName") String productName,
+                        @Param("genreIds") List<Integer> genreIds,
+                        @Param("authorIds") List<Integer> authorIds,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("sortType") String sortType,
+                        @Param("filterDate") LocalDate filterDate
+                        );
 
 }
