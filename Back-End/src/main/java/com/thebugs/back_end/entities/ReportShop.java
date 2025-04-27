@@ -35,8 +35,7 @@ public class ReportShop {
         private User user;
         @Column(nullable = false)
         private String note;
-        @Column(nullable = false)
-        private String url;
+
         @Temporal(TemporalType.DATE)
         @Column(nullable = false)
         private Date createAt;

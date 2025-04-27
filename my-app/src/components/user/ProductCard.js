@@ -3,10 +3,10 @@ import { formatCurrency } from "../../utils/Format";
 const ProductImage = ({ image, name, promotionValue }) => (
     <div className="relative">
         <img
-            src={image || "/placeholder.svg"}
+            src={image}
             alt={name || "Sản phẩm"}
             className="w-full h-52 object-cover"
-            onError={(e) => e.target.src = "https://placehold.co/400x400/?text=Không+có+hình+ảnh"}
+           
         />
         {promotionValue > 0 && (
             <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm">
@@ -73,33 +73,33 @@ const ProductStats = ({ reviewCount, purchased }) => (
 );
 
 const ProductCard = ({ product }) => {
-    if (!product) return null;
+ 
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <a href={`/product-detail/${product.id}`} className="block">
                 <ProductImage 
-                    image={product.image}
-                    name={product.name}
-                    promotionValue={product.promotionValue}
+                    image={product?.image}
+                    name={product?.name}
+                    promotionValue={product?.promotionValue}
                 />
                 <div className="p-4">
                     <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 h-12">
-                        {product.name || "Chưa có tên"}
+                        {product?.name || "Chưa có tên"}
                     </h3>
 
                     <div className="flex items-center gap-2 mb-2">
-                        <StarRating rate={product.rate} />
+                        <StarRating rate={product?.rate} />
                     </div>
 
                     <ProductPrice 
-                        price={product.price}
-                        promotionValue={product.promotionValue}
+                        price={product?.price}
+                        promotionValue={product?.promotionValue}
                     />
                     
                     <ProductStats 
-                        reviewCount={product.reviewCount}
-                        purchased={product.purchased}
+                        reviewCount={product?.reviewCount}
+                        purchased={product?.purchased}
                     />
                 </div>
             </a>

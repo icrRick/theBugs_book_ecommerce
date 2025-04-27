@@ -11,6 +11,7 @@ import PaymentStatus from "../components/user/PaymentStatus";
 import Products from "../components/seller/Products";
 import AdminShopDetail from "../components/admin/AdminShopDetail";
 import PaymentCOD from "../components/user/PaymentCOD";
+import AdminReportProductDetail from "../components/admin/AdminReportProductDetail";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -125,11 +126,12 @@ export const ADMIN_ROUTES = [
       { path: "stores", element: <Stores /> },
       { path: "publishers", element: <Publishers /> },
       { path: "reports/products", element: <AdminReportProducts /> },
+      { path: "reports/product-detail/:id", element: <AdminReportProductDetail /> },
       { path: "reports/stores", element: <ReportStores /> },
       { path: "authors", element: <Authors /> },
       { path: "shop/:shopSlug", element: <AdminShopDetail /> },
       { path: "product/:productCode", element: <AdminProductDetail /> },
-    
+      
       { path: "statistics", element: <Statistics /> },
 
 ];

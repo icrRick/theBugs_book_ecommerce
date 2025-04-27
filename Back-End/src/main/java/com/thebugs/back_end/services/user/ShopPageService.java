@@ -2,6 +2,7 @@ package com.thebugs.back_end.services.user;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -31,9 +32,6 @@ public class ShopPageService {
     private ShopPageMapper shopPageMapper;
 
     @Autowired
-    private ProductService productService;
-
-    @Autowired
     private ProItemMapper proItemMapper;
 
     public Shop getShopByShopSlug(String shopSlug) {
@@ -45,28 +43,32 @@ public class ShopPageService {
         return shopPageMapper.toDTO(getShopByShopSlug(shopSlug));
     }
 
-    public ArrayList<Object> filterProductByShop(String shopSlug, FillterShopPageBean fillterShopPageBean,
+    public List<Object> filterProductByShop(String shopSlug, FillterShopPageBean fillterShopPageBean,
             Pageable pageable) {
-                if (fillterShopPageBean.getGenresIntegers() != null && fillterShopPageBean.getGenresIntegers().isEmpty()) {
-                    fillterShopPageBean.setGenresIntegers(null);
-                }
-                if (fillterShopPageBean.getAuthorsIntegers() != null && fillterShopPageBean.getAuthorsIntegers().isEmpty()) {
-                    fillterShopPageBean.setAuthorsIntegers(null);
-                }
-                LocalDate filterDate = null;
-                if ("newest".equals(fillterShopPageBean.getSortType())) {
-                    filterDate = LocalDate.now().minusDays(30); // Tính ngày 30 ngày trước
-                }
-                
+        if (fillterShopPageBean.getGenresIntegers() != null && fillterShopPageBean.getGenresIntegers().isEmpty()) {
+            fillterShopPageBean.setGenresIntegers(null);
+        }
+        if (fillterShopPageBean.getAuthorsIntegers() != null && fillterShopPageBean.getAuthorsIntegers().isEmpty()) {
+            fillterShopPageBean.setAuthorsIntegers(null);
+        }
+        LocalDate filterDate = null;
+        if ("newest".equals(fillterShopPageBean.getSortType())) {
+            filterDate = LocalDate.now().minusDays(30); // Tính ngày 30 ngày trước
+        }
+        if (fillterShopPageBean.getProductName() == null) {
+            fillterShopPageBean.setProductName(""); // Nếu productName null, đặt thành chuỗi rỗng để tránh lỗi trong
+                                                    // query
+        }
+  
 
         Page<Product> proPage = productJPA.filterProductsWithSort(shopSlug, fillterShopPageBean.getProductName(),
                 fillterShopPageBean.getGenresIntegers(), fillterShopPageBean.getAuthorsIntegers(),
-                fillterShopPageBean.getMinPrice(), fillterShopPageBean.getMaxPrice(), fillterShopPageBean.getSortType(), 
+                fillterShopPageBean.getMinPrice(), fillterShopPageBean.getMaxPrice(), fillterShopPageBean.getSortType(),
                 filterDate, pageable);
-        return new ArrayList<>(proPage.getContent())
+        return proPage.getContent()
                 .stream()
                 .map(product -> proItemMapper.toDTO(product))
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList());
     }
 
     public int totalItems(String shopSlug, FillterShopPageBean fillterShopPageBean) {

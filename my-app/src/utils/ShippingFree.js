@@ -17,7 +17,7 @@ export async function calculateShippingFree(shop) {
 
         // Tính tổng trọng lượng của các sản phẩm
         const totalWeight = shop.products.reduce((total, product) => {
-            return total + (product.productWeight * product.productQuantity);
+            return total + (product.weight * product.productQuantity);
         }, 0);
 
         console.log('Dữ liệu gửi đi:', {

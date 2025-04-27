@@ -205,7 +205,7 @@ export default function EditAddress() {
             const response = await axiosInstance.post(`/user/address/save`, data);
             if (response.data.status === true) {
                 showSuccessToast(response.data.message);
-                navigate("/account/address");
+                navigate(-1);
             } else {
                 showErrorToast(response.data.message);
             }

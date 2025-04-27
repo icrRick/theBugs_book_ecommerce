@@ -11,6 +11,7 @@ import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.query.Page;
@@ -41,15 +42,15 @@ public class ShopPageController {
     }
 
     @PostMapping("/filter")
-    public ResponseEntity<ResponseData> getFilteredShopPage(@RequestParam(required = false) String shopSlug ,@RequestBody FillterShopPageBean fillterShopPageBean,
+    public ResponseEntity<ResponseData> getFilteredShopPage(@RequestParam(required = false) String shopSlug , @RequestBody(required = false) FillterShopPageBean fillterShopPageBean,
             @RequestParam(defaultValue = "1") int page) {
         try {
             Map<String, Object> response = new HashMap<>();
             Pageable pageable = PageRequest.of(page - 1, 12, Sort.by(Sort.Order.desc("id")));
          
-            ArrayList<Object> products = shopPageService.filterProductByShop(shopSlug,fillterShopPageBean, pageable);
+            List<Object> products = shopPageService.filterProductByShop(shopSlug, fillterShopPageBean, pageable);
         
-            int count = shopPageService.totalItems(shopSlug,fillterShopPageBean);
+            int count = shopPageService.totalItems(shopSlug, fillterShopPageBean);
             response.put("arrayList", products);
             response.put("totalItems", count);
         

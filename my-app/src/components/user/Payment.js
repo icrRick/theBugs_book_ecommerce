@@ -222,7 +222,7 @@ const Payment = () => {
 
     const calculateShopTotal = (shop) => {
         return shop.products.reduce((total, product) =>
-            total + (product.productPrice * product.productQuantity), 0);
+            total + (product.promotionValue > 0 ? (product.price * (1 - product.promotionValue / 100)) : product.price) * product.productQuantity, 0);
     };
 
     const calculateVoucherDiscount = (shopTotal, voucher) => {
@@ -293,8 +293,9 @@ const Payment = () => {
                     paymentMethod: paymentMethod,
                     customerInfo: customerInfo.fullName + " - " + customerInfo.phone + " - " + customerInfo.address,
                     cartItems: shop.products.map(product => ({
-                        productId: product.productId,
-                        price: product.productPromotionValue > 0 ? (product.productPrice * (1 - product.productPromotionValue / 100)) : product.productPrice,
+                        productId: product.id,
+                        olPrice: product.price,
+                        price: product.promotionValue > 0 ? (product.price * (1 - product.promotionValue / 100)) : product.price,
                         quantity: product.productQuantity,
                     })),
                 };
@@ -389,8 +390,8 @@ const Payment = () => {
                 removeListVoucherIds();
             }
         } catch (error) {
-            console.error("Lỗi khi đặt hàng:", error);
-            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.");
+            console.error("Lỗi khi đặt hàng:", error.response.data.message);
+            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau." , error.response.data.message);
         } finally {
             setIsLoading(false);
         }
@@ -418,7 +419,7 @@ const Payment = () => {
                                     <div className="flex items-center space-x-2 sm:space-x-4 bg-white px-2 sm:px-3 py-1 rounded-full border border-gray-200">
                                         <span className="text-xs sm:text-sm text-gray-600">Phí vận chuyển</span>
                                         <span className="text-xs sm:text-sm font-medium text-red-600">
-                                            {shippingFees[shop.shopId]?.toLocaleString() || '0'}đ
+                                            {formatCurrency(shippingFees[shop.shopId] || 0)}
                                         </span>
                                     </div>
                                 </div>
@@ -426,27 +427,27 @@ const Payment = () => {
 
                             <div className="divide-y divide-gray-200">
                                 {shop.products.map((product) => (
-                                    <div key={product.productId} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                                    <div key={product.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
                                                 <img
-                                                    src={product.productImage || "/placeholder.svg"}
-                                                    alt={product.productName}
+                                                    src={product.image || "/placeholder.svg"}
+                                                    alt={product.name}
                                                     className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg shadow-sm"
                                                 />
                                                 <div className="space-y-1 sm:space-y-2">
                                                     <h4 className="font-medium text-gray-900">
-                                                        {product.productName}
+                                                        {product.name}
                                                         <p className="text-xs sm:text-sm text-gray-600">
                                                             {product.productQuantity} x    {
-                                                                product.productPromotionValue > 0 ? (
+                                                                product.promotionValue > 0 ? (
                                                                     <>
-                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productPrice * (1 - product.productPromotionValue / 100))}</span>
-                                                                        <span className="text-gray-400 line-through">{formatCurrency(product.productPrice)}</span>
+                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.price * (1 - product.promotionValue / 100))}</span>
+                                                                        <span className="text-gray-400 line-through ml-2">{formatCurrency(product.price)}</span>
 
                                                                     </>
                                                                 ) : (
-                                                                    <span className="text-red-600 font-medium">{formatCurrency(product.productPrice)}</span>
+                                                                    <span className="text-red-600 font-medium">{formatCurrency(product.price)}</span>
                                                                 )
                                                             }
                                                         </p>
@@ -483,7 +484,13 @@ const Payment = () => {
                                                 </div>
                                             </div>
                                             <p className="font-semibold text-red-600 text-sm sm:text-base">
-                                                {(product.productPrice * product.productQuantity).toLocaleString()}đ
+                                                {
+                                                    product.promotionValue > 0 ? (
+                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productQuantity * product.price * (1 - product.promotionValue / 100))}</span>
+                                                    ) : (
+                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productQuantity * product.price)}</span>
+                                                    )
+                                                }
                                             </p>
                                         </div>
                                     </div>
@@ -593,23 +600,23 @@ const Payment = () => {
                             <div className="flex justify-between items-center">
                                 <span className="text-xs sm:text-sm text-gray-600">Tổng tiền hàng:</span>
                                 <span className="text-xs sm:text-sm text-gray-900 font-medium">
-                                    {shops.reduce((sum, shop) =>
-                                        sum + calculateShopTotal(shop), 0).toLocaleString()}đ
+                                    {formatCurrency(shops.reduce((sum, shop) =>
+                                        sum + calculateShopTotal(shop), 0))}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs sm:text-sm text-gray-600">Giảm giá:</span>
-                                <span className="text-xs sm:text-sm text-green-600 font-medium">-{calculateTotalDiscount().toLocaleString()}đ</span>
+                                <span className="text-xs sm:text-sm text-green-600 font-medium">-{formatCurrency(calculateTotalDiscount())}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs sm:text-sm text-gray-600">Phí vận chuyển:</span>
-                                <span className="text-xs sm:text-sm text-gray-900">{calculateTotalShipping().toLocaleString()}đ</span>
+                                <span className="text-xs sm:text-sm text-gray-900">{formatCurrency(calculateTotalShipping())}</span>
                             </div>
                             <div className="border-t border-gray-200 pt-2 sm:pt-3 mt-2 sm:mt-3">
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm sm:text-lg font-medium">Tổng thanh toán:</span>
                                     <span className="text-base sm:text-2xl font-bold text-red-600">
-                                        {calculateFinalTotal().toLocaleString()}đ
+                                        {formatCurrency(calculateFinalTotal())}
                                     </span>
                                 </div>
                             </div>

@@ -75,9 +75,14 @@ const Navbar = () => {
               <Link to="/home" className="text-xl font-bold text-gray-800">THEBUGS</Link>
             </div>
             <div className="hidden sm:ml-4 sm:flex sm:items-center sm:space-x-3 md:space-x-4 lg:space-x-8">
-              <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
-                Bán hàng cùng THEBUGS
-              </Link>
+              {
+                userInfo?.role === 1 && (
+                  <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
+                    Bán hàng cùng THEBUGS
+                  </Link>
+                )
+              }
+           
               <Link to="/search" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
                 Sản phẩm
               </Link>
@@ -206,9 +211,13 @@ const Navbar = () => {
               </div>
             </div>
 
-            <Link to={'/register-seller'} className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
-              Bán hàng cùng THEBUGS
-            </Link>
+            {
+                userInfo?.role === 1 && (
+                  <Link to="/register-seller" className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
+                    Bán hàng cùng THEBUGS
+                  </Link>
+                )
+              }
             <Link to={'/search'} className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
               Sản phẩm
             </Link>

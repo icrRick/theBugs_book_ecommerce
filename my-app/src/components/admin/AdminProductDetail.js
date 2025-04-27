@@ -128,7 +128,7 @@ const AdminProductDetail = () => {
             {isLoading && <Loading />}
             <div className="my-4 bg-white max-w-full">
                 {/* Header */}
-                <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 backdrop-blur-sm bg-white/90">
+                <div className="bg-white shadow-sm border-b border-gray-200">
                     <div className="w-full p-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -166,6 +166,12 @@ const AdminProductDetail = () => {
                                         </button>
                                     </>
                                 ) : null}
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Chi tiết sản phẩm {productDetail?.name}</h1>
+                                <p className="text-gray-500 text-xs sm:text-sm mt-1">Chi tiết sản phẩm</p>
                             </div>
                         </div>
                     </div>
@@ -234,7 +240,7 @@ const AdminProductDetail = () => {
                                         <p className="text-gray-500">Chưa có hình ảnh nào</p>
                                     </div>
                                 ) : (
-                                    <>
+                                    <div className="w-full">
                                         <Swiper
                                             style={{
                                                 "--swiper-navigation-color": "#3b82f6",
@@ -246,7 +252,7 @@ const AdminProductDetail = () => {
                                             thumbs={{ swiper: thumbsSwiper }}
                                             modules={[FreeMode, Navigation, Thumbs, Zoom, Pagination]}
                                             zoom={true}
-                                            className="h-[400px] rounded-lg overflow-hidden bg-gray-50 border-2 border-gray-300"
+                                            className="h-[400px] w-full rounded-lg overflow-hidden bg-gray-50 border-2 border-gray-300"
                                         >
                                             {productDetail?.images && productDetail?.images.map((img, index) => (
                                                 <SwiperSlide key={img.id} onClick={() => handleImageClick(index)}>
@@ -257,7 +263,6 @@ const AdminProductDetail = () => {
                                                             className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-105"
                                                             loading="lazy"
                                                         />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                                     </div>
                                                 </SwiperSlide>
                                             ))}
@@ -293,7 +298,7 @@ const AdminProductDetail = () => {
                                                 </Swiper>
                                             </div>
                                         )}
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -782,10 +787,7 @@ const AdminProductDetail = () => {
                 opacity: 0.35;
                 cursor: not-allowed;
             }
-            .swiper-slide {
-                opacity: 0.4;
-                transition: all 0.3s ease;
-            }
+           
             .swiper-slide-thumb-active {
                 opacity: 1;
             }

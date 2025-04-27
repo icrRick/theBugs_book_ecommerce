@@ -99,4 +99,10 @@ public class Product {
         }
         return null;
     }
+    public String getLastImageName() {
+        if (images != null && !images.isEmpty()) {
+            return images.getLast().getImageName();
+        }
+        return null;
+    }
 }

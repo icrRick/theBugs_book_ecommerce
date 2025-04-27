@@ -42,7 +42,7 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
     try {
 
 
-      const response = await axiosInstance.post("/user/change_pass", data);
+      const response = await axiosInstance.post("/auth/change_pass", data);
 
       if (response.status === 200 && response.data.status === true) {
         showSuccessToast(response.data.message);

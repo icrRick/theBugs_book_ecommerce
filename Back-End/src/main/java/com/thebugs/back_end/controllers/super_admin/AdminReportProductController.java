@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.beans.ReportRejectBean;
+import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.AdminReportProductService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
@@ -43,6 +44,15 @@ public class AdminReportProductController {
         }
     }
 
+    @GetMapping("/detail")
+    public ResponseEntity<ResponseData> getDetail(@RequestParam(required = true) Integer id) {
+        try {
+            return ResponseEntityUtil.OK("Lấy thông tin thành công", adminReportProductService.getReportProduct(id));
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+        }
+    }
+
     @PostMapping("/approve")
     public ResponseEntity<ResponseData> postApproveReportProduct(@RequestParam(required = false) Integer id) {
         try {
@@ -56,10 +66,12 @@ public class AdminReportProductController {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }
     }
-     @PostMapping("/reject")
+
+    @PostMapping("/reject")
     public ResponseEntity<ResponseData> postRejctReportProduct(@RequestBody ReportRejectBean reportRejectBean) {
         try {
-            boolean checkApprove = adminReportProductService.reject(reportRejectBean.getId(), reportRejectBean.getReasons());
+            boolean checkApprove = adminReportProductService.reject(reportRejectBean.getId(),
+                    reportRejectBean.getReasons());
             if (checkApprove) {
                 return ResponseEntityUtil.OK("Từ chối  báo cáo sản phẩm thành công", null);
             }

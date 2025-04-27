@@ -26,4 +26,9 @@ public class AdminRevenueShopService {
         return orderJPA.countRevenueShops(startDate, endDate);
     }
 
+    public double getTotalRevenue(Date startDate, Date endDate) {
+        List<AdminRevenueShopDTO> revenueList = orderJPA.getShopRevenue(startDate, endDate);
+        return revenueList.stream().mapToDouble(dto -> dto.getFixedFee()).sum();
+    }
+
 }

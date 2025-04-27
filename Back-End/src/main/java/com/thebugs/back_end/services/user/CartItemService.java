@@ -11,6 +11,7 @@ import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.CartItem;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.User;
+import com.thebugs.back_end.mappers.ProItemMapper;
 import com.thebugs.back_end.repository.CartItemJPA;
 import com.thebugs.back_end.services.seller.VoucherService;
 import com.thebugs.back_end.services.super_admin.PublisherService;
@@ -37,6 +38,8 @@ public class CartItemService {
 
     @Autowired
     private VoucherService voucherService;
+    @Autowired
+    private ProItemMapper proItemMapper;
 
     public List<Map<String, Object>> getCartItems(String authorizationHeader) {
         User user = userService.getUserToken(authorizationHeader);
@@ -45,16 +48,9 @@ public class CartItemService {
         for (CartItem cartItem : user.getCartItems()) {
             Integer shopId = cartItem.getProduct().getShop().getId();
             String shopName = cartItem.getProduct().getShop().getName();
-            ProItemDTO proItemDTO = productService.getProItemDTO(cartItem.getProduct().getId());
-            if (proItemDTO != null) {
-                Map<String, Object> productMap = new LinkedHashMap<>();
-                productMap.put("productId", proItemDTO.getProductId());
-                productMap.put("productName", proItemDTO.getProductName());
-                productMap.put("productPrice", proItemDTO.getProductPrice());
-                productMap.put("productImage", proItemDTO.getProductImage());
-                productMap.put("productWeight", proItemDTO.getWeight());
-                productMap.put("productRate", proItemDTO.getRate());
-                productMap.put("productPromotionValue", proItemDTO.getPromotionValue());
+            String shopSlug = cartItem.getProduct().getShop().getShop_slug();
+            Map<String, Object> productMap = (Map<String, Object>) proItemMapper.toDTO(cartItem.getProduct());
+            if (productMap != null) {
                 productMap.put("productQuantity", cartItem.getQuantity());
                 productMap.put("authors", productAuthorService.getAuthorsByProductId(cartItem.getProduct().getId()));
                 productMap.put("genres", productGenreService.getGenresByProductId(cartItem.getProduct().getId()));
@@ -64,6 +60,7 @@ public class CartItemService {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);
                     shopInfo.put("shopName", shopName);
+                    shopInfo.put("shopSlug", shopSlug);
                     shopInfo.put("vouchers", voucherService.findByShopIdNotInOrderByUser(id, user.getId()));
                     shopInfo.put("products", new ArrayList<Map<String, Object>>());
                     return shopInfo;
@@ -98,15 +95,15 @@ public class CartItemService {
     }
 
     public boolean saveCartItemProductCode(String authorizationHeader, String productCode, Integer quantity) {
-        System.out.println("quantity "+quantity);
+        System.out.println("quantity " + quantity);
         User user = userService.getUserToken(authorizationHeader);
-        Product product=productService.getProductByProductCode(productCode);
+        Product product = productService.getProductByProductCode(productCode);
         if (quantity > product.getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
         CartItem cartItem = findProductCodeByUser(productCode, user.getId());
         if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() +quantity);
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
             cartItemJPA.save(cartItem);
             return true;
         } else {

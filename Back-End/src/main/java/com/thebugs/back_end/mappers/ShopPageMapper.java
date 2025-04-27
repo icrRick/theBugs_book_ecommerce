@@ -41,7 +41,7 @@ public class ShopPageMapper {
         Address address = addressService.getAddressShopId(shop.getId());
         map.put("id", shop.getId());
         map.put("shopName", shop.getName());
-        map.put("shopRating", Math.round(reviewService.getAverageRatingByShopId(shop.getId()) * 10.0) / 10.0);
+        map.put("shopRating", Math.round(reviewService.getAverageRateByShopId(shop.getId()) * 10.0) / 10.0);
         map.put("shopRatingCount", reviewService.countReviewByShopId(shop.getId()));
         map.put("shopAddress",
                 address != null

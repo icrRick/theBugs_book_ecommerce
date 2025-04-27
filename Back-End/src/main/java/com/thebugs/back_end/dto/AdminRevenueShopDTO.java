@@ -13,9 +13,8 @@ public class AdminRevenueShopDTO {
     private String shopName;
 
     private Double totalRevenue;
-    private Double fixedFee;
-    private Double netPay;
-
     
+    private Double fixedFee;
+
 
 }

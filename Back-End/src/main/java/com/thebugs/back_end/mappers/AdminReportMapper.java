@@ -37,8 +37,9 @@ public class AdminReportMapper {
         map.put("createAt", reportProduct.getCreateAt());
         map.put("approvalDate",reportProduct.getApprovalDate());
         map.put("note", reportProduct.getNote());
-        map.put("url", reportProduct.getUrl());
+        // map.put("url", reportProduct.getUrl());
         map.put("active", reportProduct.getActive());
+        map.put("productImage", reportProduct.getProduct().getLastImageName());
         map.put("images", toListReportProductImage(reportProduct.getReportProductImages()));
         return map;
     }
@@ -65,7 +66,7 @@ public class AdminReportMapper {
         map.put("createAt", reportShop.getCreateAt());
         map.put("approvalDate",reportShop.getApprovalDate());
         map.put("note", reportShop.getNote());
-        map.put("url", reportShop.getUrl());
+        // map.put("url", reportShop.getUrl());
         map.put("active", reportShop.getActive());
         map.put("images", toListReportShopImage(reportShop.getReportShopImages()));
         return map;

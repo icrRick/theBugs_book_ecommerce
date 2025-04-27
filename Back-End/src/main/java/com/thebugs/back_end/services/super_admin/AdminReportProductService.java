@@ -84,6 +84,11 @@ public class AdminReportProductService {
         return reportProductJPA.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy" + id));
     }
 
+    public Object getReportProduct(Integer id) {
+        ReportProduct reportProduct = getById(id);
+        return adminReportMapper.toReportProduct(reportProduct);
+    }
+
     public boolean approve(Integer id) {
         ReportProduct reportProduct = getById(id);
         List<ReportProduct> reportProducts = findReportProductsByProductAndActive(reportProduct, null);
@@ -106,7 +111,7 @@ public class AdminReportProductService {
 
                 boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(
                         emailShop, "Sản phẩm", reportProduct.getProduct().getProduct_code(),
-                        reportProduct.getNote(), reportProduct.getUrl());
+                        reportProduct.getNote(),null);
 
                 if (!checksendEmail || !checksendEmailShop) {
                     System.err.println(
