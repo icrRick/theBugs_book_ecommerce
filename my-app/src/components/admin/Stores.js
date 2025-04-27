@@ -40,7 +40,7 @@ const Stores = () => {
       }
     } catch (error) {
       console.error('Error fetching items:', error);
-      showErrorToast('Không thể tải danh sách cửa hàng');
+      showErrorToast('Không thể tải danh sách cửa hàng ' + error.response.data.message);
     }
   };
 

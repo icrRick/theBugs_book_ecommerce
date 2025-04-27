@@ -9,7 +9,7 @@ import "swiper/css/thumbs";
 import "swiper/css/zoom";
 import ChatButton from "./ChatButton";
 import axiosInstance from "../../utils/axiosInstance";
-import { showSuccessToast } from "../../utils/Toast";
+import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 
 const ProductDetail = () => {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
@@ -151,14 +151,16 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     try {
-        const response = await axiosInstance.post(`/user/cart/saveCartItem?productId=${id}&quantity=${quantity}`);
-        if (response.status === 200 && response.data.status === true) {
-           showSuccessToast(response.data.message);
-        } else {
-            console.log(response.data.message);
-        }
+      console.log(id, quantity);
+      const response = await axiosInstance.post(`/user/cart/saveCartItemProductCode?productCode=${id}&quantity=${quantity}`);
+      if (response.status === 200 && response.data.status === true) {
+        showSuccessToast(response.data.message);
+      } else {
+        showErrorToast(response.data.message);
+      }
+      console.log(id, quantity);
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
 }
 

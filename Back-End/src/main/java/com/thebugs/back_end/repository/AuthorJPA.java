@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.dto.HomeAuthorDTO;
 import com.thebugs.back_end.entities.Author;
+import com.thebugs.back_end.entities.Genre;
 
 public interface AuthorJPA extends JpaRepository<Author, Integer> {
         @Query("SELECT a FROM  Author a WHERE : keyword IS NULL OR a.name LIKE %:keyword%")
@@ -31,4 +32,21 @@ public interface AuthorJPA extends JpaRepository<Author, Integer> {
                         "GROUP BY a.id, a.name, a.urlImage, a.urlLink " +
                         "ORDER BY COUNT(pa.product.id) DESC")
         List<HomeAuthorDTO> findFeaturedAuthors(Pageable pageable);
+
+
+
+
+
+
+
+
+
+
+
+
+         @Query("SELECT DISTINCT a FROM Product p " +
+                        "JOIN p.productAuthors pa " +
+                        "JOIN pa.author a " +
+                        "WHERE p.shop.shop_slug = :shopSlug")
+        List<Author> findDistinctAuthorsByShopSlug(@Param("shopSlug") String shopSlug);
 }

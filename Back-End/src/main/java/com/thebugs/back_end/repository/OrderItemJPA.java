@@ -12,4 +12,18 @@ public interface OrderItemJPA extends JpaRepository<OrderItem, Integer> {
         @Query("SELECT o FROM OrderItem o WHERE o.order.id = :orderId")
         List<OrderItem> findByOrderId(@Param("orderId") Integer orderId);
 
+        @Query("""
+                            SELECT COALESCE(SUM(oi.quantity), 0)
+                            FROM OrderItem oi
+                            WHERE oi.product.id = :productId
+                        """)
+        int countPurchasedByProductId(@Param("productId") Integer productId);
+
+        @Query("""
+                            SELECT COUNT(oi)
+                            FROM OrderItem oi
+                            WHERE oi.product.id = :productId
+                        """)
+        int countOrderItemsByProductId(@Param("productId") Integer productId);
+
 }

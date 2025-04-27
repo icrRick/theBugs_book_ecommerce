@@ -1,5 +1,6 @@
 package com.thebugs.back_end.services.super_admin;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,4 +81,11 @@ public class AuthorService {
                                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy " + id));
         }
 
+        public List<AuthorDTO> findDistinctAuthorsByShopSlug(String shopSlug) {
+                List<Author> authors = authorJPA.findDistinctAuthorsByShopSlug(shopSlug);
+                return authors.stream()
+                                .map(authorMapper::toDTO)
+                                .sorted(Comparator.comparing(AuthorDTO::getId).reversed())
+                                .collect(Collectors.toList());
+        }
 }
