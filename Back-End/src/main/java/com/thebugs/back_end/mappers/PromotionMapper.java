@@ -1,11 +1,13 @@
 package com.thebugs.back_end.mappers;
 
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.thebugs.back_end.dto.PromotionDTO;
+import com.thebugs.back_end.dto.Seller_ProductPromotionDTO;
 import com.thebugs.back_end.entities.Promotion;
 
 @Component
@@ -21,12 +23,19 @@ public class PromotionMapper {
                 dto.setStatus(status(promotion.getStartDate(), promotion.getExpireDate()));
                 dto.setActive(promotion.isActive());
                 if (promotion.getPromotionProducts() != null) {
-                        dto.setPromotionProductIds(
-                                        promotion.getPromotionProducts().stream()
-                                                        .map(product -> product.getId())
-                                                        .collect(Collectors.toList()));
-                }
+                        List<Seller_ProductPromotionDTO> productDTOs = promotion.getPromotionProducts().stream()
+                                        .map(pp -> {
+                                                Seller_ProductPromotionDTO spd = new Seller_ProductPromotionDTO();
+                                                spd.setId(pp.getProduct().getId());
+                                                spd.setName(pp.getProduct().getName());
+                                                spd.setPrice(pp.getProduct().getPrice());
+                                                spd.setQuantity(pp.getQuantity());
+                                                return spd;
+                                        })
+                                        .toList();
 
+                        dto.setPromotionProductDTO(productDTOs);
+                }
                 return dto;
         }
 
@@ -43,5 +52,5 @@ public class PromotionMapper {
                 }
 
         }
-    
+
 }
