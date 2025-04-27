@@ -1,434 +1,157 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import { showErrorToast } from "../../utils/Toast";
+import { formatCurrency } from "../../utils/Format";
 
 const Search = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [sortBy, setSortBy] = useState("relevance")
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" })
-  const [selectedCategories, setSelectedCategories] = useState([])
-  const [selectedRatings, setSelectedRatings] = useState([])
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState("relevance");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // Dữ liệu mẫu
-  const categories = [
-    { id: 1, name: "Văn học Việt Nam" },
-    { id: 2, name: "Kinh tế - Quản lý" },
-    { id: 3, name: "Kỹ năng sống" },
-    { id: 4, name: "Sách thiếu nhi" },
-    { id: 5, name: "Sách giáo khoa - Tham khảo" },
-    { id: 6, name: "Sách ngoại ngữ" },
-  ]
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const ratings = [5, 4, 3, 2, 1]
-
-  // Dữ liệu mẫu cho sản phẩm
-  const sampleProducts = [
-    {
-      id: 1,
-      name: "Đắc Nhân Tâm",
-      image: "https://placehold.co/300x400/2ecc71/ffffff?text=Đắc+Nhân+Tâm",
-      shop: "Shop A",
-      rate: 4.5,
-      price: 150000,
-      discountPrice: 120000,
-      stock: 50,
-      sold: 100,
-      category: "Kỹ năng sống",
-    },
-    {
-      id: 2,
-      name: "Nhà Giả Kim",
-      image: "https://placehold.co/300x400/3498db/ffffff?text=Nhà+Giả+Kim",
-      shop: "Shop B",
-      rate: 5.0,
-      price: 120000,
-      discountPrice: 100000,
-      stock: 30,
-      sold: 200,
-      category: "Văn học Việt Nam",
-    },
-    {
-      id: 3,
-      name: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-      image: "https://placehold.co/300x400/9b59b6/ffffff?text=Tuổi+Trẻ",
-      shop: "Shop C",
-      rate: 4.0,
-      price: 90000,
-      discountPrice: 75000,
-      stock: 20,
-      sold: 150,
-      category: "Kỹ năng sống",
-    },
-    {
-      id: 4,
-      name: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh",
-      image: "https://placehold.co/300x400/e74c3c/ffffff?text=Hoa+Vàng",
-      shop: "Shop D",
-      rate: 4.8,
-      price: 110000,
-      discountPrice: 95000,
-      stock: 40,
-      sold: 180,
-      category: "Văn học Việt Nam",
-    },
-    {
-      id: 5,
-      name: "Tiếng Anh Giao Tiếp Cơ Bản",
-      image: "https://placehold.co/300x400/f39c12/ffffff?text=Tiếng+Anh",
-      shop: "Shop E",
-      rate: 4.2,
-      price: 200000,
-      discountPrice: 180000,
-      stock: 25,
-      sold: 120,
-      category: "Sách ngoại ngữ",
-    },
-    {
-      id: 6,
-      name: "Toán Học Lớp 12",
-      image: "https://placehold.co/300x400/1abc9c/ffffff?text=Toán+12",
-      shop: "Shop F",
-      rate: 4.0,
-      price: 80000,
-      discountPrice: 70000,
-      stock: 60,
-      sold: 90,
-      category: "Sách giáo khoa - Tham khảo",
-    },
-    {
-      id: 7,
-      name: "Doraemon - Tập 1",
-      image: "https://placehold.co/300x400/3498db/ffffff?text=Doraemon",
-      shop: "Shop G",
-      rate: 5.0,
-      price: 30000,
-      discountPrice: 25000,
-      stock: 100,
-      sold: 300,
-      category: "Sách thiếu nhi",
-    },
-    {
-      id: 8,
-      name: "Kinh Tế Học Vĩ Mô",
-      image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-      shop: "Shop H",
-      rate: 4.3,
-      price: 180000,
-      discountPrice: 160000,
-      stock: 35,
-      sold: 110,
-      category: "Kinh tế - Quản lý",
-    },
-    
-    {
-      id: 9,
-      name: "Kinh Tế Học Vĩ Mô",
-      image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-      shop: "Shop H",
-      rate: 4.3,
-      price: 180000,
-      discountPrice: 160000,
-      stock: 35,
-      sold: 110,
-      category: "Kinh tế - Quản lý",
-    },
-    
-    {
-      id: 10,
-      name: "Kinh Tế Học Vĩ Mô",
-      image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-      shop: "Shop H",
-      rate: 4.3,
-      price: 180000,
-      discountPrice: 160000,
-      stock: 35,
-      sold: 110,
-      category: "Kinh tế - Quản lý",
-    },
-    
-    {
-      id: 11,
-      name: "Kinh Tế Học Vĩ Mô",
-      image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-      shop: "Shop H",
-      rate: 4.3,
-      price: 180000,
-      discountPrice: 160000,
-      stock: 35,
-      sold: 110,
-      category: "Kinh tế - Quản lý",
-    },
-    {
-        id: 12,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 13,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 14,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 15,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 16,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 17,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 18,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 19,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 20,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 21,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 22,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 23,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-      {
-        id: 24,
-        name: "Kinh Tế Học Vĩ Mô",
-        image: "https://placehold.co/300x400/e67e22/ffffff?text=Kinh+Tế",
-        shop: "Shop H",
-        rate: 4.3,
-        price: 180000,
-        discountPrice: 160000,
-        stock: 35,
-        sold: 110,
-        category: "Kinh tế - Quản lý",
-      },
-  ]
+  const ratings = [5, 4, 3, 2, 1];
 
   useEffect(() => {
-    // Mô phỏng việc tải dữ liệu từ API
-    setLoading(true)
-    const keyword = searchParams.get("keyword") || ""
-    const category = searchParams.get("category") || ""
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const keyword = searchParams.get("keyword") || "";
+        const minPriceParams = searchParams.get("minPrice") || "";
+        const maxPriceParams = searchParams.get("maxPrice") || "";
+        const pageParam = parseInt(searchParams.get("page") || 1);
+        const genresIDs = searchParams.getAll("genresID");
+        const sortByParam = searchParams.get("sortBy") || "relevance";
 
-    // Lọc sản phẩm theo từ khóa và danh mục
-    let filteredProducts = [...sampleProducts]
+        setPriceRange({ min: minPriceParams, max: maxPriceParams });
+        setCurrentPage(pageParam);
 
-    if (keyword) {
-      filteredProducts = filteredProducts.filter((product) =>
-        product.name.toLowerCase().includes(keyword.toLowerCase()),
-      )
-    }
+        if (genresIDs.length > 0) {
+          const selected = genres
+            .filter((cat) => genresIDs.includes(cat.id.toString()))
+            .map((cat) => cat.name);
+          setSelectedCategories(selected);
+        } else {
+          setSelectedCategories([]);
+        }
 
-    if (selectedCategories.length > 0) {
-      filteredProducts = filteredProducts.filter((product) => selectedCategories.includes(product.category))
-    }
+        const params = new URLSearchParams();
+        if (keyword) params.append("keyword", keyword);
+        if (priceRange.min !== "") params.append("minPrice", priceRange.min);
+        if (priceRange.max !== "") params.append("maxPrice", priceRange.max);
+        genresIDs.forEach((id) => params.append("genresID", id));
+        params.append("page", pageParam);
+        params.append("sortBy", sortByParam);
 
-    if (selectedRatings.length > 0) {
-      filteredProducts = filteredProducts.filter((product) => selectedRatings.includes(Math.floor(product.rate)))
-    }
+        const response = await axiosInstance.get(
+          `/search?${params.toString()}`
+        );
+        const data = response.data;
+        if (data.status) {
+          setProducts(data.data.data);
+          setGenres(data.data.listGenres);
+          const totalItems = Number(data.data.totalItem) || 0;
+          setTotalPages(Math.ceil(totalItems / 16));
+        } else {
+          console.error("Lỗi từ API:", data.message);
+          setProducts([]);
+          setTotalPages(1);
+        }
+      } catch (error) {
+        console.log("Lỗi khi gọi API:", error);
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.data?.message ||
+          "Đã xảy ra lỗi không xác định!";
 
-    if (priceRange.min !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.discountPrice >= Number.parseInt(priceRange.min))
-    }
-
-    if (priceRange.max !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.discountPrice <= Number.parseInt(priceRange.max))
-    }
-
-    // Sắp xếp sản phẩm
-    switch (sortBy) {
-      case "price-asc":
-        filteredProducts.sort((a, b) => a.discountPrice - b.discountPrice)
-        break
-      case "price-desc":
-        filteredProducts.sort((a, b) => b.discountPrice - a.discountPrice)
-        break
-      case "rating":
-        filteredProducts.sort((a, b) => b.rate - a.rate)
-        break
-      case "bestseller":
-        filteredProducts.sort((a, b) => b.sold - a.sold)
-        break
-      default:
-        // Mặc định sắp xếp theo độ phù hợp (giữ nguyên thứ tự)
-        break
-    }
-
-    setProducts(filteredProducts)
-    setTotalPages(Math.ceil(filteredProducts.length / 12))
-
-    setTimeout(() => {
-      setLoading(false)
-    }, 500)
-  }, [searchParams, sortBy, selectedCategories, selectedRatings, priceRange])
+        showErrorToast(errorMessage);
+      }
+      setLoading(false);
+    };
+    fetchProducts();
+  }, [searchParams]);
 
   const handleSortChange = (e) => {
-    setSortBy(e.target.value)
-  }
+    const newSortBy = e.target.value;
+    setSortBy(newSortBy);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sortBy", newSortBy);
+    newParams.set("page", 1);
+    setSearchParams(newParams);
+  };
 
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) => {
       if (prev.includes(category)) {
-        return prev.filter((cat) => cat !== category)
+        return prev.filter((cat) => cat !== category);
       } else {
-        return [...prev, category]
+        return [...prev, category];
       }
-    })
-  }
-
-  const handleRatingChange = (rating) => {
-    setSelectedRatings((prev) => {
-      if (prev.includes(rating)) {
-        return prev.filter((r) => r !== rating)
-      } else {
-        return [...prev, rating]
-      }
-    })
-  }
+    });
+  };
 
   const handlePriceRangeChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setPriceRange((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handlePageChange = (page) => {
-    setCurrentPage(page)
-    window.scrollTo(0, 0)
-  }
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", page);
+    setSearchParams(newParams);
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
 
   const handleApplyFilter = () => {
-    // Đóng filter trên mobile sau khi áp dụng
-    setIsFilterOpen(false)
-  }
+    const params = new URLSearchParams();
+
+    if (keyword) params.set("keyword", keyword);
+    if (priceRange.min) params.set("minPrice", priceRange.min);
+    if (priceRange.max) params.set("maxPrice", priceRange.max);
+    if (selectedCategories.length > 0) {
+      selectedCategories.forEach((cat) => {
+        const catObj = genres.find((c) => c.name === cat);
+        if (catObj) params.append("genresID", catObj.id);
+      });
+    }
+
+    params.set("page", 1);
+
+    setSearchParams(params);
+
+    setIsFilterOpen(false);
+  };
 
   const handleResetFilter = () => {
-    setSelectedCategories([])
-    setSelectedRatings([])
-    setPriceRange({ min: "", max: "" })
-  }
+    setSelectedCategories([]);
+    setPriceRange({ min: "", max: "" });
+  };
 
-  const keyword = searchParams.get("keyword") || ""
+  const formatSold = (sold) => {
+    if (sold >= 1000000) {
+      return (sold / 1000000).toFixed(1).replace(".0", "") + "m"; // triệu
+    }
+    if (sold >= 1000) {
+      return (sold / 1000).toFixed(1).replace(".0", "") + "k"; // nghìn
+    }
+    return sold.toString();
+  };
+
+  const keyword = searchParams.get("keyword") || "";
 
   return (
     <div className="container mx-auto px-4">
@@ -436,7 +159,9 @@ const Search = () => {
         <h1 className="text-2xl font-bold text-gray-800">
           {keyword ? `Kết quả tìm kiếm cho "${keyword}"` : "Tất cả sản phẩm"}
         </h1>
-        <p className="text-gray-600 mt-1">Tìm thấy {products.length} sản phẩm</p>
+        <p className="text-gray-600 mt-1">
+          Tìm thấy {products.length} sản phẩm
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -446,20 +171,49 @@ const Search = () => {
             <div className="mb-6">
               <h3 className="font-semibold text-lg mb-3">Danh mục</h3>
               <div className="space-y-2">
-                {categories.map((category) => (
-                  <div key={category.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`category-${category.id}`}
-                      checked={selectedCategories.includes(category.name)}
-                      onChange={() => handleCategoryChange(category.name)}
-                      className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor={`category-${category.id}`} className="ml-2 text-sm text-gray-700">
-                      {category.name}
-                    </label>
-                  </div>
-                ))}
+                {(showAllCategories ? genres : genres.slice(0, 5)).map(
+                  (category) => (
+                    <div key={category?.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`category-${category.id}`}
+                        checked={selectedCategories.includes(category?.name)}
+                        onChange={() => handleCategoryChange(category?.name)}
+                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor={`category-${category?.id}`}
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        {category?.name}
+                      </label>
+                    </div>
+                  )
+                )}
+                {genres.length > 5 && (
+                  <button
+                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-3 transition-colors"
+                  >
+                    <span>{showAllCategories ? "Thu gọn" : "Xem thêm"}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-4 w-4 ml-1 transition-transform duration-300 ${
+                        showAllCategories ? "transform rotate-180" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -467,7 +221,10 @@ const Search = () => {
               <h3 className="font-semibold text-lg mb-3">Giá</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label htmlFor="min-price" className="text-sm text-gray-600 block mb-1">
+                  <label
+                    htmlFor="min-price"
+                    className="text-sm text-gray-600 block mb-1"
+                  >
                     Từ
                   </label>
                   <input
@@ -481,7 +238,10 @@ const Search = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="max-price" className="text-sm text-gray-600 block mb-1">
+                  <label
+                    htmlFor="max-price"
+                    className="text-sm text-gray-600 block mb-1"
+                  >
                     Đến
                   </label>
                   <input
@@ -494,34 +254,6 @@ const Search = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="font-semibold text-lg mb-3">Đánh giá</h3>
-              <div className="space-y-2">
-                {ratings.map((rating) => (
-                  <div key={rating} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`rating-${rating}`}
-                      checked={selectedRatings.includes(rating)}
-                      onChange={() => handleRatingChange(rating)}
-                      className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor={`rating-${rating}`} className="ml-2 flex items-center">
-                      <div className="flex text-yellow-400">
-                        {[...Array(rating)].map((_, i) => (
-                          <i key={i} className="bi bi-star-fill"></i>
-                        ))}
-                        {[...Array(5 - rating)].map((_, i) => (
-                          <i key={i} className="bi bi-star text-gray-300"></i>
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-700 ml-1">trở lên</span>
-                    </label>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -567,7 +299,12 @@ const Search = () => {
                 className="lg:hidden flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path
                     fillRule="evenodd"
                     d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
@@ -582,7 +319,10 @@ const Search = () => {
           {/* Mobile filter drawer */}
           {isFilterOpen && (
             <div className="fixed inset-0 z-50 lg:hidden">
-              <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsFilterOpen(false)}></div>
+              <div
+                className="absolute inset-0 bg-black bg-opacity-50"
+                onClick={() => setIsFilterOpen(false)}
+              ></div>
               <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl p-4 overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Bộ lọc</h3>
@@ -594,7 +334,12 @@ const Search = () => {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -602,20 +347,38 @@ const Search = () => {
                 <div className="mb-6">
                   <h3 className="font-semibold text-lg mb-3">Danh mục</h3>
                   <div className="space-y-2">
-                    {categories.map((category) => (
-                      <div key={category.id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id={`mobile-category-${category.id}`}
-                          checked={selectedCategories.includes(category.name)}
-                          onChange={() => handleCategoryChange(category.name)}
-                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <label htmlFor={`mobile-category-${category.id}`} className="ml-2 text-sm text-gray-700">
-                          {category.name}
-                        </label>
-                      </div>
-                    ))}
+                    {(showAllCategories ? genres : genres.slice(0, 5)).map(
+                      (category) => (
+                        <div key={category?.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`category-${category.id}`}
+                            checked={selectedCategories.includes(
+                              category?.name
+                            )}
+                            onChange={() =>
+                              handleCategoryChange(category?.name)
+                            }
+                            className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <label
+                            htmlFor={`category-${category?.id}`}
+                            className="ml-2 text-sm text-gray-700"
+                          >
+                            {category?.name}
+                          </label>
+                        </div>
+                      )
+                    )}
+
+                    {genres.length > 5 && (
+                      <button
+                        onClick={() => setShowAllCategories(!showAllCategories)}
+                        className="text-blue-600 hover:underline text-sm mt-2"
+                      >
+                        {showAllCategories ? "Thu gọn" : "Xem thêm"}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -623,7 +386,10 @@ const Search = () => {
                   <h3 className="font-semibold text-lg mb-3">Giá</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="mobile-min-price" className="text-sm text-gray-600 block mb-1">
+                      <label
+                        htmlFor="mobile-min-price"
+                        className="text-sm text-gray-600 block mb-1"
+                      >
                         Từ
                       </label>
                       <input
@@ -637,7 +403,10 @@ const Search = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="mobile-max-price" className="text-sm text-gray-600 block mb-1">
+                      <label
+                        htmlFor="mobile-max-price"
+                        className="text-sm text-gray-600 block mb-1"
+                      >
                         Đến
                       </label>
                       <input
@@ -650,34 +419,6 @@ const Search = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       />
                     </div>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="font-semibold text-lg mb-3">Đánh giá</h3>
-                  <div className="space-y-2">
-                    {ratings.map((rating) => (
-                      <div key={rating} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id={`mobile-rating-${rating}`}
-                          checked={selectedRatings.includes(rating)}
-                          onChange={() => handleRatingChange(rating)}
-                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <label htmlFor={`mobile-rating-${rating}`} className="ml-2 flex items-center">
-                          <div className="flex text-yellow-400">
-                            {[...Array(rating)].map((_, i) => (
-                              <i key={i} className="bi bi-star-fill"></i>
-                            ))}
-                            {[...Array(5 - rating)].map((_, i) => (
-                              <i key={i} className="bi bi-star text-gray-300"></i>
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-700 ml-1">trở lên</span>
-                        </label>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -708,55 +449,110 @@ const Search = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {products.map((product) => (
                 <div
-                  key={product.id}
+                  key={product?.productId}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
-                  <a href={`/product-detail/${product.id}`} className="block">
+                  <Link
+                    to={`/product-detail/${product?.productId}`}
+                    className="block"
+                  >
                     <div className="relative">
                       <img
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.name}
+                        src={product?.imageName || "/placeholder.svg"}
+                        alt={product?.productName}
                         className="w-full aspect-[3/4] object-cover"
                       />
-                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm">
-                        -{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%
-                      </div>
+                      {product?.promotionValue && (
+                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm">
+                          -{product.promotionValue}%
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 h-12">{product.name}</h3>
+                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 h-12">
+                        {product?.productName}
+                      </h3>
 
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex text-yellow-400">
-                          {[...Array(Math.floor(product.rate))].map((_, index) => (
-                            <i key={index} className="bi bi-star-fill"></i>
-                          ))}
-                          {product.rate % 1 !== 0 && <i className="bi bi-star-half"></i>}
-                          {[...Array(5 - Math.ceil(product.rate))].map((_, index) => (
-                            <i key={index} className="bi bi-star"></i>
-                          ))}
+                          {[...Array(Math.floor(product?.rate))].map(
+                            (_, index) => (
+                              <i key={index} className="bi bi-star-fill"></i>
+                            )
+                          )}
+                          {product?.rate % 1 !== 0 && (
+                            <i className="bi bi-star-half"></i>
+                          )}
+                          {[...Array(5 - Math.ceil(product?.rate))].map(
+                            (_, index) => (
+                              <i key={index} className="bi bi-star"></i>
+                            )
+                          )}
                         </div>
-                        <span className="text-gray-600 text-sm">({product.rate})</span>
                       </div>
 
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-red-600 font-bold text-lg">
-                            {product.discountPrice.toLocaleString()}đ
-                          </span>
-                          <span className="text-gray-500 line-through ml-2 text-sm">
-                            {product.price.toLocaleString()}đ
-                          </span>
+                          {product?.discountPrice ? (
+                            <>
+                              <span className="text-red-600 font-bold text-lg">
+                                {formatCurrency(product?.discountPrice)}
+                              </span>
+                              <span className="text-gray-500 line-through ml-2 text-sm">
+                                {formatCurrency(product?.price)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-red-600 font-bold text-lg">
+                              {formatCurrency(product?.price)}
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <a href="#" className="text-blue-600 hover:text-blue-800 text-sm">
-                          {product.shop}
-                        </a>
-                        <span className="text-gray-500 text-sm">Đã bán {product.sold}</span>
+                        <Link
+                          to={`/shop/${product?.shopId}`}
+                          className="flex items-center text-gray-500 hover:text-gray-800 text-sm space-x-1"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 9.75L12 4.5l9 5.25M4.5 10.5v8.25A1.5 1.5 0 006 20.25h12a1.5 1.5 0 001.5-1.5V10.5M12 12v8.25"
+                            />
+                          </svg>
+                          <span>{product?.shopName}</span>
+                        </Link>
+                        <div className="flex items-center text-gray-500 text-sm space-x-1 mt-1">
+                          {product?.sold > 1000 && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4 text-red-500"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 2C8.686 2 6 5.134 6 8.5c0 2.358 1.5 3.816 3 4.5-.75.5-1.5 1.25-1.5 2.5 0 1.381 1.119 2.5 2.5 2.5.828 0 1.5-.672 1.5-1.5S11.828 15 11 15c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1c0-.828-.672-1.5-1.5-1.5-.828 0-1.5.672-1.5 1.5S9.172 18 10 18c1.381 0 2.5-1.119 2.5-2.5 0-1.25-.75-2-1.5-2.5 1.5-.684 3-2.142 3-4.5C18 5.134 15.314 2 12 2z"
+                              />
+                            </svg>
+                          )}
+                          <span>Đã bán: {formatSold(product?.sold)}</span>
+                        </div>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -776,8 +572,13 @@ const Search = () => {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy sản phẩm nào</h3>
-              <p className="text-gray-600">Vui lòng thử lại với từ khóa khác hoặc điều chỉnh bộ lọc của bạn.</p>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                Không tìm thấy sản phẩm nào
+              </h3>
+              <p className="text-gray-600">
+                Vui lòng thử lại với từ khóa khác hoặc điều chỉnh bộ lọc của
+                bạn.
+              </p>
             </div>
           )}
 
@@ -789,10 +590,17 @@ const Search = () => {
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`px-3 py-1 rounded-md ${
-                    currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
@@ -801,26 +609,32 @@ const Search = () => {
                   </svg>
                 </button>
 
-                {[...Array(totalPages)].map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`px-3 py-1 rounded-md ${
-                      currentPage === index + 1 ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+                {Number.isInteger(totalPages) &&
+                  totalPages > 0 &&
+                  [...Array(totalPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handlePageChange(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
 
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`px-3 py-1 rounded-md ${
-                    currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
@@ -834,8 +648,7 @@ const Search = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Search
-
+export default Search;
