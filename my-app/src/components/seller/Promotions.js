@@ -113,17 +113,19 @@ const Promotions = () => {
   const confirmDelete = async (id) => {
     try {
       // Gọi API xóa voucher
-      const response = await axiosInstance.post(
-        `/seller/promotion/delete?id=${id}`
-      );
-
-      if (response.data.status === true) {
-        // Đóng modal
-        setShowDeleteModal(false);
-        setSelectedItem(null);
-        showSuccessToast(response.data.message || "Xóa khuyến mãi thành công");
-        fetchPromotions(startDate, expireDate, currentPage);
-      }
+      axiosInstance
+        .delete(`/api/seller/promotion/delete/${id}`)
+        .then((response) => {
+          setShowDeleteModal(false);
+          setSelectedItem(null);
+          showSuccessToast(
+            response.data.message || "Xóa khuyến mãi thành công"
+          );
+          fetchPromotions(startDate, expireDate, currentPage);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.error("Lỗi khi xóa khuyến mãi:", error);
       showErrorToast("Xóa khuyến mãi thất bại" + error.response.data.message);

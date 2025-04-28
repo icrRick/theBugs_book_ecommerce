@@ -52,6 +52,6 @@ public class Promotion {
     private boolean active;
     @Column(nullable = false)
     private boolean flashSale;
-    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PromotionProduct> promotionProducts;
 }

@@ -21,10 +21,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,9 +66,10 @@ public class PromotionController {
                 }
         }
 
-        @GetMapping("/get/{id}")
+        @GetMapping("/{id}")
         public ResponseEntity<PromotionDTO> getPromotionById(@PathVariable Integer id) {
                 try {
+                        System.out.println("PromotionControllerID: " + id);
                         PromotionDTO promotion = promotionService.getPromotionById(id);
                         return ResponseEntity.ok(promotion);
                 } catch (IllegalArgumentException e) {
@@ -105,7 +107,33 @@ public class PromotionController {
                         @RequestHeader("Authorization") String authorizationHeader,
                         @RequestBody PromotionBean promotion) {
                 ResponseData responseData = promotionService.createPromotion(promotion, authorizationHeader);
-                ResponseEntity<ResponseData> responseEntity = ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode()))
+                ResponseEntity<ResponseData> responseEntity = ResponseEntity
+                                .status(HttpStatus.valueOf(responseData.getStatusCode()))
+                                .body(responseData);
+                return responseEntity;
+        }
+
+        @PutMapping("/update/{promotionId}")
+        public ResponseEntity<ResponseData> updatePromotion(
+                        @PathVariable Integer promotionId,
+                        @RequestHeader("Authorization") String authorizationHeader,
+                        @RequestBody PromotionBean promotion) {
+                System.out.println("PromotionControllerUpdateID: " + promotionId);
+                ResponseData responseData = promotionService.updatePromotion(promotionId, promotion, authorizationHeader);
+                ResponseEntity<ResponseData> responseEntity = ResponseEntity
+                                .status(HttpStatus.valueOf(responseData.getStatusCode()))
+                                .body(responseData);
+                return responseEntity;
+        }
+
+        @DeleteMapping("/delete/{promotionId}")
+        public ResponseEntity<ResponseData> deletePromotion(
+                        @PathVariable Integer promotionId,
+                        @RequestHeader("Authorization") String authorizationHeader) {
+                System.out.println("PromotionControllerDeleteID: " + promotionId);
+                ResponseData responseData = promotionService.deletePromotion(promotionId, authorizationHeader);
+                ResponseEntity<ResponseData> responseEntity = ResponseEntity
+                                .status(HttpStatus.valueOf(responseData.getStatusCode()))
                                 .body(responseData);
                 return responseEntity;
         }

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class PromotionProductDTO {
-
     private Integer id;
     private String name;
     private Double price;

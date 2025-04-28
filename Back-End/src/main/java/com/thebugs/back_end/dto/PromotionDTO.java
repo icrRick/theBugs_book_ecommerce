@@ -14,5 +14,5 @@ public class PromotionDTO {
         private Date expireDate;
         private String status;
         private Boolean active;
-        private List<Integer> promotionProductIds;
+        private List<Seller_ProductPromotionDTO> promotionProductDTO;
 }

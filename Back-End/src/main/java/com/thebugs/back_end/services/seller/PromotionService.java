@@ -1,7 +1,9 @@
 package com.thebugs.back_end.services.seller;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -90,6 +92,89 @@ public class PromotionService {
                 }
         }
 
+        private Promotion promotionBeanToEntity(PromotionBean promotionBean, Promotion promotionOg) {
+                Promotion promotion = new Promotion();
+                promotion.setId(promotionOg.getId());
+                promotion.setCreateAt(promotionOg.getCreateAt());
+                promotion.setShop(promotionOg.getShop());
+
+                promotion.setStartDate(promotionBean.getStartDate());
+                promotion.setExpireDate(promotionBean.getExpireDate());
+                promotion.setPromotionValue(promotionBean.getPromotionValue());
+                promotion.setActive(true);
+                promotion.setFlashSale(true);
+                return promotion;
+        }
+
+        public ResponseData updatePromotion(Integer promotionId, PromotionBean promotionBean,
+                        String authorizationHeader) {
+                try {
+                        // Find the existing promotion by ID
+                        Optional<Promotion> optionalPromotion = promotionJPA.findById(promotionId);
+                        if (!optionalPromotion.isPresent()) {
+                                return new ResponseData(false, "Không tìm thấy khuyến mãi với ID = " + promotionId,
+                                                null, 404);
+                        }
+                        Promotion og_promotion = optionalPromotion.get();
+                        Promotion promotion = promotionBeanToEntity(promotionBean, og_promotion);
+
+                        List<PromotionProduct> updatedPromotionProducts = new ArrayList<>();
+
+                        // Create a map to track existing promotion products by product ID
+                        Map<Integer, PromotionProduct> productMap = new HashMap<>();
+                        for (PromotionProduct promotionProduct : og_promotion.getPromotionProducts()) {
+                                productMap.put(promotionProduct.getProduct().getId(), promotionProduct);
+                        }
+
+                        // Loop through the new products to add or update them
+                        for (PromotionProductBean productBean : promotionBean.getProducts()) {
+                                Optional<Product> optionalProduct = g_ProductJPA.findById(productBean.getId());
+                                if (!optionalProduct.isPresent()) {
+                                        return new ResponseData(false,
+                                                        "Không tìm thấy sản phẩm với ID = " + productBean.getId(), null,
+                                                        401);
+                                }
+                                Product productEntity = optionalProduct.get();
+                                if (productBean.getQuantity() > productEntity.getQuantity()) {
+                                        return new ResponseData(false,
+                                                        "Số lượng sản phẩm " + productEntity.getName()
+                                                                        + " trong kho không đủ, số lượng trong kho: "
+                                                                        + productEntity.getQuantity(),
+                                                        null, 401);
+                                }
+
+                                // Check if the product already exists in the promotion
+                                PromotionProduct existingPromotionProduct = productMap.get(productBean.getId());
+                                if (existingPromotionProduct != null) {
+                                        // Update the existing promotion product quantity
+                                        System.out.println("ExistingProduct: " + existingPromotionProduct.getId());
+                                        existingPromotionProduct.setQuantity(productBean.getQuantity());
+                                        updatedPromotionProducts.add(existingPromotionProduct);
+                                } else {
+                                        // Create a new promotion product if it doesn't exist
+                                        PromotionProduct promotionProduct = new PromotionProduct();
+                                        promotionProduct.setPromotion(promotion);
+                                        promotionProduct.setProduct(productEntity);
+                                        promotionProduct.setQuantity(productBean.getQuantity());
+                                        promotionProduct.setSoldQuantity(0);
+                                        updatedPromotionProducts.add(promotionProduct);
+                                }
+                        }
+
+                        // Set the updated list of promotion products
+                        promotion.setPromotionProducts(updatedPromotionProducts);
+                        promotion.setActive(true);
+                        promotion.setFlashSale(true);
+
+                        // Save the updated promotion
+                        promotionJPA.save(promotion);
+
+                        return new ResponseData(true, "Cập nhật khuyến mãi thành công", null, 200);
+                } catch (Exception e) {
+                        return new ResponseData(false, "Lỗi: " + e.getMessage(), null, 400);
+                }
+        }
+
         public ArrayList<PromotionDTO> findByShopAndDateRange(String authorizationHeader, Date startDate,
                         Date expireDate, Pageable pageable) {
                 Page<Promotion> page = promotionJPA.findByShopAndDateRange(
@@ -131,6 +216,25 @@ public class PromotionService {
                 return promotionMapper.toDTO(promotion);
         }
 
+        public ResponseData deletePromotion(Integer promotionId, String authorizationHeader) {
+                try {
+                        // Find the promotion by ID
+                        Optional<Promotion> optionalPromotion = promotionJPA.findById(promotionId);
+                        if (!optionalPromotion.isPresent()) {
+                                return new ResponseData(false, "Không tìm thấy khuyến mãi với ID = " + promotionId,
+                                                null, 404);
+                        }
+
+                        Promotion promotion = optionalPromotion.get();
+                        // Delete the promotion itself
+                        promotionJPA.delete(promotion);
+
+                        return new ResponseData(true, "Xóa khuyến mãi thành công", null, 200);
+                } catch (Exception e) {
+                        return new ResponseData(false, "Lỗi: " + e.getMessage(), null, 400);
+                }
+        }
+
         public ResponseData getProductAndPromotion(Integer shopId, Pageable pageable) {
                 try {
                         Page<Seller_ProductPromotionDTO> productAndPromotion = g_ProductJPA.getPromotions(shopId,
@@ -141,4 +245,5 @@ public class PromotionService {
                         return new ResponseData(false, "Lỗi: " + e.getMessage(), null, 400);
                 }
         }
+
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Select from "react-select";
 
 import axiosInstance from "../../utils/axiosInstance";
@@ -29,15 +29,15 @@ const AddPromotion = () => {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
   const [isFetching, setIsFetching] = useState(false);
-
   // Fetch products when component mounts
   useEffect(() => {
     fetchProducts();
   }, [currentPage]);
 
+
   const fetchProducts = () => {
     console.log("Fetching products...");
-    
+
     axiosInstance
       .get("/api/seller/promotion/products", {
         params: {
@@ -56,9 +56,10 @@ const AddPromotion = () => {
       })
       .catch((error) => {
         showErrorToast(error.response.data.message);
-      }).finally(() => {
-        setIsFetching(false);
       })
+      .finally(() => {
+        setIsFetching(false);
+      });
   };
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -75,6 +76,17 @@ const AddPromotion = () => {
     const product = products.find((p) => p.id === Number(productId));
     return product ? product.price : null;
   };
+  function mapPromotionData(data) {
+    return {
+      promotionValue: Number(data.promotionValue),
+      startDate: data.startDate,
+      expireDate: data.expireDate,
+      products: (data.promotionProductIds || []).map((id) => ({
+        id: id,
+        quantity: 1, // default quantity, vì dữ liệu ban đầu chỉ có id
+      })),
+    };
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -196,6 +208,7 @@ const AddPromotion = () => {
       })),
     };
 
+    console.log("Data to send:", dataToSend);
     axiosInstance
       .post("/api/seller/promotion/create", dataToSend)
       .then(() => {
