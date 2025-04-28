@@ -227,6 +227,12 @@ const Statistics = () => {
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phí cố định (5%)
                   </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doanh thu cửa hàng
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doanh thu sau khi trừ phí cố định
+                  </th>
 
 
 
@@ -262,6 +268,17 @@ const Statistics = () => {
                           {formatCurrency(item?.fixedFee || 0)}
                         </div>
                       </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalRevenueShop || 0)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalRevenueShop - item?.fixedFee || 0)}
+                        </div>
+                      </td>
+
 
                     </tr>
                   ))

@@ -39,6 +39,7 @@ public class AdminDashboardService {
         map.put("activeTrueShops", shopJPA.countShopByActiveTrue());
         map.put("approveNullShops", shopJPA.countShopByApproveNull());
         map.put("statusTrueShops", shopJPA.countShopByStatusTrue());
+        
         map.put("activeTrueProducts", productJPA.countProductByActiveTrue());
         map.put("approveNullProducts", productJPA.countProductByApproveNull());
         map.put("statusTrueProducts", productJPA.countProductByStatusTrue());

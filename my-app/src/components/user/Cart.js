@@ -7,6 +7,7 @@ import { cookie, getListProductIds, setListProductIds, setListVoucherIds } from 
 import { showErrorToast } from "../../utils/Toast";
 import { s_deleteCartItem, s_getCartItems, s_saveCartItem } from "../service/cartItemService";
 import Loading from "../../utils/Loading";
+import { useAuth } from "../../contexts/AuthContext";
 
 
 const useDebounce = (value, delay) => {
@@ -37,7 +38,7 @@ const Cart = () => {
     const [selectedVouchers, setSelectedVouchers] = useState({});
 
     const [pendingUpdate, setPendingUpdate] = useState(null);
-
+    const {setCartCount } = useAuth();
     // Debounce pendingUpdate với delay 400ms
     const debouncedUpdate = useDebounce(pendingUpdate, 400);
 
@@ -125,6 +126,7 @@ const Cart = () => {
         try {
             const response = await s_deleteCartItem(productId);
             if (response) {
+                setCartCount(response.reduce((acc, shop) => acc + shop.products.length, 0));
                 setShowDeleteModal(false);
                 setSelectedItem(null);
                 fetchCartItems();
@@ -281,23 +283,36 @@ const Cart = () => {
                 // Cập nhật trạng thái sản phẩm
                 const updatedProducts = shop.products.map(product => ({
                     ...product,
-                    checked: (product.status === true || product.active === false) ? false : product.checked || false,
                     disabled: (product.status === true || product.active === false)
                 }));
 
-                // Kiểm tra xem có sản phẩm nào được checked không
-                const hasCheckedProducts = updatedProducts.some(product => product.checked);
-
                 return {
                     ...shop,
-                    checked: hasCheckedProducts,
                     products: updatedProducts
                 };
             });
-            setCart(updatedCart);
+
+            // Giữ nguyên trạng thái đã chọn cho các sản phẩm hợp lệ
+            const mergedCart = updatedCart.map(updatedShop => {
+                const currentShop = cart.find(s => s.shopId === updatedShop.shopId);
+                if (!currentShop) return updatedShop;
+
+                return {
+                    ...updatedShop,
+                    products: updatedShop.products.map(updatedProduct => {
+                        const currentProduct = currentShop.products.find(p => p.id === updatedProduct.id);
+                        return {
+                            ...updatedProduct,
+                            checked: updatedProduct.disabled ? false : (currentProduct?.checked || false)
+                        };
+                    })
+                };
+            });
+
+            setCart(mergedCart);
 
             // Kiểm tra và lấy danh sách sản phẩm đã chọn và bị disabled
-            const disabledProducts = updatedCart.flatMap(shop =>
+            const disabledProducts = mergedCart.flatMap(shop =>
                 shop.products.filter(product =>
                     product.checked && product.disabled
                 ).map(product => ({
@@ -306,15 +321,8 @@ const Cart = () => {
                 }))
             );
 
-            // Nếu có sản phẩm bị disabled thì hiển thị thông báo và cập nhật trạng thái
-            if (disabledProducts.length > 0) {
-                const productNames = disabledProducts.map(p => `"${p.name}" của shop "${p.shopName}"`).join(", ");
-                showErrorToast(`Không thể thanh toán các sản phẩm đã ngừng bán: ${productNames}`);
-                return;
-            }
-
             // Lấy tất cả productId đã được checked và không bị disabled
-            const productIds = updatedCart.flatMap(shop =>
+            const productIds = mergedCart.flatMap(shop =>
                 shop.products
                     .filter(product =>
                         product.checked && !product.disabled
@@ -644,6 +652,56 @@ const Cart = () => {
                         <div className="flex flex-col mb-4 px-4 sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
                             <div className="flex flex-col items-end">
                                 <div className="flex items-center space-x-2">
+                                    <span className="text-sm sm:text-base text-gray-600">
+                                        Tổng tiền hàng:
+                                    </span>
+                                    <span className="font-medium text-gray-900">
+                                        {formatCurrency(cart.reduce((total, shop) => {
+                                            return total + shop.products.reduce((shopTotal, product) => {
+                                                if (product.checked) {
+                                                    const price = product.price;
+                                                    return shopTotal + (price * product.productQuantity);
+                                                }
+                                                return shopTotal;
+                                            }, 0);
+                                        }, 0))}
+                                    </span>
+                                </div>
+                                
+                                {/* Phần giảm giá trực tiếp */}
+                                <div className="flex items-center space-x-2 mt-1">
+                                    <span className="text-sm sm:text-base text-gray-600">
+                                        Giảm giá:
+                                    </span>
+                                    <span className="font-medium text-green-600">
+                                        -{formatCurrency(cart.reduce((total, shop) => {
+                                            // Tính tổng giảm giá từ khuyến mãi sản phẩm
+                                            const promotionDiscount = shop.products.reduce((discount, product) => {
+                                                if (product.checked && product.promotionValue > 0) {
+                                                    return discount + (product.price * product.promotionValue / 100 * product.productQuantity);
+                                                }
+                                                return discount;
+                                            }, 0);
+                                            
+                                            // Tính tổng giảm giá từ voucher
+                                            const shopTotal = shop.products.reduce((total, product) => {
+                                                if (product.checked) {
+                                                    const price = product.promotionValue > 0
+                                                        ? product.price * (1 - product.promotionValue / 100)
+                                                        : product.price;
+                                                    return total + (price * product.productQuantity);
+                                                }
+                                                return total;
+                                            }, 0);
+                                            
+                                            const voucherDiscount = calculateVoucherDiscount(shopTotal, selectedVouchers[shop.shopId]);
+                                            
+                                            return total + promotionDiscount + voucherDiscount;
+                                        }, 0))}
+                                    </span>
+                                </div>
+                                
+                                <div className="flex items-center space-x-2 mt-3">
                                     <span className="text-sm sm:text-base text-gray-600">
                                         Tổng thanh toán ({calculateTotalItems(cart)} sản phẩm):
                                     </span>

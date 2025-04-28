@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 import { cookie, getAddressId, getListVoucherIds, removeListProductIds, removeListVoucherIds, setListOrderId } from '../../utils/cookie'
 import { calculateShippingFree } from "../../utils/ShippingFree"
@@ -7,9 +7,13 @@ import axiosInstance from "../../utils/axiosInstance"
 import axios from "axios"
 import { showErrorToast } from "../../utils/Toast"
 import { formatCurrency } from "../../utils/Format"
+import { s_getCartItems } from "../service/cartItemService"
+import { useAuth } from "../../contexts/AuthContext"
 
 const Payment = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { setCartCount } = useAuth();
     const { getListProductIds, getListVoucherIds } = cookie();
     const [shops, setShops] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState("Thanh toán tiền mặt khi nhận hàng");
@@ -134,8 +138,11 @@ const Payment = () => {
             navigate('/cart');
             return;
         }
+        // Lấy quantity từ state nếu có nêu không thì là 0
+        const { quantity } = location.state || { quantity: 0 };
         const requestBody = {
             productIntegers: productIds,
+            productQuantity: quantity, 
             voucherIntegers: voucherIds
         };
 
@@ -148,7 +155,7 @@ const Payment = () => {
                 showErrorToast(response.data.message || "Có lỗi xảy ra khi tải dữ liệu giỏ hàng");
             }
         } catch (error) {
-            showErrorToast(error.response?.data?.message || "Không thể kết nối đến máy chủ");
+            showErrorToast(error.response?.data?.message || "Không thể kết nối ến máy chủ");
             console.error("Error fetching cart data:", error);
         } finally {
             setIsLoading(false);
@@ -252,35 +259,26 @@ const Payment = () => {
         }, 0);
     };
 
-    const handleVnpayError = (error) => {
-        let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
-
-        if (error?.code === 76) {
-            errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
-        } else if (error?.code === 3) {
-            errorMessage = "Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin thanh toán hoặc liên hệ bộ phận hỗ trợ.";
-        } else if (error?.message) {
-            errorMessage = error.message;
-        }
-
-        showErrorToast(errorMessage);
-        return errorMessage;
+    // Thêm hàm tính tổng giá gốc (không bao gồm khuyến mãi)
+    const calculateOriginalShopTotal = (shop) => {
+        return shop.products.reduce((total, product) =>
+            total + product.price * product.productQuantity, 0);
     };
 
-    const validatePaymentData = () => {
+    const calculateTotalOriginalPrice = () => {
+        return shops.reduce((total, shop) => total + calculateOriginalShopTotal(shop), 0);
+    };
 
-        if (!customerInfo?.fullName || !customerInfo?.phone || !customerInfo?.address) {
-            showErrorToast("Vui lòng kiểm tra lại thông tin giao hàng.");
-            return false;
-        }
-
-        const total = calculateFinalTotal();
-        if (!total || isNaN(total) || total <= 0) {
-            showErrorToast("Số tiền thanh toán không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
-            return false;
-        }
-
-        return true;
+    // Thêm hàm tính giảm giá trực tiếp từ khuyến mãi của sản phẩm
+    const calculatePromotionDiscount = () => {
+        return shops.reduce((total, shop) => {
+            return total + shop.products.reduce((shopTotal, product) => {
+                if (product.promotionValue > 0) {
+                    return shopTotal + (product.price * product.promotionValue / 100 * product.productQuantity);
+                }
+                return shopTotal;
+            }, 0);
+        }, 0);
     };
 
     const handlePayment = async () => {
@@ -301,9 +299,6 @@ const Payment = () => {
                 };
             });
 
-            // if(!validatePaymentData()){
-            //     return;
-            // }
             if (responseData.length < 0) {
                 navigate('/cart');
                 return;
@@ -313,7 +308,8 @@ const Payment = () => {
             const responseCreateOrder = await axiosInstance.post("/user/payment/payment-ordered", responseData);
             if (responseCreateOrder.status === 200) {
                 console.log("responseCreateOrder.data.data", responseCreateOrder.data.data);
-
+                const responseCartItems = await s_getCartItems();
+                setCartCount(responseCartItems.reduce((acc, shop) => acc + shop.products.length, 0));
                 const arrayOrderIds = responseCreateOrder.data.data; // Ví dụ: [25, 26]
                 setListOrderId(JSON.stringify(arrayOrderIds));
                 if (paymentMethod === "Thanh toán chuyển khoản ngân hàng") {
@@ -350,10 +346,10 @@ const Payment = () => {
                         if (responseVnpay.status === 200 && responseVnpay.data?.status === true) {
                             window.location.href = responseVnpay.data.data;
                         } else {
-                            let errorMessage = "Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
+                            let errorMessage = "ã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.";
 
                             if (responseVnpay.data?.code === 76) {
-                                errorMessage = "Vui lòng chọn ngân hàng khác để thanh toán hoặc liên hệ bộ phận hỗ trợ.";
+                                errorMessage = "Vui lòng chọn ngân hàng khác ể thanh toán hoặc liên hệ bộ phận hỗ trợ.";
                                 showErrorToast(errorMessage);
                                 return;
                             } else if (responseVnpay.data?.code === 3) {
@@ -598,14 +594,17 @@ const Payment = () => {
                     <div className="border-b bg-white p-4 sm:p-6">
                         <div className="space-y-2 sm:space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs sm:text-sm text-gray-600">Tổng tiền hàng:</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Tổng tiền hàng (giá gốc):</span>
                                 <span className="text-xs sm:text-sm text-gray-900 font-medium">
-                                    {formatCurrency(shops.reduce((sum, shop) =>
-                                        sum + calculateShopTotal(shop), 0))}
+                                    {formatCurrency(calculateTotalOriginalPrice())}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá:</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá khuyến mãi sản phẩm:</span>
+                                <span className="text-xs sm:text-sm text-green-600 font-medium">-{formatCurrency(calculatePromotionDiscount())}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá voucher:</span>
                                 <span className="text-xs sm:text-sm text-green-600 font-medium">-{formatCurrency(calculateTotalDiscount())}</span>
                             </div>
                             <div className="flex justify-between items-center">
@@ -640,7 +639,7 @@ const Payment = () => {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Đang xử lý...
+                                        đang xử lý...
                                     </div>
                                 ) : (
                                     "Xác nhận đặt hàng"
@@ -673,9 +672,9 @@ const Payment = () => {
                         <div className="space-y-2 sm:space-y-3">
                             <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-3 sm:mb-4">
                                 <div className="flex justify-between items-center text-xs sm:text-sm">
-                                    <span className="text-gray-600">Tổng tiền đơn hàng:</span>
+                                    <span className="text-gray-600">Tổng tiền ơn hàng:</span>
                                     <span className="text-gray-900 font-medium">
-                                        {formatCurrency(calculateShopTotal(shops.find(shop => shop.shopId === selectedShopId)))}đ
+                                        {formatCurrency(calculateShopTotal(shops.find(shop => shop.shopId === selectedShopId)))}
                                     </span>
                                 </div>
                             </div>
@@ -711,20 +710,20 @@ const Payment = () => {
                                                     <h4 className="font-semibold text-blue-600 text-sm sm:text-base">{voucher.codeVoucher}</h4>
                                                     <div className="text-xs space-y-1 mt-1">
                                                         <p className="text-gray-600">
-                                                            Giảm {voucher.discountPercentage}% tối đa {formatCurrency(voucher.maxDiscount)}đ
+                                                            Giảm {voucher.discountPercentage}% tối a {formatCurrency(voucher.maxDiscount)}
                                                         </p>
                                                         {isValidTotal ? (
                                                             <div className="text-green-600 space-y-1">
-                                                                <p>Giảm {voucher.discountPercentage}% = {formatCurrency(discountAmount)}đ</p>
+                                                                <p>Giảm {voucher.discountPercentage}% = {formatCurrency(discountAmount)}</p>
                                                                 {discountAmount > voucher.maxDiscount && (
-                                                                    <p>→ Áp dụng giảm tối đa: {formatCurrency(finalDiscount)}đ</p>
+                                                                    <p>→ Áp dụng giảm tối đa: {formatCurrency(finalDiscount)}</p>
                                                                 )}
                                                             </div>
                                                         ) : (
                                                             <p className="text-red-500">
-                                                                Đơn tối thiểu {formatCurrency(voucher.minTotalOrder)}đ
+                                                                đơn hàng tối thiểu {formatCurrency(voucher.minTotalOrder)}
                                                                 <br />
-                                                                Cần mua thêm {formatCurrency(voucher.minTotalOrder - shopTotal)}đ
+                                                                Cần mua thêm {formatCurrency(voucher.minTotalOrder - shopTotal)}
                                                             </p>
                                                         )}
                                                     </div>

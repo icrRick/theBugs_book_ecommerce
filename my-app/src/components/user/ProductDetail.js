@@ -10,6 +10,7 @@ import "swiper/css/zoom";
 import ChatButton from "./ChatButton";
 import axiosInstance from "../../utils/axiosInstance";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
+import { setListProductIds, setListVoucherIds } from "../../utils/cookie";
 
 const ProductDetail = () => {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
@@ -183,13 +184,9 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    console.log("Mua ngay:", {
-      productId: product.id,
-      variantId: selectedVariant?.id,
-      quantity: quantity,
-    });
-
-    navigate("/payment");
+    setListProductIds(JSON.stringify([product.id]));
+    setListVoucherIds(JSON.stringify([]));
+    navigate("/payment" , { state: { quantity: quantity } });
   };
 
   const handleReportProduct = () => {

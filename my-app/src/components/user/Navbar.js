@@ -3,40 +3,24 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { showSuccessToast, showErrorToast } from "../../utils/Toast";
 import axiosInstance from "../../utils/axiosInstance";
+import { s_countCartItems, s_getCartItems } from "../service/cartItemService";
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
   const { userInfo, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const fetchCartItems = async () => {
-    try {
-      const response = await axiosInstance.get("/user/cart/getCartItems");
-      if (response.status === 200 && response.data.status === true) {
-        const shopList = response.data.data; // đây là mảng chứa nhiều shop
 
-        let totalProductIds = 0;
-        shopList.forEach((shop) => {
-          totalProductIds += shop.products.length;
-        });
 
-        setCartCount(totalProductIds);
-      } else {
-        console.log(response.data.message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
+  const { cartCount, setCartCount } = useAuth();
   useEffect(() => {
-    fetchCartItems();
+    s_countCartItems().then(response => {
+      setCartCount(response);
+    });
   }, []);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -89,13 +73,20 @@ const Navbar = () => {
             </div>
             <div className="hidden sm:ml-4 sm:flex sm:items-center sm:space-x-3 md:space-x-4 lg:space-x-8">
               {
-                userInfo?.role === 1 && (
-                  <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
+                userInfo === null ?
+                  (<Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
                     Bán hàng cùng THEBUGS
-                  </Link>
-                )
-              }
-           
+                  </Link>) : (
+                    userInfo.role === 1 ?
+                      <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
+                        Bán hàng cùng THEBUGS
+                      </Link>
+                      :
+                      <></>
+                  )}
+
+
+
               <Link to="/search" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
                 Sản phẩm
               </Link>
@@ -165,16 +156,15 @@ const Navbar = () => {
               >
                 <img
                   className="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                  src="https://placehold.co/100x100/2ecc71/ffffff?text=S%C3%A1ch+3"
+                  src={userInfo?.avatar || "https://placehold.co/100x100/2ecc71/ffffff?text={userInfo?.fullName}"}
                   alt="User avatar"
                 />
                 <span className="hidden lg:inline-block text-sm font-medium">
                   Tài khoản
                 </span>
                 <svg
-                  className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
-                    isDropdownOpen ? "transform rotate-180" : ""
-                  }`}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -310,12 +300,12 @@ const Navbar = () => {
             </div>
 
             {
-                userInfo?.role === 1 && (
-                  <Link to="/register-seller" className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
-                    Bán hàng cùng THEBUGS
-                  </Link>
-                )
-              }
+              isAuthenticated && userInfo && userInfo.role === 1 && (
+                <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
+                  Bán hàng cùng THEBUGS
+                </Link>
+              )
+            }
             <Link to={'/search'} className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
               Sản phẩm
             </Link>
@@ -353,9 +343,8 @@ const Navbar = () => {
                 />
                 <span className="text-sm font-medium">Tài khoản</span>
                 <svg
-                  className={`w-3 h-3 transition-transform ${
-                    isDropdownOpen ? "transform rotate-180" : ""
-                  }`}
+                  className={`w-3 h-3 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

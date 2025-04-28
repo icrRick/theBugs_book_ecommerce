@@ -6,13 +6,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.thebugs.back_end.beans.ProfileBean;
 import com.thebugs.back_end.dto.UserDTO;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.UserService;
+import com.thebugs.back_end.utils.CloudinaryUpload;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +34,7 @@ public class ProfileController {
                 try {
                         UserDTO userDTO = userService.getUserDTO(authorizationHeader);
                         responseData.setStatus(true);
-                        System.out.println("thông tin "+userDTO);
+                        System.out.println("thông tin " + userDTO);
                         responseData.setMessage("Lấy thông tin người dùng thành công");
                         responseData.setData(userDTO);
                         return ResponseEntity.ok(responseData);
@@ -67,4 +72,31 @@ public class ProfileController {
                 }
 
         }
+
+        @PostMapping("/auth/upload-avatar")
+        public ResponseEntity<ResponseData> uploadAvatar(@RequestPart("avatar") MultipartFile avatar,
+                        @RequestHeader("Authorization") String authorizationHeader) {
+
+                try {
+                        String urlImage = null;
+
+                        if (avatar != null && !avatar.isEmpty()) {
+                                System.out.println("Image: " + avatar.getOriginalFilename());
+                                urlImage = CloudinaryUpload.uploadImage(avatar);
+                        } else {
+                                System.out.println("No image provided");
+                        }
+
+                        if (userService.uploadAvatar(authorizationHeader, urlImage)) {
+                                return ResponseEntityUtil.OK("Cập nhật ảnh thành công", null);
+                        } else {
+                                return ResponseEntityUtil.badRequest("Cập nhật ảnh không thành công");
+                        }
+
+                } catch (Exception e) {
+                        return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+                }
+
+        }
+
 }

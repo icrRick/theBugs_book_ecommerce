@@ -63,7 +63,6 @@ public class CartController {
         try {
             boolean check = cartItemService.saveCartItemProductCode(authorizationHeader, productCode, quantity);
             if (check == false) {
-
                 return ResponseEntityUtil.badRequest("Lỗi ");
             }
 
@@ -95,6 +94,20 @@ public class CartController {
             responseData.setMessage("Lỗi! " + e.getMessage());
             responseData.setData(null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+        }
+    }
+
+    @PostMapping("/repurchaseCartItem")
+    public ResponseEntity<ResponseData> repurchaseCartItem(@RequestParam Integer orderId) {
+        try {
+            boolean check = cartItemService.repurchaseCartItem(orderId);
+            if (check == false) {
+                return ResponseEntityUtil.badRequest("Lỗi ");
+            }
+            return ResponseEntityUtil.OK("Thêm vào giỏ hàng thành công", null);
+        } catch (Exception e) {
+          
+            return ResponseEntityUtil.badRequest("Lỗi! " + e.getMessage());
         }
     }
 

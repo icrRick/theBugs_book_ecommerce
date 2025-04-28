@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useAuth } from "../../contexts/AuthContext"
 import axiosInstance from "../../utils/axiosInstance"
@@ -7,21 +7,61 @@ import Loading from "../../utils/Loading"
 
 const Profile = () => {
   const [selectedFile, setSelectedFile] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState("https://placehold.co/100x100/2ecc71/ffffff?text=avatar")
-  const [loading, setLoading] = useState(false)
   const { userInfo, setUserInfo } = useAuth();
-
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
-    defaultValues: {
-      fullName: userInfo?.fullName,
-      email: userInfo?.email,
-      phone: userInfo?.phone,
-      dob: userInfo?.dob,
-      gender: userInfo?.gender,
-      cccd: userInfo?.cccd,
-      address: userInfo?.address,
+  const [previewUrl, setPreviewUrl] = useState(userInfo?.avatar)
+  const [loading, setLoading] = useState(false)
+ 
+  // Format ngày sinh từ dạng yyyy-MM-dd
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    
+    // Nếu đã đúng format thì trả về luôn
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
     }
-  })
+    
+    try {
+      // Chuyển đổi từ các định dạng khác về yyyy-MM-dd
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return ""; // Nếu không phải ngày hợp lệ
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error("Lỗi định dạng ngày:", error);
+      return "";
+    }
+  };
+
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
+    defaultValues: {
+      fullName: userInfo?.fullName || "",
+      email: userInfo?.email || "",
+      phone: userInfo?.phone || "",
+      dob: formatDate(userInfo?.dob) || "",
+      gender: userInfo?.gender || "",
+      cccd: userInfo?.cccd || "",
+      address: userInfo?.address || "",
+      avatar: userInfo?.avatar || "",
+    }
+  });
+  
+  // Cập nhật giá trị khi userInfo thay đổi
+  useEffect(() => {
+    if (userInfo) {
+      setValue("fullName", userInfo.fullName || "");
+      setValue("email", userInfo.email || "");
+      setValue("phone", userInfo.phone || "");
+      setValue("dob", formatDate(userInfo.dob) || "");
+      setValue("gender", userInfo.gender || "");
+      setValue("cccd", userInfo.cccd || "");
+      setValue("address", userInfo.address || "");
+      setValue("avatar", userInfo.avatar || "");
+    }
+  }, [userInfo, setValue]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -35,14 +75,63 @@ const Profile = () => {
     }
   }
 
+
+  const uploadAvatar = async () => {
+    if (!selectedFile) {
+      showErrorToast("No file selected.");
+      return;
+    }
+  
+    // Optional: Validate file type and size
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  
+    if (selectedFile.size > maxSize) {
+      showErrorToast("File size exceeds the 5MB limit.");
+      return;
+    }
+  
+    if (!validTypes.includes(selectedFile.type)) {
+      showErrorToast("Unsupported file type. Only JPEG, PNG, and GIF are allowed.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('avatar', selectedFile);
+  
+    try {
+      const response = await axiosInstance.post('/auth/upload-avatar', formData,{
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+  
+      // Handle success response
+      if (response.status === 200 && response.data.status === true) {
+        showSuccessToast(response.data.message);
+      } else {
+        showErrorToast(response.data.message || "Unexpected error occurred.");
+      }
+    } catch (error) {
+      // Improved error handling
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again.";
+      showErrorToast(errorMessage);
+      console.error("Error uploading avatar:", errorMessage);
+    }
+  };
+  
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // đợi 4s
+    
+
       const response = await axiosInstance.post("/auth/profile", data);
-      if (response.data.status === true) {
+      if (response.status === 200 &&   response.data.status === true) {
         setUserInfo(response.data.data);
         reset(response.data.data);
+        setSelectedFile(response.data.data.avatar);
+        setPreviewUrl(response.data.data.avatar);
         showSuccessToast(response.data.message);
       }
     } catch (error) {
@@ -53,7 +142,27 @@ const Profile = () => {
     }
   }
 
+  // Nút cập nhật ảnh riêng biệt
+  const handleUpdateAvatar = async () => {
+    if (!selectedFile) {
+      showErrorToast("Vui lòng chọn ảnh đại diện");
+      return;
+    }
 
+    setLoading(true);
+    try {
+      const avatarUrl = await uploadAvatar();
+      if (avatarUrl) {
+        setUserInfo({ ...userInfo, avatarUrl });
+        showSuccessToast("Cập nhật ảnh đại diện thành công");
+        setSelectedFile(null);
+      }
+    } catch (error) {
+      showErrorToast("Lỗi cập nhật ảnh đại diện");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -64,7 +173,7 @@ const Profile = () => {
           <div className="absolute -bottom-16 left-8">
             <div className="relative">
               <div className="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
-                <img src={previewUrl || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={previewUrl || userInfo?.avatarUrl || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
               </div>
               <label
                 htmlFor="avatar-upload"
@@ -73,12 +182,21 @@ const Profile = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
-                <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input id="avatar-upload" type="file" accept="image/*" className="hidden" name="avatar" onChange={handleFileChange} />
               </label>
             </div>
+            {selectedFile && (
+              <button
+                onClick={handleUpdateAvatar}
+                className="mt-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H9V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L7 9.414V13H5.5z" clipRule="evenodd" />
+                </svg>
+                Cập nhật ảnh
+              </button>
+            )}
           </div>
-
-
         </div>
 
         {/* User info section */}
@@ -255,7 +373,7 @@ const Profile = () => {
                 </div>
                 <a
                   href="/account/change-password"
-                  className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition duration-150 ease-in-out"
+                  className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -266,12 +384,10 @@ const Profile = () => {
             </div>
           </div>
           <div className="flex items-center justify-end space-x-4 mt-6 p-4">
-
-
             <button
               type="submit"
               onClick={handleSubmit(onSubmit)}
-              className="inline-flex items-center px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+              className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -291,7 +407,6 @@ const Profile = () => {
         </div>
       </div>
     </>
-
   )
 }
 

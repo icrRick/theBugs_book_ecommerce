@@ -27,7 +27,6 @@ public class Image {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @NotNull
-    @Column(name = "image_name", nullable = false)
+    @Column(name = "image_name", nullable = false, columnDefinition = "text")
     private String imageName;
 }

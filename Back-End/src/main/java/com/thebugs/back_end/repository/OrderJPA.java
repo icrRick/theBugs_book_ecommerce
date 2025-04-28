@@ -129,26 +129,44 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         List<Order> findDeliveredOrdersByStatus(@Param("statusId") int statusId);
 
         @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
-                        "o.shop.id, o.shop.name, SUM(oi.olPrice * oi.quantity),(SUM(oi.olPrice * oi.quantity)*0.05)) "
+                        "o.shop.id, " +
+                        "o.shop.name, " +
+                        "SUM(oi.olPrice * oi.quantity), " +
+                        "SUM(oi.olPrice * oi.quantity) * 0.05, " +
+                        "(COALESCE(SUM(oi.quantity * oi.price), 0) - " +
+                        "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
+                        "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
+                        "ELSE 0 END) " +
+                        ") " +
                         "FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN ( 4 , 5) " +
-                        "AND o.orderPayment.id IN ( 2 , 3 ) " +
+                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
+                        "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
                         "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
-                        "GROUP BY o.shop.id, o.shop.name " +
+                        "GROUP BY o.shop.id, o.shop.name "
+                        +
                         "ORDER BY SUM(oi.olPrice * oi.quantity) DESC")
         Page<AdminRevenueShopDTO> getShopRevenuePage(@Param("startDate") Date startDate,
-                        @Param("endDate") Date endDate, Pageable pageable);
+                        @Param("endDate") Date endDate,
+                        Pageable pageable);
 
-                        @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
-                        "o.shop.id, o.shop.name, SUM(oi.olPrice * oi.quantity),(SUM(oi.olPrice * oi.quantity)*0.05)) "
+        @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
+                        "o.shop.id, " +
+                        "o.shop.name, " +
+                        "SUM(oi.olPrice * oi.quantity), " +
+                        "SUM(oi.olPrice * oi.quantity) * 0.05, " +
+                        "(COALESCE(SUM(oi.quantity * oi.price), 0) - " +
+                        "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
+                        "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
                         +
+                        "ELSE 0 END) " +
+                        ") " +
                         "FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN ( 4 , 5) " +
-                        "AND o.orderPayment.id IN ( 2 , 3 ) " +
+                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
+                        "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
                         "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
                         "GROUP BY o.shop.id, o.shop.name " +
@@ -159,7 +177,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         @Query("SELECT COUNT(DISTINCT o.shop.id) " +
                         "FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN (4,5) " +
+                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
                         "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
                         "AND (:endDate IS NULL OR o.createdAt <= :endDate)")

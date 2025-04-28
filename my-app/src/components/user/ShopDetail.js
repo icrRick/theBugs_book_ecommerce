@@ -85,6 +85,13 @@ const ShopDetail = () => {
 
   const handleFilter = async (id, page) => {
     try {
+      updateURL({
+        productName: searchQuery,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sortType: sortBy,
+        page: page
+      });
       const requestBody = {
         "productName": searchQuery || "",
         "minPrice": minPrice,
@@ -93,13 +100,7 @@ const ShopDetail = () => {
         "genresIntegers": genres,
         "authorsIntegers": authors
       }
-      updateURL({
-        productName: searchQuery,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        sortType: sortBy,
-        page: page
-      });
+    
       const response = await axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=${page}`, requestBody);
       if (response.status === 200 && response.data.status === true) {
         setItems(response.data.data.arrayList)
@@ -109,6 +110,43 @@ const ShopDetail = () => {
       showErrorToast(error.response?.data?.message || "Có lỗi xảy ra")
       console.error("Lỗi khi lấy dữ liệu:", error)
     }
+  }
+  const handleResetFilter = () => {
+    setSearchQuery("");
+    setMinPrice(0);
+    setMaxPrice(1000000000);
+    setSortBy("price_desc");
+    setGenres([]);
+    setAuthors([]);
+    setSelectedPriceRange('all');
+    setCurrentPage(1);
+    updateURL({
+      productName: "",
+      minPrice: 0,
+      maxPrice: 1000000000,
+      sortType: "price_desc",
+      page: 1
+    });
+    
+    // Gọi API trực tiếp thay vì thông qua handleFilter
+    axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=1`, {
+      productName: "",
+      minPrice: 0,
+      maxPrice: 1000000000,
+      sortType: "price_desc",
+      genresIntegers: [],
+      authorsIntegers: []
+    })
+      .then(response => {
+        if (response.status === 200 && response.data.status === true) {
+          setItems(response.data.data.arrayList)
+          setTotalItems(response.data.data.totalItems)
+        }
+      })
+      .catch(error => {
+        showErrorToast(error.response?.data?.message || "Có lỗi xảy ra")
+        console.error("Lỗi khi lấy dữ liệu:", error)
+      });
   }
 
   const handleGenreChange = (genreId) => {
@@ -254,7 +292,7 @@ const ShopDetail = () => {
                     </h1>
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    {/* <button
                       className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
                       onClick={handleChat}
                     >
@@ -267,27 +305,28 @@ const ShopDetail = () => {
                     >
                       <i className="bi bi-flag"></i>
                       <span>Báo cáo</span>
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
                 {/* Thông tin bổ sung */}
                 <div className="flex flex-wrap gap-3 mb-4 text-sm text-gray-600">
-                  <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
+                  <div className="flex items-center bg-gray-50 rounded-full ">
                     <i className="bi bi-star-fill text-yellow-400 mr-2"></i>
                     <span>{shop?.shopRating || 0} ({shop?.shopRatingCount || 0} đánh giá)</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
+                  <div className="flex items-center bg-gray-50 rounded-full ">
                     <i className="bi bi-box text-gray-500 mr-2"></i>
                     <span>{shop?.productsCount} sản phẩm</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
+                  <div className="flex items-center bg-gray-50 rounded-full ">
                     <i className="bi bi-geo-alt text-gray-500 mr-2"></i>
-                    <span>{shop?.shopAddress}</span>
+                    <span>{shop?.shopAddress || "Không có địa chỉ"}</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
+                  <div className="flex items-center bg-gray-50 rounded-full ">
                     <i className="bi bi-calendar text-gray-500 mr-2"></i>
-                    <span>Tham gia từ {new Date(shop?.shopCreatAt).toLocaleDateString('vi-VN')}</span>
+                    {/* <span>Tham gia từ {new Date().toLocaleDateString('vi-VN')}</span> */}
+                    {shop?.shopCreatAt}
                   </div>
                 </div>
 
@@ -422,11 +461,16 @@ const ShopDetail = () => {
                 </ul>
               </li>
 
-              <li className="mt-4">
+              <li className="mt-4 flex gap-2">
                 <button
                   onClick={handleApplyFilter}
                   className="w-full bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
                   Áp dụng bộ lọc
+                </button>
+                <button
+                  onClick={handleResetFilter}
+                  className="w-full bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                  Xóa bộ lọc
                 </button>
               </li>
             </ul>
@@ -470,6 +514,14 @@ const ShopDetail = () => {
                 onClick={handleApplyFilter}
               >
                 <i className="bi bi-search"></i>
+              </button>
+              
+              {/* Reset Button */}
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                onClick={handleResetFilter}
+              >
+                <i className="bi bi-arrow-counterclockwise"></i>
               </button>
             </div>
 

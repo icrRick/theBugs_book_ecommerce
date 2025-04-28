@@ -2,7 +2,7 @@ import { Outlet, NavLink } from "react-router-dom"
 
 const LayoutAccount = () => {
   return (
-    <div className="container">
+    <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Menu - 2 phần trên mobile, 3 phần trên desktop */}
         <div className="col-span-1 md:col-span-3 bg-white rounded-lg shadow p-4">
@@ -55,7 +55,7 @@ const LayoutAccount = () => {
         </div>
 
         {/* Nội dung chính - 1 phần trên mobile, 9 phần trên desktop */}
-        <div className="col-span-1 md:col-span-9 bg-white rounded-lg shadow p-4">
+        <div className="col-span-1 md:col-span-9 bg-white rounded-lg shadow p-4 min-h-[80vh]">
           <Outlet />
         </div>
       </div>

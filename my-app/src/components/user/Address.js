@@ -61,7 +61,7 @@ const Address = () => {
 
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">Địa chỉ giao hàng</h2>
         <Link

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.CartItem;
+import com.thebugs.back_end.entities.Order;
+import com.thebugs.back_end.entities.OrderItem;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.ProItemMapper;
@@ -21,6 +23,9 @@ public class CartItemService {
 
     @Autowired
     private CartItemJPA cartItemJPA;
+
+    @Autowired
+    private OrderService orderService;
 
     @Autowired
     private UserService userService;
@@ -101,6 +106,9 @@ public class CartItemService {
         if (quantity > product.getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
+        if (user.getShop().getId() == product.getShop().getId()) {
+            throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
+        }
         CartItem cartItem = findProductCodeByUser(productCode, user.getId());
         if (cartItem != null) {
             cartItem.setQuantity(cartItem.getQuantity() + quantity);
@@ -135,4 +143,26 @@ public class CartItemService {
         Product product = productService.getProductByProductCode1(productCode);
         return cartItemJPA.findProductByUserId(product.getId(), userId).orElse(null);
     }
+
+    public boolean repurchaseCartItem(Integer orderId) {
+        Order order = orderService.findById(orderId);
+        if (order == null) return false;
+    
+        for (OrderItem orderItem : order.getOrderItems()) {
+            CartItem cartItem = findProductByUser(orderItem.getProduct().getId(), order.getUser().getId());
+            if (cartItem != null) {
+                cartItem.setQuantity(cartItem.getQuantity() + orderItem.getQuantity());
+                cartItemJPA.save(cartItem);
+            } else {
+                CartItem cartItemAdd = new CartItem();
+                cartItemAdd.setProduct(orderItem.getProduct());
+                cartItemAdd.setQuantity(orderItem.getQuantity());
+                cartItemAdd.setUser(order.getUser());
+                cartItemJPA.save(cartItemAdd);
+            }
+        }
+    
+        return true;
+    }
+    
 }

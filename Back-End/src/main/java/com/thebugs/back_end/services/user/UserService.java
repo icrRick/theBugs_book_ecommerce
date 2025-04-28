@@ -95,4 +95,12 @@ public class UserService {
                 userJPA.save(user);
                 return true;
         }
+
+
+        public boolean uploadAvatar(String authorizationHeader, String avatar) {
+                User user = getUserToken(authorizationHeader);
+                user.setAvatar(avatar);
+                userJPA.save(user);
+                return true;
+        }
 }

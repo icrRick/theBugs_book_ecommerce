@@ -116,14 +116,14 @@ public class PaymentService {
         for (Integer productId : paymentBeans.getProductIntegers()) {
 
             Shop shop = productService.getProductById(productId).getShop();
-            Integer cartItemQuantity = cartItemService.findProductByUser(productId, user.getId()).getQuantity();
+            Integer quantity = paymentBeans.getProductQuantity() > 0 ? paymentBeans.getProductQuantity() :cartItemService.findProductByUser(productId, user.getId()).getQuantity();;
             Integer shopId = shop.getId();
             String shopName = shop.getName();
 
             Map<String, Object> productMap = (Map<String, Object>) proItemMapper
                     .toDTO(productService.getProductById(productId));
             if (productMap != null) {
-                productMap.put("productQuantity", cartItemQuantity);
+                productMap.put("productQuantity", quantity);
                 productMap.put("authors", productAuthorService.getAuthorsByProductId(productService.getProductById(productId).getId()));
                 productMap.put("genres", productGenreService.getGenresByProductId(productService.getProductById(productId).getId()));
                 productMap.put("publisher", publisherService.getPublisherDTO(productService.getProductById(productId).getPublisher()));

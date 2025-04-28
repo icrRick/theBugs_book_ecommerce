@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Pie } from 'react-chartjs-2';
+import { Pie, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -12,6 +15,9 @@ import Loading from '../../utils/Loading';
 
 ChartJS.register(
   ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -84,7 +90,7 @@ const Dashboard = () => {
     ],
   };
 
-  const pieOptions = {
+  const shopPieOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -97,7 +103,26 @@ const Dashboard = () => {
             family: "'Inter', sans-serif"
           },
           usePointStyle: true,
-          pointStyle: 'circle'
+          pointStyle: 'circle',
+          generateLabels: function(chart) {
+            const datasets = chart.data.datasets;
+            return chart.data.labels.map(function(label, i) {
+              const meta = chart.getDatasetMeta(0);
+              const style = meta.controller.getStyle(i);
+              const value = datasets[0].data[i];
+              const total = data.totalShops;
+              const percentage = Math.round((value / total) * 100);
+              
+              return {
+                text: `${label}: ${value}/${total} (${percentage}%)`,
+                fillStyle: style.backgroundColor,
+                strokeStyle: style.borderColor,
+                lineWidth: style.borderWidth,
+                hidden: !chart.getDataVisibility(i),
+                index: i
+              };
+            });
+          }
         },
         onClick: null
       },
@@ -119,9 +144,12 @@ const Dashboard = () => {
           label: function (context) {
             const label = context.label || '';
             const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const total = data.totalShops;
             const percentage = Math.round((value / total) * 100);
-            return `${label}: ${percentage}%`;
+            return `${label}: ${value}/${total} (${percentage}%)`;
+          },
+          title: function(context) {
+            return 'Cửa hàng';
           }
         }
       }
@@ -133,7 +161,174 @@ const Dashboard = () => {
     onClick: null
   };
 
+  const productPieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif"
+          },
+          usePointStyle: true,
+          pointStyle: 'circle',
+          generateLabels: function(chart) {
+            const datasets = chart.data.datasets;
+            return chart.data.labels.map(function(label, i) {
+              const meta = chart.getDatasetMeta(0);
+              const style = meta.controller.getStyle(i);
+              const value = datasets[0].data[i];
+              const total = data.totalProducts;
+              const percentage = Math.round((value / total) * 100);
+              
+              return {
+                text: `${label}: ${value}/${total} (${percentage}%)`,
+                fillStyle: style.backgroundColor,
+                strokeStyle: style.borderColor,
+                lineWidth: style.borderWidth,
+                hidden: !chart.getDataVisibility(i),
+                index: i
+              };
+            });
+          }
+        },
+        onClick: null
+      },
+      title: {
+        display: true,
+        text: 'Trạng thái',
+        font: {
+          size: 16,
+          family: "'Inter', sans-serif"
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        }
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = data.totalProducts;
+            const percentage = Math.round((value / total) * 100);
+            return `${label}: ${value}/${total} (${percentage}%)`;
+          },
+          title: function(context) {
+            return 'Sản phẩm';
+          }
+        }
+      }
+    },
+    interaction: {
+      mode: 'nearest',
+      intersect: false
+    },
+    onClick: null
+  };
 
+  // Dữ liệu cho biểu đồ cột
+  const shopBarData = {
+    labels: ['Đang hoạt động', 'Đã khóa', 'Chờ duyệt'],
+    datasets: [
+      {
+        data: [data.activeTrueShops, data.statusTrueShops, data.approveNullShops],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.5)',  // Đang hoạt động - xanh lá
+          'rgba(255, 99, 132, 0.5)',  // Đã khóa - đỏ
+          'rgba(255, 205, 86, 0.5)'   // Chờ duyệt - vàng
+        ],
+        borderColor: [
+          'rgb(75, 192, 192)',
+          'rgb(255, 99, 132)',
+          'rgb(255, 205, 86)'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const productBarData = {
+    labels: ['Đang hoạt động', 'Đã khóa', 'Chờ duyệt'],
+    datasets: [
+      {
+        data: [data.activeTrueProducts, data.statusTrueProducts, data.approveNullProducts],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.5)',  // Đang hoạt động - xanh lá
+          'rgba(255, 99, 132, 0.5)',  // Đã khóa - đỏ
+          'rgba(255, 205, 86, 0.5)'   // Chờ duyệt - vàng
+        ],
+        borderColor: [
+          'rgb(75, 192, 192)',
+          'rgb(255, 99, 132)',
+          'rgb(255, 205, 86)'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Tùy chọn cho biểu đồ cột
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = data.totalShops;
+            return `${label}: ${value}/${total}`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        }
+      }
+    }
+  };
+
+  const productBarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = data.totalProducts;
+            return `${label}: ${value}/${total}`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        }
+      }
+    }
+  };
 
   return (
     <>
@@ -248,18 +443,22 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Biểu đồ tròn */}
+          {/* Biểu đồ cột */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="rounded-lg border border-gray-300 p-6 transition-all duration-300">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Trạng thái cửa hàng</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
+                Trạng thái cửa hàng 
+              </h3>
               <div className="h-[300px] sm:h-[400px]">
-                <Pie data={shopStatusData} options={pieOptions} />
+                <Bar data={shopBarData} options={barOptions} />
               </div>
             </div>
             <div className="rounded-lg border border-gray-300 p-6 transition-all duration-300">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Trạng thái sản phẩm</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
+                Trạng thái sản phẩm 
+              </h3>
               <div className="h-[300px] sm:h-[400px]">
-                <Pie data={productStatusData} options={pieOptions} />
+                <Bar data={productBarData} options={productBarOptions} />
               </div>
             </div>
           </div>

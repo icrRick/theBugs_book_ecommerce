@@ -76,20 +76,15 @@ const PlaceOrderAddress = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {addresses.map((address) => (
                             <div key={address.id} className="col-span-1">
-                                <div className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl border-l-4 ${address.isDefault ? "border-emerald-500" : "border-transparent"} hover:border-l-emerald-500 transform hover:-translate-y-1`}>
+                                <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl border-l-4 border-transparent hover:border-l-emerald-500 transform hover:-translate-y-1">
                                     <div className="p-6">
                                         <div className="flex justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center mb-3">
                                                     <h3 className="font-bold text-lg text-gray-800">{address?.fullName}</h3>
-                                                    {address.isDefault && (
-                                                        <span className="ml-3 px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-medium rounded-full">
-                                                            Mặc định
-                                                        </span>
-                                                    )}
                                                 </div>
-                                                <p className="text-gray-600 mb-2 text-lg">{address?.phone}</p>
-                                                <p className="text-gray-600 text-lg">
+                                                <p className="text-gray-600 mb-1">{address?.phone}</p>
+                                                <p className="text-gray-600 text-sm">
                                                     <StreetApiAddress 
                                                         provinceId={address?.provinceId} 
                                                         districtId={address?.districtId} 
@@ -99,33 +94,32 @@ const PlaceOrderAddress = () => {
                                                 </p>
                                             </div>
 
-                                            <div className="flex flex-col space-y-3 ml-6">
-                                                <div className="flex space-x-3">
+                                            <div className="flex flex-col justify-between ml-4">
+                                                <div className="flex space-x-2">
                                                     <Link
                                                         to={`/account/address/edit/${address.id}`}
-                                                        className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-300"
+                                                        className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                                                         title="Chỉnh sửa"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                                         </svg>
                                                     </Link>
                                                     <button
                                                         onClick={() => handleDeleteClick(address)}
-                                                        className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300"
+                                                        className="p-2 text-gray-500 rounded-lg transition-all hover:text-red-600 hover:bg-red-50"
                                                         title="Xóa"
-                                                        disabled={address.isDefault}
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                                         </svg>
                                                     </button>
                                                 </div>
                                                 <button
                                                     onClick={() => handleSetAddress(address)}
-                                                    className="px-4 py-2 text-sm font-medium border-2 border-emerald-500 rounded-xl text-emerald-600 hover:bg-emerald-500 hover:text-white cursor-pointer transition-all duration-300"
+                                                    className="mt-2 px-3 py-1.5 text-xs font-medium border border-emerald-500 rounded-lg text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all"
                                                 >
-                                                    Chọn địa chỉ này
+                                                    Chọn địa chỉ
                                                 </button>
                                             </div>
                                         </div>

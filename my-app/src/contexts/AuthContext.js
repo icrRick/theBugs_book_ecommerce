@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { removeToken, setToken, getToken } from '../utils/cookie';
 import axiosInstance from '../utils/axiosInstance';
+import { s_countCartItems, s_getCartItems } from '../components/service/cartItemService';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -8,6 +9,15 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    s_getCartItems().then(response => {
+      setCartCount(response.reduce((acc, shop) => acc + shop.products.length, 0));
+    });
+  }, []);
+
+
 
   const fetchUserInfo = async () => {
     try {
@@ -76,6 +86,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     hasRole,
+    cartCount,
+    setCartCount,
   };
 
   return (

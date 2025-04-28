@@ -16,5 +16,7 @@ public class AdminRevenueShopDTO {
     
     private Double fixedFee;
 
+    private Double totalRevenueShop;
+
 
 }

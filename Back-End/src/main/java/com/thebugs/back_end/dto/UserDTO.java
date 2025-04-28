@@ -19,4 +19,5 @@ public class UserDTO {
         private String address;
         private Date dob;
         private int role;
+        private String avatar;
 }
