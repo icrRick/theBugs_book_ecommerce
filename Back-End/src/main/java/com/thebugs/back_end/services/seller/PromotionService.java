@@ -91,7 +91,7 @@ public class PromotionService {
                         return new ResponseData(false, "Lỗi: " + e.getMessage(), null, 400);
                 }
         }
-
+        
         private Promotion promotionBeanToEntity(PromotionBean promotionBean, Promotion promotionOg) {
                 Promotion promotion = new Promotion();
                 promotion.setId(promotionOg.getId());

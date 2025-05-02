@@ -346,10 +346,6 @@ const ProductDetail = () => {
 
               {/* Share buttons */}
               <div className="flex items-center justify-center mt-6 space-x-4">
-                <button className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors">
-                  <i className="bi bi-share text-lg mr-2"></i>
-                  <span className="text-sm">Chia sẻ</span>
-                </button>
                 <button className="flex items-center text-gray-600 hover:text-red-600 transition-colors">
                   <i className="bi bi-heart text-lg mr-2"></i>
                   <span className="text-sm">Yêu thích</span>
@@ -789,14 +785,7 @@ const ProductDetail = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6">
-                    <button
-                      onClick={() => setShowReviewModal(true)}
-                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      Viết đánh giá
-                    </button>
-                  </div>
+                 
                 </div>
 
                 {/* Danh sách đánh giá */}
