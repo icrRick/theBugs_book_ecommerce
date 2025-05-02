@@ -97,13 +97,16 @@ public class PaymentService {
             for (CartItemBean cartItemBean : cartBean2.getCartItems()) {
                 OrderItem orderItem = new OrderItem();
                 Product product = productService.getProductById(cartItemBean.getProductId());
+
+
                 orderItem.setOrder(savedOrder);
                 orderItem.setProduct(product);
                 orderItem.setQuantity(cartItemBean.getQuantity());
-                orderItem.setOlPrice(cartItemBean.getOlPrice());//Gia gia ban dau
+                orderItem.setOlPrice(cartItemBean.getOlPrice());// Gia gia ban dau
                 orderItem.setPrice(cartItemBean.getPrice());// Gia da giam
                 orderItemService.saveOrderItem(orderItem);
-                // productService.updateProductQuantity(cartItemBean.getProductId(), cartItemBean.getQuantity());
+                // productService.updateProductQuantity(cartItemBean.getProductId(),
+                // cartItemBean.getQuantity());
                 cartItemService.deleteCartItem(authorizationHeader, cartItemBean.getProductId());
             }
         }
@@ -116,7 +119,9 @@ public class PaymentService {
         for (Integer productId : paymentBeans.getProductIntegers()) {
 
             Shop shop = productService.getProductById(productId).getShop();
-            Integer quantity = paymentBeans.getProductQuantity() > 0 ? paymentBeans.getProductQuantity() :cartItemService.findProductByUser(productId, user.getId()).getQuantity();;
+            Integer quantity = paymentBeans.getProductQuantity() > 0 ? paymentBeans.getProductQuantity()
+                    : cartItemService.findProductByUser(productId, user.getId()).getQuantity();
+            ;
             Integer shopId = shop.getId();
             String shopName = shop.getName();
 
@@ -124,9 +129,12 @@ public class PaymentService {
                     .toDTO(productService.getProductById(productId));
             if (productMap != null) {
                 productMap.put("productQuantity", quantity);
-                productMap.put("authors", productAuthorService.getAuthorsByProductId(productService.getProductById(productId).getId()));
-                productMap.put("genres", productGenreService.getGenresByProductId(productService.getProductById(productId).getId()));
-                productMap.put("publisher", publisherService.getPublisherDTO(productService.getProductById(productId).getPublisher()));
+                productMap.put("authors",
+                        productAuthorService.getAuthorsByProductId(productService.getProductById(productId).getId()));
+                productMap.put("genres",
+                        productGenreService.getGenresByProductId(productService.getProductById(productId).getId()));
+                productMap.put("publisher",
+                        publisherService.getPublisherDTO(productService.getProductById(productId).getPublisher()));
                 shopMap.computeIfAbsent(shopId, id -> {
                     Map<String, Object> shopInfo = new LinkedHashMap<>();
                     shopInfo.put("shopId", id);

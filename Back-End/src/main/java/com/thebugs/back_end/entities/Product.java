@@ -46,7 +46,7 @@ public class Product {
     @Column
     private Boolean approve;
 
-    @Column(nullable = true)
+    @Column
     private Boolean status;
 
     @Column(nullable = false, columnDefinition = "TEXT")
