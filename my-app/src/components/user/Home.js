@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { Swiper, SwiperSlide } from "swiper/react"
-import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules"
-import "swiper/css"
-import "swiper/css/navigation"
-import "swiper/css/pagination"
-import "swiper/css/autoplay"
-import "swiper/css/effect-fade"
-import "swiper/css/effect-coverflow"
-import "../../assets/css/home.css"
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import axios from "axios"
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/autoplay";
+import "swiper/css/effect-fade";
+import "swiper/css/effect-coverflow";
+import "../../assets/css/home.css";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState("popular")
+  const [activeTab, setActiveTab] = useState("popular");
   const [countdown, setCountdown] = useState({
     hours: 5,
     minutes: 30,
     seconds: 0,
-  })
+  });
   const genreColors = [
     "from-blue-500/50 to-transparent",
     "from-green-500/50 to-transparent",
@@ -33,95 +33,105 @@ const Home = () => {
     "from-cyan-500/50 to-transparent",
     "from-gray-500/50 to-transparent",
     "from-lime-500/50 to-transparent",
-  ]
-  const [isVisible, setIsVisible] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [loadingProducts, setLoadingProducts] = useState(false)
-  const [featuredAuthors, setFeaturedAuthors] = useState([])
-  const [genres, setGenres] = useState([])
-  const [products, setProducts] = useState([])
-  const [promotions, setPromotions] = useState([])
-  const [flashSaleShops, setFlashSaleShops] = useState([])
-  const [productLimit, setProductLimit] = useState(20)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalProducts, setTotalProducts] = useState(0)
+  ];
+  const [isVisible, setIsVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [featuredAuthors, setFeaturedAuthors] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [flashSaleShops, setFlashSaleShops] = useState([]);
+  const [productLimit, setProductLimit] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
 
   // Effect for countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 }
+          return { ...prev, seconds: prev.seconds - 1 };
         } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
         } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 }
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
         }
-        return prev
-      })
-    }, 1000)
+        return prev;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [])
+    return () => clearInterval(timer);
+  }, []);
 
   // Effect for fade-in animations
   useEffect(() => {
     const handleScroll = () => {
-      setIsVisible(true)
-    }
+      setIsVisible(true);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    handleScroll()
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
 
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fetch products based on active tab
   const fetchProducts = async (filter = "", page = 1) => {
-    setLoadingProducts(true)
+    setLoadingProducts(true);
     try {
-      const response = await axios.get(`http://localhost:8080/home/products?page=${page}&filter=${filter}`)
+      const response = await axios.get(
+        `http://localhost:8080/home/products?page=${page}&filter=${filter}`
+      );
       if (response.data.status) {
         console.log(response.data);
-        
-        const productsData = response.data.data || []
-        setProducts(productsData)
-        setTotalProducts(productsData.length)
+
+        const productsData = response.data.data || [];
+        setProducts(productsData);
+        setTotalProducts(productsData.length);
       } else {
-        console.error("Error fetching products:", response.data.message)
-        setProducts([])
+        console.error("Error fetching products:", response.data.message);
+        setProducts([]);
       }
     } catch (error) {
-      console.error("Error fetching products:", error)
-      setProducts([])
+      console.error("Error fetching products:", error);
+      setProducts([]);
     } finally {
-      setLoadingProducts(false)
+      setLoadingProducts(false);
     }
-  }
+  };
 
   // Effect to fetch products when tab changes
   useEffect(() => {
-    fetchProducts(activeTab)
-    setProductLimit(20) // Reset product limit when changing tabs
-  }, [activeTab])
+    fetchProducts(activeTab);
+    setProductLimit(20); // Reset product limit when changing tabs
+  }, [activeTab]);
 
   // Fetch initial data
   useEffect(() => {
     const fetchInitialData = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         // Fetch products based on active tab
-        await fetchProducts(activeTab)
+        await fetchProducts(activeTab);
 
         // Fetch authors
-        const authorsResponse = await axios.get("http://localhost:8080/home/authors?limit=6")
-        const authorsData = authorsResponse.data.status ? authorsResponse.data.data || [] : []
-        setFeaturedAuthors(authorsData)
+        const authorsResponse = await axios.get(
+          "http://localhost:8080/home/authors?limit=6"
+        );
+        const authorsData = authorsResponse.data.status
+          ? authorsResponse.data.data || []
+          : [];
+        setFeaturedAuthors(authorsData);
 
         // Fetch genres
-        const genresResponse = await axios.get("http://localhost:8080/home/genres")
-        const genresData = genresResponse.data.status ? genresResponse.data.data || [] : []
-        setGenres(genresData)
+        const genresResponse = await axios.get(
+          "http://localhost:8080/home/genres"
+        );
+        const genresData = genresResponse.data.status
+          ? genresResponse.data.data || []
+          : [];
+        setGenres(genresData);
 
         // Fetch flash sale shops
         // const shopsResponse = await axios.get("http://localhost:8080/home/shops/flash-sale")
@@ -151,43 +161,43 @@ const Home = () => {
             expiry: "10/05/2025",
             backgroundColor: "bg-gradient-to-r from-orange-500 to-red-600",
           },
-        ]
-        setPromotions(mockPromotions)
+        ];
+        setPromotions(mockPromotions);
       } catch (error) {
-        console.error("Error fetching initial data:", error)
-        setFeaturedAuthors([])
-        setGenres([])
-        setFlashSaleShops([])
-        setProducts([])
-        setPromotions([])
+        console.error("Error fetching initial data:", error);
+        setFeaturedAuthors([]);
+        setGenres([]);
+        setFlashSaleShops([]);
+        setProducts([]);
+        setPromotions([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchInitialData()
-  }, [])
+    fetchInitialData();
+  }, []);
 
   const getProductImage = (product) => {
-    return product.productImage || "/placeholder.svg"
-  }
+    return product.productImage || "/placeholder.svg";
+  };
 
   const calculateDiscountedPrice = (product) => {
-    const price = product.price || 0
+    const price = product.price || 0;
     if (!product.promotionValue) {
-      return price
+      return price;
     }
-    return price - (price * product.promotionValue) / 100
-  }
+    return price - (price * product.promotionValue) / 100;
+  };
 
   // Helper function to get average rating
   const getAverageRating = (product) => {
-    return product.rate || 0
-  }
+    return product.rate || 0;
+  };
 
   const handleLoadMore = () => {
-    setProductLimit((prevLimit) => prevLimit + 20)
-  }
+    setProductLimit((prevLimit) => prevLimit + 20);
+  };
 
   // Mock data for banner
   const bannerSlides = [
@@ -203,22 +213,13 @@ const Home = () => {
     {
       id: 2,
       image:
-        "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
-      title: "Giảm giá lên đến 50%",
-      subtitle: "Cho tất cả sách văn học và tiểu thuyết",
-      buttonText: "Mua ngay",
-      buttonLink: "/search?category=fiction",
-    },
-    {
-      id: 3,
-      image:
         "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
       title: "Sách thiếu nhi",
       subtitle: "Khơi dậy trí tưởng tượng cho trẻ em",
       buttonText: "Xem bộ sưu tập",
       buttonLink: "/search?category=children",
     },
-  ]
+  ];
 
   // Mock data for testimonials
   const testimonials = [
@@ -246,7 +247,7 @@ const Home = () => {
       rating: 5,
       text: "Chất lượng sách rất tốt, đúng như mô tả. Tôi sẽ tiếp tục mua sắm tại đây trong tương lai.",
     },
-  ]
+  ];
 
   if (loading) {
     return (
@@ -272,7 +273,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -295,7 +296,11 @@ const Home = () => {
           {bannerSlides.map((slide) => (
             <SwiperSlide key={slide.id}>
               <div className="relative w-full h-full">
-                <img src={slide.image || "/placeholder.svg"} alt={slide.title} className="w-full h-full object-cover" />
+                <img
+                  src={slide.image || "/placeholder.svg"}
+                  alt={slide.title}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent flex items-center">
                   <div className="container mx-auto px-6 md:px-12">
                     <div className="max-w-lg">
@@ -468,14 +473,21 @@ const Home = () => {
       </section> */}
 
       {/* Danh mục */}
-      <section className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}>
+      <section
+        className={`mb-12 transition-opacity duration-1000 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative">
               Danh mục sách
               <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
             </h2>
-            <Link to="/search" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group">
+            <Link
+              to="/search"
+              className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center group"
+            >
               Xem tất cả
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -494,7 +506,11 @@ const Home = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {genres.length > 0 ? (
               genres.map((genre, index) => (
-                <Link to={`/search?category=${genre.id}`} key={genre.id} className="group">
+                <Link
+                  to={`/search?category=${genre.id}`}
+                  key={genre.id}
+                  className="group"
+                >
                   <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
                     <div className="relative h-40 overflow-hidden">
                       <img
@@ -503,21 +519,28 @@ const Home = () => {
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       />
                       <div
-                        className={`absolute inset-0 bg-gradient-to-t ${genreColors[index % genreColors.length]
-                          } opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
+                        className={`absolute inset-0 bg-gradient-to-t ${
+                          genreColors[index % genreColors.length]
+                        } opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
                       ></div>
                       <div className="absolute inset-0 flex items-center justify-center p-4">
-                        <h3 className="font-bold text-white text-center text-lg drop-shadow-md">{genre.name}</h3>
+                        <h3 className="font-bold text-white text-center text-lg drop-shadow-md">
+                          {genre.name}
+                        </h3>
                       </div>
                     </div>
                     <div className="p-3 text-center">
-                      <span className="text-sm text-gray-600">{genre.count} sách</span>
+                      <span className="text-sm text-gray-600">
+                        {genre.count} sách
+                      </span>
                     </div>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="text-center text-gray-600 py-8 col-span-full">Không có danh mục sách hiện tại.</div>
+              <div className="text-center text-gray-600 py-8 col-span-full">
+                Không có danh mục sách hiện tại.
+              </div>
             )}
           </div>
         </div>
@@ -534,22 +557,31 @@ const Home = () => {
             <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("popular")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "popular" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "popular"
+                    ? "bg-emerald-500 text-white"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 Phổ biến
               </button>
               <button
                 onClick={() => setActiveTab("new")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "new" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "new"
+                    ? "bg-emerald-500 text-white"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 Mới
               </button>
               <button
                 onClick={() => setActiveTab("sale")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "sale" ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-200"
-                  }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "sale"
+                    ? "bg-emerald-500 text-white"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 Giảm giá
               </button>
@@ -560,7 +592,10 @@ const Home = () => {
             {loadingProducts ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 {[...Array(10)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden h-64 animate-pulse">
+                  <div
+                    key={index}
+                    className="bg-white rounded-xl shadow-md overflow-hidden h-64 animate-pulse"
+                  >
                     <div className="h-40 bg-gray-200"></div>
                     <div className="p-4">
                       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -578,7 +613,10 @@ const Home = () => {
                     className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
                   >
                     <div className="relative">
-                      <Link to={`/product-detail/${product.productId}`} className="block">
+                      <Link
+                        to={`/product-detail/${product.productId}`}
+                        className="block"
+                      >
                         <img
                           src={product?.imageName || "/placeholder.svg"}
                           alt={product.productName}
@@ -629,7 +667,10 @@ const Home = () => {
                         </button>
                       </div>
                     </div>
-                    <Link to={`/product-detail/${product.productId}`} className="block">
+                    <Link
+                      to={`/product-detail/${product.productId}`}
+                      className="block"
+                    >
                       <div className="p-4 flex flex-col h-[140px]">
                         <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 min-h-[3rem] flex items-start">
                           {product.productName}
@@ -640,10 +681,11 @@ const Home = () => {
                               <svg
                                 key={index}
                                 xmlns="http://www.w3.org/2000/svg"
-                                className={`h-4 w-4 ${index < Math.floor(getAverageRating(product))
-                                  ? "fill-current"
-                                  : "stroke-current fill-none"
-                                  }`}
+                                className={`h-4 w-4 ${
+                                  index < Math.floor(getAverageRating(product))
+                                    ? "fill-current"
+                                    : "stroke-current fill-none"
+                                }`}
                                 viewBox="0 0 24 24"
                               >
                                 <path
@@ -655,14 +697,19 @@ const Home = () => {
                               </svg>
                             ))}
                           </div>
-                          <span className="text-xs text-gray-500 ml-1">({getAverageRating(product)})</span>
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({getAverageRating(product)})
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
                             {product.promotionValue > 0 ? (
                               <>
                                 <span className="text-emerald-600 font-bold">
-                                  {calculateDiscountedPrice(product)?.toLocaleString?.() || "0"}đ
+                                  {calculateDiscountedPrice(
+                                    product
+                                  )?.toLocaleString?.() || "0"}
+                                  đ
                                 </span>
                                 <span className="text-gray-400 text-sm line-through ml-2">
                                   {product.price?.toLocaleString?.() || "0"}đ
@@ -720,15 +767,20 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/90 to-transparent flex items-center">
               <div className="p-8 md:p-12 max-w-lg">
                 <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium mb-4 inline-block">
-                  Ưu đãi đặc biệt
+                  Thông tin khuyến mãi
                 </span>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Giảm 30% cho tất cả sách văn học</h2>
-                <p className="text-white/90 mb-6">Chỉ áp dụng đến hết ngày 30/04/2025. Nhanh tay mua ngay!</p>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Khám phá thế giới văn học tuyệt vời
+                </h2>
+                <p className="text-white/90 mb-6">
+                  Hàng ngàn tựa sách hay đang chờ bạn. Cùng bước vào hành trình
+                  tri thức hôm nay!
+                </p>
                 <Link
-                  to="/search?category=literature&discount=true"
+                  to="/search?category=literature"
                   className="px-6 py-3 bg-white text-emerald-700 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-300 inline-flex items-center shadow-lg"
                 >
-                  Mua ngay
+                  Khám phá ngay
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 ml-2"
@@ -749,6 +801,7 @@ const Home = () => {
       </section>
 
       {/* Tác giả nổi bật */}
+      {/*}
       <section className="mb-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
@@ -796,7 +849,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-
+            */}
       {/* Testimonials */}
       {/* <section className="mb-12">
         <div className="container mx-auto px-4">
@@ -847,10 +900,8 @@ const Home = () => {
           </div>
         </div>
       </section> */}
-
-   
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
