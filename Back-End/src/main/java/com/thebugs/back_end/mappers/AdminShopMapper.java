@@ -51,26 +51,23 @@ public class AdminShopMapper {
     }
 
     public Object toShopDetail(Shop shop) {
-        Map<String, Object> map = new LinkedHashMap<>();
+        Map<String, Object> map = new HashMap<>();
+    
         User user = shop.getUser();
-        Address address = addressService.getAddressShopId(shop.getId());
-
-        Integer proviceId = address.getProvinceId();
-        Integer districtId = address.getDistrictId();
-        String wardId = String.valueOf(address.getWardId());
-
-        map.put("email", user.getEmail());
-        map.put("phone", user.getPhone());
-        map.put("avatar", user.getEmail());
-        map.put("userFullName", user.getFullName());
-        map.put("gender", user.getGender());
-        map.put("cccd", user.getCccd());
-        map.put("verify", user.getVerify()); // Assuming 'getVerify()' is the correct method
-        map.put("dob", user.getDob());
-        map.put("active", user.isActive());
-        map.put("address", user.getAddress());
-
-        map.put("shoid", shop.getId());
+        if (user != null) {
+            map.put("email", user.getEmail());
+            map.put("phone", user.getPhone());
+            map.put("avatar", user.getAvatar()); 
+            map.put("userFullName", user.getFullName());
+            map.put("gender", user.getGender());
+            map.put("cccd", user.getCccd());
+            map.put("verify", user.getVerify());
+            map.put("dob", user.getDob());
+            map.put("userActive", user.isActive()); 
+            map.put("address", user.getAddress());
+        }
+    
+        map.put("shopId", shop.getId());
         map.put("shopName", shop.getName());
         map.put("shopSlug", shop.getShop_slug());
         map.put("description", shop.getDescription());
@@ -81,19 +78,20 @@ public class AdminShopMapper {
         map.put("shopCreatAt", shop.getCreateAt());
         map.put("image", shop.getImage());
         map.put("banner", shop.getBanner());
-        map.put("addressShop", "Can tho");
-        map.put("active", shop.isActive());
+        map.put("shopActive", shop.isActive()); 
         map.put("approve", shop.getApprove());
         map.put("status", shop.getStatus());
-
-        map.put("addressFullName", address.getFullName());
-        map.put("addressPhone", address.getPhone());
-        map.put("provinceName", apiGHNService.getProvinceName(proviceId));
-        map.put("districtName", apiGHNService.getDistrictName(proviceId, districtId));
-        map.put("wardName", apiGHNService.getWardName(districtId, wardId));
-        map.put("street", address.getStreet());
-
+    
+        Address address = addressService.getAddressShopId(shop.getId());
+        if (address != null) {
+            map.put("addressFullName", address.getFullName());
+            map.put("addressPhone", address.getPhone());
+            map.put("provinceName", apiGHNService.getProvinceName(address.getProvinceId()));
+            map.put("districtName", apiGHNService.getDistrictName(address.getProvinceId(), address.getDistrictId()));
+            map.put("wardName", apiGHNService.getWardName(address.getDistrictId(), String.valueOf(address.getWardId())));
+            map.put("street", address.getStreet());
+        }
+    
         return map;
     }
-
-}
+}    

@@ -80,7 +80,6 @@ export const PUBLIC_ROUTES = [
       { path: "home", element: <Home /> },
   
       { path: "product-detail/:id", element: <ProductDetail /> },
-      { path: "payment", element: <Payment /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
       { path: "search", element: <Search /> },
@@ -88,17 +87,17 @@ export const PUBLIC_ROUTES = [
       { path: "register-seller", element: <SellerRegistration /> },
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "reset-password", element: <ResetPassword /> },
-      { path: "otp", element: <Otp /> },
-      { path: "payment-cod", element: <PaymentCOD /> },
 
 ];
 export const USER_ROUTES = [
-  { path: 'payment', element: <Payment /> },
   { path: "report-product/:id", element: <Report /> },
   { path: "register-seller", element: <SellerRegistration /> },
   { path: 'cart', element: <Cart /> },
+  { path: "payment-cod", element: <PaymentCOD /> },
   { path: 'place-order-address', element: <PlaceOrderAddress /> },
   { path: "user/payment-status", element: <PaymentStatus /> },
+  { path: 'payment', element: <Payment /> },
+
   {
     path: "account",
     element: <ProtectedRoute requiredRoles={[1, 2]}><LayoutAccount /></ProtectedRoute>,

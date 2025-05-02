@@ -84,7 +84,7 @@ public class ProfileController {
                                 System.out.println("Image: " + avatar.getOriginalFilename());
                                 urlImage = CloudinaryUpload.uploadImage(avatar);
                         } else {
-                                System.out.println("No image provided");
+                                System.out.println("No image provided ");
                         }
 
                         if (userService.uploadAvatar(authorizationHeader, urlImage)) {
