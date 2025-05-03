@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { showSuccessToast, showErrorToast } from "../../utils/Toast";
 import axiosInstance from "../../utils/axiosInstance";
@@ -12,6 +12,10 @@ const Navbar = () => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const dropdownRef = useRef(null);
   const { userInfo, logout, isAuthenticated } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [islistening, setIsListening] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
   const navigate = useNavigate();
 
 
@@ -26,6 +30,7 @@ const Navbar = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      setShowSuggestions(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -36,16 +41,150 @@ const Navbar = () => {
 
   //code search product by tâm
   const handleSearch = () => {
-    if (searchKeyword.trim() === "") {
+    const trimmed = searchKeyword.trim();
+    if (trimmed === "") {
       navigate("/search");
     } else {
-      navigate(`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+      saveSearchHistory(trimmed);
+      navigate(`/search?keyword=${encodeURIComponent(trimmed)}`, {
+        state: { keyword: trimmed },
+      });
     }
   };
   const handleEnter = (e) => {
     if (e.key === "Enter") {
       handleSearch();
     }
+  };
+
+  const handleFocusInput = () => {
+    const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    setSearchHistory(history);
+    setShowSuggestions(true);
+  };
+
+  const handleVoiceSearch = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+          channelCount: 1,
+        },
+      });
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+        audioBitsPerSecond: 128000,
+      });
+
+      let audioChunks = [];
+
+      setIsListening(true);
+
+      mediaRecorder.ondataavailable = (e) => {
+        audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("file", audioBlob, "voice.webm");
+
+        stream.getTracks().forEach((track) => track.stop());
+
+        try {
+          const response = await fetch(
+            "http://localhost:8080/search/voice/transcribe",
+            {
+              method: "POST",
+              body: formData,
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          setIsListening(false);
+
+          const isJson = response.headers
+            .get("content-type")
+            ?.includes("application/json");
+          const data = isJson ? await response.json() : {};
+
+          if (!response.ok) {
+            throw new Error(data.message || `Lỗi server: ${response.status}`);
+          }
+          if (data.status && data.data?.transcript) {
+            let transcript = data.data.transcript
+              .replace(/[?!.]+$/, "")
+              .replace(/[?!.]/g, "")
+              .trim();
+
+            setSearchKeyword(transcript);
+            saveSearchHistory(transcript);
+            navigate(`/search?keyword=${encodeURIComponent(transcript)}`); // chuyển trang tìm kiếm luôn
+          } else {
+            alert("Không thể nhận diện giọng nói!");
+          }
+        } catch (error) {
+          setIsListening(false);
+          alert("Lỗi gửi file ghi âm: " + error.message);
+        }
+      };
+
+      mediaRecorder.start();
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 2500);
+    } catch (error) {
+      setIsListening(false);
+      alert("Không thể truy cập micro: " + error.message);
+    }
+  };
+
+  //save history
+  const saveSearchHistory = (keyword) => {
+    if (!keyword) return;
+    let history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+
+    history = [keyword, ...history.filter((item) => item !== keyword)];
+
+    if (history.length > 10) history = history.slice(0, 10);
+
+    localStorage.setItem("searchHistory", JSON.stringify(history));
+  };
+
+  const handleChangeInput = (e) => {
+    const value = e.target.value;
+    setSearchKeyword(value);
+
+    if (value.trim() === "") {
+      setShowSuggestions(false);
+      return;
+    }
+
+    const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    const filtered = history.filter((item) =>
+      item.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setSearchHistory(filtered);
+    setShowSuggestions(true);
+  };
+
+  const handleSelectHistoryKeyword = (keyword) => {
+    const trimmed = keyword.trim();
+    setSearchKeyword(trimmed);
+    saveSearchHistory(trimmed);
+    setShowSuggestions(false);
+
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set("keyword", trimmed);
+    newParams.set("page", 1);
+
+    setSearchParams(newParams);
   };
 
   const handleNavigateCart = () => {
@@ -94,10 +233,13 @@ const Navbar = () => {
               <div className="relative ml-2 lg:ml-4">
                 <input
                   type="text"
+                  value={searchKeyword}
+                  autoComplete="off"
                   placeholder="Tìm kiếm..."
                   className="w-[180px] sm:w-[250px] md:w-[300px] lg:w-[400px] px-3 py-1.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onChange={handleChangeInput}
                   onKeyDown={handleEnter}
+                  onFocus={handleFocusInput}
                 />
                 <button
                   className="absolute right-2 top-1/2 transform -translate-y-1/2"
@@ -117,7 +259,75 @@ const Navbar = () => {
                     />
                   </svg>
                 </button>
+                {showSuggestions && searchHistory.length > 0 && (
+                  <div className="absolute left-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 w-full max-w-[400px]">
+                    <div className="flex justify-between items-center px-4 py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-600">
+                        Lịch sử tìm kiếm
+                      </span>
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem("searchHistory");
+                          setSearchHistory([]);
+                        }}
+                        className="text-xs text-blue-500 hover:underline"
+                      >
+                        Xoá tất cả
+                      </button>
+                    </div>
+                    <ul className="max-h-60 overflow-y-auto">
+                      {searchHistory.map((item, index) => (
+                        <li
+                          key={index}
+                          className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer group"
+                        >
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className="text-sm text-gray-700 group-hover:text-indigo-600"
+                            onClick={() => handleSelectHistoryKeyword(item)}
+                          >
+                            {item}
+                          </div>
+
+                          <button
+                            className="text-gray-400 text-xs hover:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const updated = searchHistory.filter(
+                                (_, i) => i !== index
+                              );
+                              localStorage.setItem(
+                                "searchHistory",
+                                JSON.stringify(updated)
+                              );
+                              setSearchHistory(updated);
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
+              <button onClick={handleVoiceSearch} className="ml-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-gray-600 hover:text-gray-800"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14a4 4 0 004-4V6a4 4 0 10-8 0v4a4 4 0 004 4zM19 10v2a7 7 0 11-14 0v-2m14 0H5"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -462,6 +672,31 @@ const Navbar = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {islistening && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+            <svg
+              className="animate-bounce w-10 h-10 text-red-500 mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 14a4 4 0 004-4V6a4 4 0 10-8 0v4a4 4 0 004 4zM19 10v2a7 7 0 11-14 0v-2m14 0H5"
+              />
+            </svg>
+            <p className="text-gray-700 font-semibold text-lg">Đang nghe...</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Hãy nói nội dung tìm kiếm
+            </p>
           </div>
         </div>
       )}

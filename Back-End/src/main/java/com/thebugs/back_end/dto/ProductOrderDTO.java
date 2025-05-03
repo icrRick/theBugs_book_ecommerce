@@ -11,7 +11,11 @@ public class ProductOrderDTO {
     private Integer orderItemId;
     private Integer productId;
     private String productName;
+    private String productAuthor;
+    private String productGenres;
+    private String productPublisher;
     private String productImage;
+    // private Double oldPriceProduct;
     private Double priceProduct;
     private Integer quantityProduct;
     private Double totalPriceProduct;

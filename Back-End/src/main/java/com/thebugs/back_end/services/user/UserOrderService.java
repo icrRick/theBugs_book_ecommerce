@@ -24,6 +24,7 @@ import com.thebugs.back_end.entities.OrderStatus;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
+import com.thebugs.back_end.repository.UserJPA;
 import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.EmailUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
@@ -42,6 +43,8 @@ public class UserOrderService {
     private EmailUtil emailUtil;
     @Autowired
     private ReviewService reviewService;
+    @Autowired
+    private UserJPA userJPA;
 
     public ArrayList<OrderSimpleDTO> getAll(String token, int page, int size) {
         int userId = userService.getUserToken(token).getId();
@@ -60,7 +63,7 @@ public class UserOrderService {
     }
 
     public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
-            Integer orderStatusName, // Đảm bảo là Integer
+            Integer orderStatusName,
             String nameUser, Pageable pageable) {
         int userId = userService.getUserToken(token).getId();
         Page<OrderSimpleDTO> page;
@@ -111,11 +114,8 @@ public class UserOrderService {
         } else {
             checkShopId.setNoted(cancelReason);
             if (checkShopId.getOrderPayment().getId() == 3) {
-                // String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với
-                // Shop "
-                // + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
-                // + checkShopId.getShop().getUser().getEmail();
-                getUserEmailNoted(orderId, checkShopId.getShop().getUser().getEmail());
+
+                getUserEmailNoted(orderId);
             }
         }
         if (orderStatusId == 5) {
@@ -134,14 +134,15 @@ public class UserOrderService {
         return true;
     }
 
-    public boolean getUserEmailNoted(Integer orderId, String shopMail) {
+    public boolean getUserEmailNoted(Integer orderId) {
         Order order = getById(orderId);
         String mail = order.getUser().getEmail();
-        String shopPhone = "0965199249";
+        String emailAdmin = getEmailAdmin();
+        String phoneAdmin = getPhoneAdmin();
         String orderNumber = ("#" + orderId);
         String setSubject = ("Thông báo hoàn tiền cho đơn hàng" + " " + orderNumber + " "
                 + "của bạn đã bị hủy");
-        emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, shopMail, shopPhone);
+        emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, emailAdmin, phoneAdmin);
         return true;
     }
 
@@ -226,6 +227,27 @@ public class UserOrderService {
                     productOrderDTO.setOrderItemId(item.getId());
                     productOrderDTO.setProductId(item.getProduct().getId());
                     productOrderDTO.setProductName(item.getProduct().getName());
+                    productOrderDTO.setProductAuthor(item.getProduct().getProductAuthors() != null
+                            && !item.getProduct().getProductAuthors().isEmpty()
+                                    ? item.getProduct().getProductAuthors().stream()
+                                            .map(pa -> pa.getAuthor()
+                                                    .getName())
+                                            .collect(Collectors
+                                                    .joining(", "))
+                                    : null);
+                    productOrderDTO.setProductGenres(item.getProduct().getProductGenres() != null
+                            && !item.getProduct().getProductGenres().isEmpty()
+                                    ? item.getProduct().getProductGenres().stream()
+                                            .map(pg -> pg.getGenre()
+                                                    .getName())
+                                            .collect(Collectors
+                                                    .joining(", "))
+                                    : null);
+                    productOrderDTO.setProductPublisher(item.getProduct().getPublisher()
+                            .getName() != null
+                            && !item.getProduct().getPublisher().getName().isEmpty()
+                                    ? item.getProduct().getPublisher().getName()
+                                    : null);
                     productOrderDTO.setProductImage(
                             item.getProduct().getImages().getLast().getImageName());
                     productOrderDTO.setPriceProduct(item.getPrice());
@@ -256,4 +278,17 @@ public class UserOrderService {
         return map;
 
     }
+
+    public String getEmailAdmin() {
+        // Integer idUser = 3;
+        String emailAdmin = userJPA.findEmailAdmin().get(0).getEmail();
+        return emailAdmin;
+    }
+
+    public String getPhoneAdmin() {
+        // Integer idUser = 3;
+        String phoneAdmin = userJPA.findEmailAdmin().get(0).getPhone();
+        return phoneAdmin;
+    }
+
 }

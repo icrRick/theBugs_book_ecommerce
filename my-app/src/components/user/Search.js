@@ -20,8 +20,6 @@ const Search = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const ratings = [5, 4, 3, 2, 1];
-
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -76,7 +74,9 @@ const Search = () => {
 
         showErrorToast(errorMessage);
       }
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     };
     fetchProducts();
   }, [searchParams]);
@@ -91,12 +91,33 @@ const Search = () => {
   };
 
   const handleCategoryChange = (category) => {
+    setLoading(true);
     setSelectedCategories((prev) => {
+      let newSelected;
       if (prev.includes(category)) {
-        return prev.filter((cat) => cat !== category);
+        newSelected = prev.filter((cat) => cat !== category);
       } else {
-        return [...prev, category];
+        newSelected = [...prev, category];
       }
+
+      const params = new URLSearchParams(searchParams);
+      params.delete("genresID");
+      newSelected.forEach((cat) => {
+        const catObj = genres.find((g) => g.name === cat);
+        if (catObj) {
+          params.append("genresID", catObj.id);
+        }
+      });
+      params.set("page", 1);
+      setSearchParams(params);
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "auto",
+        });
+      }, 200);
+
+      return newSelected;
     });
   };
 
@@ -113,7 +134,12 @@ const Search = () => {
     newParams.set("page", page);
     setSearchParams(newParams);
     setCurrentPage(page);
-    window.scrollTo(0, 0);
+    setTimeout(() => {
+      window.scrollTo({
+        top: 10,
+        behavior: "auto",
+      });
+    }, 200);
   };
 
   const handleApplyFilter = () => {
@@ -134,11 +160,34 @@ const Search = () => {
     setSearchParams(params);
 
     setIsFilterOpen(false);
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 100);
   };
 
   const handleResetFilter = () => {
+    const params = new URLSearchParams(searchParams);
+
+    params.delete("keyword");
+    params.delete("genresID");
+    params.delete("minPrice");
+    params.delete("maxPrice");
+    params.set("page", 1);
+
     setSelectedCategories([]);
     setPriceRange({ min: "", max: "" });
+
+    setSearchParams(params);
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 200);
   };
 
   const formatSold = (sold) => {
@@ -151,10 +200,20 @@ const Search = () => {
     return sold.toString();
   };
 
+  const formatSumCountReview = (countRateProduct) => {
+    if (countRateProduct >= 1000000) {
+      return (countRateProduct / 1000000).toFixed(1).replace(".0", "") + "m"; // triệu
+    }
+    if (countRateProduct >= 1000) {
+      return (countRateProduct / 1000).toFixed(1).replace(".0", "") + "k"; // nghìn
+    }
+    return countRateProduct.toString();
+  };
+
   const keyword = searchParams.get("keyword") || "";
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 min-h-[calc(100vh-50px)]">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">
           {keyword ? `Kết quả tìm kiếm cho "${keyword}"` : "Tất cả sản phẩm"}
@@ -455,6 +514,7 @@ const Search = () => {
                   <Link
                     to={`/product-detail/${product?.productId}`}
                     className="block"
+                    // onClick={() => handleSelectProduct(product)}
                   >
                     <div className="relative">
                       <img
@@ -473,7 +533,7 @@ const Search = () => {
                         {product?.productName}
                       </h3>
 
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-1 mb-2">
                         <div className="flex text-yellow-400">
                           {[...Array(Math.floor(product?.rate))].map(
                             (_, index) => (
@@ -489,6 +549,11 @@ const Search = () => {
                             )
                           )}
                         </div>
+                        {product?.countRateProduct > 0 && (
+                          <span className="text-gray-500 text-sm">
+                            ({formatSumCountReview(product?.countRateProduct)})
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between mb-2">
@@ -582,65 +647,64 @@ const Search = () => {
             </div>
           )}
 
-          {/* Pagination */}
-          {products.length > 0 && (
+          {products.length > 0 && !loading && (
             <div className="mt-8 flex justify-center">
               <nav className="flex items-center space-x-2">
+                {/* Prev button */}
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-md ${
+                  className={`px-3 py-1 rounded-full ${
                     currentPage === 1
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  ←
                 </button>
 
-                {Number.isInteger(totalPages) &&
-                  totalPages > 0 &&
-                  [...Array(totalPages)].map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handlePageChange(index + 1)}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
+                {/* Page numbers */}
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .filter((page) => {
+                    return (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 2 && page <= currentPage + 2)
+                    );
+                  })
+                  .map((page, index, arr) => {
+                    const isEllipsis = index > 0 && page - arr[index - 1] > 1;
 
+                    return (
+                      <div key={page} className="flex items-center">
+                        {isEllipsis && (
+                          <span className="px-2 text-gray-400">...</span>
+                        )}
+                        <button
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 rounded-full ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                {/* Next button */}
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-md ${
+                  className={`px-3 py-1 rounded-full ${
                     currentPage === totalPages
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  →
                 </button>
               </nav>
             </div>

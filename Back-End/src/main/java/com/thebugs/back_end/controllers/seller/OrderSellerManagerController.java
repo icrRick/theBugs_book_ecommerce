@@ -1,8 +1,6 @@
 package com.thebugs.back_end.controllers.seller;
 
-
 import java.sql.Date;
-import java.text.SimpleDateFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -43,23 +41,21 @@ public class OrderSellerManagerController {
     @GetMapping("")
     public ResponseEntity<ResponseData> getSearchListOrderByCreateAT(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Date startDate,
+            @RequestParam(required = false) Date endDate,
             @RequestParam(required = false) String userName,
             @RequestParam(required = false) Integer statusOrder,
             @RequestParam(defaultValue = "1") int page) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Date start = startDate != null ? new java.sql.Date(sdf.parse(startDate).getTime()) : null;
-            Date end = endDate != null ? new java.sql.Date(sdf.parse(endDate).getTime() + 86399999) : null;
+
             Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
             ResponseDataPagination responseDataPagination = new ResponseDataPagination();
             responseDataPagination.setObjects(
-                    orderSellerService.findOrders(authorizationHeader, start, end, statusOrder, userName,
+                    orderSellerService.findOrders(authorizationHeader, startDate, endDate, statusOrder, userName,
                             pageable));
             responseDataPagination.setTotalItems(
-                    orderSellerService.countOrders(authorizationHeader, start, end, statusOrder, userName));
-            String message = (start == null && end == null && statusOrder == null
+                    orderSellerService.countOrders(authorizationHeader, startDate, endDate, statusOrder, userName));
+            String message = (startDate == null && endDate == null && statusOrder == null
                     && (userName == null || userName.isEmpty()))
                             ? "Load danh sách thành công"
                             : "Tìm kiếm thành công";

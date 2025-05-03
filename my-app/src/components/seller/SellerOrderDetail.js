@@ -2,21 +2,20 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import { formatCurrency } from "../../utils/Format";
+import { showErrorToast } from "../../utils/Toast";
 
 const SellerOrderDetail = () => {
   const { orderId } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
   const handleNavigate = () => {
-    navigate("/seller/orders");
+    navigate(-1);
   };
 
   const fetchOrderDetails = async (orderId) => {
     setLoading(true);
-    setError(null);
     try {
       const response = await axiosInstance.get(`/seller/order/${orderId}`);
       if (!response.data.status) {
@@ -27,7 +26,10 @@ const SellerOrderDetail = () => {
       setItem(response.data.data);
     } catch (error) {
       console.error("Có vấn đề khi tải dữ liệu:", error);
-      setError(error.message || "Đã xảy ra lỗi khi tải chi tiết đơn hàng");
+      showErrorToast(
+        error.response?.data?.message ||
+          "Đã xảy ra lỗi khi tải chi tiết đơn hàng"
+      );
     } finally {
       setLoading(false);
     }
@@ -35,6 +37,7 @@ const SellerOrderDetail = () => {
 
   useEffect(() => {
     if (orderId) {
+      window.scrollTo(0, 0);
       fetchOrderDetails(orderId);
     }
   }, [orderId]);
@@ -206,9 +209,15 @@ const SellerOrderDetail = () => {
                 Thông tin khách hàng
               </h3>
               <div className="space-y-3">
-                <p className="text-sm text-gray-700">{item?.fullName}</p>
-                <p className="text-sm text-gray-700">{item?.phone}</p>
-                <p className="text-sm text-gray-700">{item?.address}</p>
+                <p className="text-sm text-gray-700 break-words max-w-[200px]">
+                  {item?.fullName}
+                </p>
+                <p className="text-sm text-gray-700 break-words max-w-[200px]">
+                  {item?.phone}
+                </p>
+                <p className="text-sm text-gray-700 break-words max-w-[300px]">
+                  {item?.address}
+                </p>
               </div>
             </div>
 
@@ -309,7 +318,6 @@ const SellerOrderDetail = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {/* Kiểm tra nếu item tồn tại và có orderItems */}
                 {item?.orderItems &&
                   item.orderItems.length > 0 &&
                   item.orderItems.map((product) => (
@@ -319,30 +327,39 @@ const SellerOrderDetail = () => {
                           <div className="flex-shrink-0 h-16 w-16">
                             <img
                               className="h-16 w-16 rounded-lg object-cover"
-                              src={product.productImage}
-                              alt={product.productName}
+                              src={product?.productImage}
+                              alt={product?.productName}
                             />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {product.productName}
+                              {product?.productName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Tác giả: {product?.productAuthor}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Thể loại: {product?.productGenres}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Nhà xuất bản: {product?.productPublisher}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="text-sm text-gray-900">
-                          {product.quantityProduct}
+                          {product?.quantityProduct}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm text-gray-900">
-                          {formatCurrency(product.priceProduct)}
+                          {formatCurrency(product?.priceProduct)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm text-gray-900">
-                          {formatCurrency(product.totalPriceProduct)}
+                          {formatCurrency(product?.totalPriceProduct)}
                         </div>
                       </td>
                     </tr>

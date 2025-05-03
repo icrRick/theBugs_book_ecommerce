@@ -1,13 +1,17 @@
 package com.thebugs.back_end.controllers.user;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.SearchProductService;
@@ -33,6 +37,28 @@ public class SearchProductController {
             responseData
                     .setData(searchProductService.searchProduct(keyword, genresID, minPrice, maxPrice, sortBy, page));
             return ResponseEntity.ok().body(responseData);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseData(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/voice/transcribe")
+    public ResponseEntity<ResponseData> transcribeVoice(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        new ResponseData(false, "File âm thanh trống!", null));
+            }
+            ResponseData responseData = new ResponseData();
+            responseData.setStatus(true);
+
+            String transcript = searchProductService.transcribeVoice(file);
+            Map<String, String> map = new HashMap<>();
+            map.put("transcript", transcript);
+            responseData.setData(map);
+            responseData.setMessage("Nhận diện giọng nói thành công");
+            return ResponseEntity.ok(responseData);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ResponseData(false, e.getMessage(), null));
