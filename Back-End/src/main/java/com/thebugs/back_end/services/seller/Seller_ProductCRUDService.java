@@ -17,7 +17,6 @@ import com.thebugs.back_end.entities.Image;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.mappers.Seller_ProductConverter;
 import com.thebugs.back_end.repository.Seller_ProductJPA;
-import com.thebugs.back_end.utils.ColorUtil;
 import com.thebugs.back_end.utils.IrRickUtil;
 
 @Service
@@ -32,13 +31,13 @@ public class Seller_ProductCRUDService {
     private Seller_ProductConverter g_ProductConverter;
 
     public Page<Seller_ProductDTO> getProductsByShopId(int shopId, String keyword, String sort, Pageable pageable) {
-        ColorUtil.print(ColorUtil.RED, "Start JPA GetProduct");
+
         String cleaned = keyword.replaceAll("\\s+", "");
+
         String keywordPattern = Arrays.stream(cleaned.split(""))
                 .map(ch -> "%" + ch)
                 .collect(Collectors.joining("")) + "%";
         Page<Product> products = g_ProductJPA.findAllByShopIdAndKeyword(shopId, keywordPattern, pageable);
-        ColorUtil.print(ColorUtil.RED, "End JPA GetProduct");
         return products.map(g_ProductConverter::fromEntityToDTO);
     }
 
