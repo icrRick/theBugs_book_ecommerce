@@ -10,4 +10,18 @@ public class Format {
                 String formattedDate = sdf.format(dob);
                 return sdf.parse(formattedDate);
         }
+
+        public static Date formatDateS(Date dob) {
+                try {
+                        if (dob == null) {
+                                return null;
+                        }
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        String formattedDate = sdf.format(dob);
+                        return sdf.parse(formattedDate);
+                } catch (ParseException e) {
+                        e.printStackTrace();
+                        return null;
+                }
+        }
 }

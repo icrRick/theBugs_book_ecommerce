@@ -141,7 +141,6 @@ const Payment = () => {
         const quantity = getQuantityByNow() || 0;
         const requestBody = {
             productIntegers: productIds,
-          
             voucherIntegers: voucherIds,
             productQuantity: quantity, 
         };
@@ -229,7 +228,7 @@ const Payment = () => {
 
     const calculateShopTotal = (shop) => {
         return shop.products.reduce((total, product) =>
-            total + (product.promotionValue > 0 ? (product.price * (1 - product.promotionValue / 100)) : product.price) * product.productQuantity, 0);
+            total + (product?.promotionValue > 0 ? (product?.price * (1 - product?.promotionValue / 100)) : product?.price) * product?.productQuantity, 0);
     };
 
     const calculateVoucherDiscount = (shopTotal, voucher) => {
@@ -262,7 +261,7 @@ const Payment = () => {
     // Thêm hàm tính tổng giá gốc (không bao gồm khuyến mãi)
     const calculateOriginalShopTotal = (shop) => {
         return shop.products.reduce((total, product) =>
-            total + product.price * product.productQuantity, 0);
+            total + product?.price * product?.productQuantity, 0);
     };
 
     const calculateTotalOriginalPrice = () => {
@@ -273,8 +272,8 @@ const Payment = () => {
     const calculatePromotionDiscount = () => {
         return shops.reduce((total, shop) => {
             return total + shop.products.reduce((shopTotal, product) => {
-                if (product.promotionValue > 0) {
-                    return shopTotal + (product.price * product.promotionValue / 100 * product.productQuantity);
+                if (product?.promotionValue > 0) {
+                    return shopTotal + (product?.price * product?.promotionValue / 100 * product?.productQuantity);
                 }
                 return shopTotal;
             }, 0);
@@ -291,10 +290,10 @@ const Payment = () => {
                     paymentMethod: paymentMethod,
                     customerInfo: customerInfo.fullName + " - " + customerInfo.phone + " - " + customerInfo.address,
                     cartItems: shop.products.map(product => ({
-                        productId: product.id,
-                        olPrice: product.price,
-                        price: product.promotionValue > 0 ? (product.price * (1 - product.promotionValue / 100)) : product.price,
-                        quantity: product.productQuantity,
+                        productId: product?.id,
+                        olPrice: product?.price,
+                        price: product?.promotionValue > 0 ? (product?.price * (1 - product?.promotionValue / 100)) : product?.price,
+                        quantity: product?.productQuantity,
                     })),
                 };
             });
@@ -399,7 +398,7 @@ const Payment = () => {
     const handleBack = () => {
         removeListProductIds();
         removeListVoucherIds();
-        navigate('/cart');
+        navigate(-1);
     }
 
     return (
@@ -424,27 +423,27 @@ const Payment = () => {
 
                             <div className="divide-y divide-gray-200">
                                 {shop.products.map((product) => (
-                                    <div key={product.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                                    <div key={product?.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
                                                 <img
-                                                    src={product.image || "/placeholder.svg"}
-                                                    alt={product.name}
+                                                    src={product?.image || "/placeholder.svg"}
+                                                    alt={product?.name}
                                                     className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg shadow-sm"
                                                 />
                                                 <div className="space-y-1 sm:space-y-2">
                                                     <h4 className="font-medium text-gray-900">
-                                                        {product.name}
+                                                        {product?.name}
                                                         <p className="text-xs sm:text-sm text-gray-600">
-                                                            {product.productQuantity} x    {
-                                                                product.promotionValue > 0 ? (
+                                                            {product?.productQuantity} x    {
+                                                                product?.promotionValue > 0 ? (
                                                                     <>
-                                                                        <span className="text-red-600 font-medium">{formatCurrency(product.price * (1 - product.promotionValue / 100))}</span>
-                                                                        <span className="text-gray-400 line-through ml-2">{formatCurrency(product.price)}</span>
+                                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.price * (1 - product?.promotionValue / 100))}</span>
+                                                                        <span className="text-gray-400 line-through ml-2">{formatCurrency(product?.price)}</span>
 
                                                                     </>
                                                                 ) : (
-                                                                    <span className="text-red-600 font-medium">{formatCurrency(product.price)}</span>
+                                                                    <span className="text-red-600 font-medium">{formatCurrency(product?.price)}</span>
                                                                 )
                                                             }
                                                         </p>
@@ -455,7 +454,7 @@ const Payment = () => {
                                                             <span className="text-xs font-medium text-gray-500">Thể loại:</span>
                                                             {product?.genres?.length > 0 ? (
                                                                 <span className="text-xs text-gray-600">
-                                                                    {product.genres.map(genre => genre.name).join(', ')}
+                                                                    {product?.genres.map(genre => genre.name).join(', ')}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-xs text-gray-400 italic">Chưa có thể loại</span>
@@ -465,7 +464,7 @@ const Payment = () => {
                                                             <span className="text-xs font-medium text-gray-500">Tác giả:</span>
                                                             {product?.authors?.length > 0 ? (
                                                                 <span className="text-xs text-gray-600">
-                                                                    {product.authors.map(author => author.name).join(', ')}
+                                                                    {product?.authors.map(author => author.name).join(', ')}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-xs text-gray-400 italic">Chưa có tác giả</span>
@@ -482,10 +481,10 @@ const Payment = () => {
                                             </div>
                                             <p className="font-semibold text-red-600 text-sm sm:text-base">
                                                 {
-                                                    product.promotionValue > 0 ? (
-                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productQuantity * product.price * (1 - product.promotionValue / 100))}</span>
+                                                    product?.promotionValue > 0 ? (
+                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.productQuantity * product?.price * (1 - product?.promotionValue / 100))}</span>
                                                     ) : (
-                                                        <span className="text-red-600 font-medium">{formatCurrency(product.productQuantity * product.price)}</span>
+                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.productQuantity * product?.price)}</span>
                                                     )
                                                 }
                                             </p>
@@ -595,7 +594,7 @@ const Payment = () => {
                     <div className="border-b bg-white p-4 sm:p-6">
                         <div className="space-y-2 sm:space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs sm:text-sm text-gray-600">Tổng tiền hàng (giá gốc):</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Tổng tiền hàng:</span>
                                 <span className="text-xs sm:text-sm text-gray-900 font-medium">
                                     {formatCurrency(calculateTotalOriginalPrice())}
                                 </span>

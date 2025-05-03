@@ -1,5 +1,6 @@
 package com.thebugs.back_end.mappers;
 
+import com.thebugs.back_end.utils.Format;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class ProItemMapper {
         map.put("quantity", product.getQuantity());
         map.put("weight", product.getWeight());
         map.put("productCode", product.getProduct_code());
-        map.put("image", product.getImages().getLast().getImageName()!=null ?  product.getImages().getLast().getImageName() : ReplaceName.generatePlaceholderUrl(product.getName()));
+        map.put("image", product.getImages().getLast().getImageName()!= null ?  product.getImages().getLast().getImageName() : ReplaceName.generatePlaceholderUrl(product.getName()));
 
         map.put("shopSlug", product.getShop().getShop_slug());
         map.put("shopName", product.getShop().getName());
@@ -49,7 +50,8 @@ public class ProItemMapper {
 
       
         if (product.getPromotionProducts() != null && !product.getPromotionProducts().isEmpty()) {
-            Date today = new Date();
+            Date today = Format.formatDateS(new Date()); // Current date;
+            System.out.println("Current date: " + today);
             PromotionProduct validPromotion = product.getPromotionProducts().stream()
                     .filter(promotion -> {
                         Date startDate = promotion.getPromotion().getStartDate();

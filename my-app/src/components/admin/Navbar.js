@@ -85,13 +85,13 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
             <a href="/" className="flex items-center group">
               <img src="https://flowbite.com/docs/images/logo.svg" className="h-8 mr-3 transition-transform duration-200 group-hover:scale-105" alt="Logo" />
               <span className="self-center text-xl font-semibold text-gray-800">
-                Admin Panel
+                THEBUGS
               </span>
             </a>
           </div>
 
           <div className="flex items-center gap-3">
-         
+
 
             {/* User Menu */}
             <div className="relative">
@@ -108,12 +108,11 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
               </button>
 
               {/* Dropdown menu */}
-              <div 
-                className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-gray-200 transition-all duration-200 transform origin-top-right ${
-                  userMenuOpen 
-                    ? 'opacity-100 scale-100 translate-y-0' 
+              <div
+                className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-gray-200 transition-all duration-200 transform origin-top-right ${userMenuOpen
+                    ? 'opacity-100 scale-100 translate-y-0'
                     : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
-                }`}
+                  }`}
               >
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-700">
@@ -154,27 +153,24 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
       </div>
 
       {/* Modal xác nhận đăng xuất */}
-      <div 
-        className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ${
-          isModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ${isModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-          <div 
-            className={`fixed inset-0 transition-opacity duration-200 ${
-              isModalOpen ? 'opacity-75' : 'opacity-0'
-            }`}
+          <div
+            className={`fixed inset-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-75' : 'opacity-0'
+              }`}
             aria-hidden="true"
           >
             <div className="absolute inset-0 bg-gray-500"></div>
           </div>
 
-          <div 
-            className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all duration-200 sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${
-              isModalOpen 
-                ? 'opacity-100 scale-100 translate-y-0' 
+          <div
+            className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all duration-200 sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${isModalOpen
+                ? 'opacity-100 scale-100 translate-y-0'
                 : 'opacity-0 scale-95 translate-y-4'
-            }`}
+              }`}
           >
             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <div className="sm:flex sm:items-start">
@@ -216,27 +212,24 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
       </div>
 
       {/* Modal đổi mật khẩu */}
-      <div 
-        className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ${
-          isChangePasswordModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ${isChangePasswordModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-          <div 
-            className={`fixed inset-0 transition-opacity duration-200 ${
-              isChangePasswordModalOpen ? 'opacity-75' : 'opacity-0'
-            }`}
+          <div
+            className={`fixed inset-0 transition-opacity duration-200 ${isChangePasswordModalOpen ? 'opacity-75' : 'opacity-0'
+              }`}
             aria-hidden="true"
           >
             <div className="absolute inset-0 bg-gray-500"></div>
           </div>
 
-          <div 
-            className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all duration-200 sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${
-              isChangePasswordModalOpen 
-                ? 'opacity-100 scale-100 translate-y-0' 
+          <div
+            className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all duration-200 sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${isChangePasswordModalOpen
+                ? 'opacity-100 scale-100 translate-y-0'
                 : 'opacity-0 scale-95 translate-y-4'
-            }`}
+              }`}
           >
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">

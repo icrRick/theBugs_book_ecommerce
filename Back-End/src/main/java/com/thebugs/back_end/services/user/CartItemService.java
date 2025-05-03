@@ -1,6 +1,8 @@
 package com.thebugs.back_end.services.user;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,11 +14,13 @@ import com.thebugs.back_end.entities.CartItem;
 import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.entities.OrderItem;
 import com.thebugs.back_end.entities.Product;
+import com.thebugs.back_end.entities.PromotionProduct;
 import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.ProItemMapper;
 import com.thebugs.back_end.repository.CartItemJPA;
 import com.thebugs.back_end.services.seller.VoucherService;
 import com.thebugs.back_end.services.super_admin.PublisherService;
+import com.thebugs.back_end.utils.Format;
 
 @Service
 public class CartItemService {
@@ -81,9 +85,40 @@ public class CartItemService {
 
     public boolean saveCartItem(String authorizationHeader, Integer productId, Integer quantity) {
         User user = userService.getUserToken(authorizationHeader);
-        if (quantity > productService.getProductById(productId).getQuantity()) {
-            throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
+        Product product = productService.getProductById(productId);
+        PromotionProduct promotionValue = null;
+        if (user.getShop().getId() == productService.getProductById(productId).getShop().getId()) {
+            throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
         }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng không hợp lệ");
+        }
+        if (product.getPromotionProducts() != null && !product.getPromotionProducts().isEmpty()) {
+            Date today = Format.formatDateS(new Date()); 
+            System.out.println("Current date: " + today);
+            PromotionProduct validPromotion = product.getPromotionProducts().stream()
+                    .filter(promotion -> {
+                        Date startDate = promotion.getPromotion().getStartDate();
+                        Date endDate = promotion.getPromotion().getExpireDate();
+                        return (startDate == null || !today.before(startDate))
+                                && (endDate == null || !today.after(endDate));
+                    })
+                    .max(Comparator.comparingDouble(promotion -> promotion.getPromotion().getPromotionValue()))
+                    .orElse(null);
+
+            if (validPromotion != null) {
+                promotionValue =validPromotion;
+            } else {
+                promotionValue = null;
+            }
+        }
+        if (promotionValue != null && promotionValue.getPromotion().getPromotionValue() > 0 && quantity > promotionValue.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng không hợp lệ với mã giảm giá");
+        }else{
+            if (quantity > product.getQuantity()) {
+                throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
+            }
+        }    
         CartItem cartItem = findProductByUser(productId, user.getId());
         if (cartItem != null) {
             cartItem.setQuantity(quantity);
@@ -146,8 +181,9 @@ public class CartItemService {
 
     public boolean repurchaseCartItem(Integer orderId) {
         Order order = orderService.findById(orderId);
-        if (order == null) return false;
-    
+        if (order == null)
+            return false;
+
         for (OrderItem orderItem : order.getOrderItems()) {
             CartItem cartItem = findProductByUser(orderItem.getProduct().getId(), order.getUser().getId());
             if (cartItem != null) {
@@ -161,8 +197,8 @@ public class CartItemService {
                 cartItemJPA.save(cartItemAdd);
             }
         }
-    
+
         return true;
     }
-    
+
 }
