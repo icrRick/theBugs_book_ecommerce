@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import axiosInstance from "../../utils/axiosInstance"
 import { showSuccessToast, showErrorToast } from "../../utils/Toast"
 import Loading from "../../utils/Loading"
-const AdminReportProductDetail = () => {
+const AdminReportStoresDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [report, setReport] = useState(null)
@@ -16,7 +16,7 @@ const AdminReportProductDetail = () => {
   const fetchReportDetail = async (id) => {
     setIsLoading(true)
     try {
-      const response = await axiosInstance.get(`/admin/report/product/detail?id=${id}`);
+      const response = await axiosInstance.get(`/admin/report/shop/detail?id=${id}`);
       if (response.status === 200 && response.data.status == true) {
         setReport(response.data.data);
       }
@@ -32,7 +32,6 @@ const AdminReportProductDetail = () => {
       fetchReportDetail(id);
     }
   }, [id]);
-
   const handleApproveClick = (report) => {
     setSelectedItem(report);
     setShowApproveModal(true);
@@ -46,15 +45,15 @@ const AdminReportProductDetail = () => {
   const handleApprove = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.post(`/admin/report/product/approve?id=${selectedItem.id}`);
+      const response = await axiosInstance.post(`/admin/report/shop/approve?id=${selectedItem.id}`);
       if (response.status === 200 && response.data.status === true) {
-        showSuccessToast("Đã duyệt sản phẩm thành công!");
+        showSuccessToast("Đã duyệt cửa hàng thành công!");
       } else {
-        showErrorToast(response.data.message || "Có lỗi xảy ra khi duyệt sản phẩm!");
+        showErrorToast(response.data.message || "Có lỗi xảy ra khi duyệt cửa hàng!");
       }
     } catch (error) {
       console.error('Error approving product:', error);
-      showErrorToast("Có lỗi xảy ra khi duyệt sản phẩm!");
+      showErrorToast("Có lỗi xảy ra khi duyệt cửa hàng!");
     } finally {
       setIsLoading(false);
       setShowApproveModal(false);
@@ -75,19 +74,19 @@ const AdminReportProductDetail = () => {
 
     try {
       setIsLoading(true);
-      const response = await axiosInstance.post('/admin/report/product/reject', {
+      const response = await axiosInstance.post('/admin/report/shop/reject', {
         id: selectedItem.id,
         reasons: reasons
       });
 
       if (response.status === 200 && response.data.status === true) {
-        showSuccessToast("Đã từ chối sản phẩm thành công!");
+        showSuccessToast("Đã từ chối cửa hàng thành công!");
       } else {
-        showErrorToast(response.data.message || "Có lỗi xảy ra khi từ chối sản phẩm!");
+        showErrorToast(response.data.message || "Có lỗi xảy ra khi từ chối cửa hàng!");
       }
     } catch (error) {
       console.error('Error rejecting product:', error);
-      showErrorToast("Có lỗi xảy ra khi từ chối sản phẩm!");
+      showErrorToast("Có lỗi xảy ra khi từ chối cửa hàng!");
     } finally {
       setIsLoading(false);
       setShowRejectModal(false);
@@ -160,11 +159,11 @@ const AdminReportProductDetail = () => {
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <Link to="/admin/reports/products" className="hover:text-blue-600 transition-colors duration-200">Quản lý báo cáo sản phẩm</Link>
+                <Link to="/admin/reports/products" className="hover:text-blue-600 transition-colors duration-200">Quản lý báo cáo cửa hàng</Link>
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <span className="text-gray-900 font-medium truncate max-w-xs">{report?.productName || ''}</span>
+                <span className="text-gray-900 font-medium truncate max-w-xs">{report?.shopName || ''}</span>
               </div>
 
               <div className="flex justify-end">
@@ -197,8 +196,8 @@ const AdminReportProductDetail = () => {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Chi tiết báo cáo sản phẩm {report?.productName}</h1>
-                <p className="text-gray-500 text-xs sm:text-sm mt-1">Chi tiết báo cáo sản phẩm</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Chi tiết báo cáo cửa hàng {report?.productName}</h1>
+                <p className="text-gray-500 text-xs sm:text-sm mt-1">Chi tiết báo cáo cửa hàng</p>
               </div>
             </div>
 
@@ -210,13 +209,13 @@ const AdminReportProductDetail = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
             <div className="flex items-start space-x-4">
               <img
-                src={report?.productImage || "/placeholder.svg"}
-                alt={report?.productName}
+                src={report?.shopImage}
+                alt={report?.shopName}
                 className="w-24 h-24 object-cover rounded-lg border border-gray-200"
               />
               <div>
-                <h3 className="font-medium text-gray-800 text-xl">{report?.productName}</h3>
-                <p className="text-sm text-gray-600 mt-1">Mã sản phẩm: {report?.productCode}</p>
+                <h3 className="font-medium text-gray-800 text-xl">{report?.shopName}</h3>
+                <p className="text-sm text-gray-600 mt-1">Mã cửa hàng: {report?.shopSlug}</p>
                 <p className="text-sm text-gray-500 mt-1">Email người dùng: {report?.emailUser}</p>
               </div>
             </div>
@@ -238,9 +237,11 @@ const AdminReportProductDetail = () => {
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Ngày tạo:</span> {formatDate(report?.createAt)}
               </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Ngày {report?.active === null ? 'duyệt' : 'từ chối'}:</span> {formatDate(report?.approvalDate)}
-              </div>
+              {report?.active !== null && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Ngày {report?.active === true ? 'duyệt' : 'từ chối'}:</span> {formatDate(report?.approvalDate)}
+                </div>
+              )}
             </div>
           </div>
 
@@ -309,15 +310,15 @@ const AdminReportProductDetail = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Xác nhận duyệt báo cáo sản phẩm</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Xác nhận duyệt báo cáo cửa hàng</h3>
                 <p className="text-sm text-gray-500 mb-2">
-                  Bạn có chắc chắn muốn duyệt báo cáo sản phẩm "{selectedItem?.productName || ''}" không?
+                  Bạn có chắc chắn muốn duyệt báo cáo cửa hàng "{selectedItem?.shopName || ''}" không?
                 </p>
                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm">
                   <p className="font-medium text-yellow-700">Lưu ý quan trọng:</p>
                   <p className="text-yellow-600">
-                    Sau khi duyệt, sản phẩm sẽ bị khóa trên hệ thống và không thể khôi phục.
-                    <span className="font-bold"> Bạn sẽ không thể hủy duyệt báo cáo sản phẩm sau khi xác nhận.</span>
+                    Sau khi duyệt, cửa hàng sẽ bị khóa trên hệ thống và không thể khôi phục.
+                    <span className="font-bold"> Bạn sẽ không thể hủy duyệt báo cáo cửa hàng sau khi xác nhận.</span>
                   </p>
                 </div>
               </div>
@@ -485,5 +486,5 @@ const AdminReportProductDetail = () => {
   )
 }
 
-export default AdminReportProductDetail
+export default AdminReportStoresDetail
 

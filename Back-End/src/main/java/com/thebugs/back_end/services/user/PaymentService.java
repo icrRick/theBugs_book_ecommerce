@@ -121,7 +121,6 @@ public class PaymentService {
             Shop shop = productService.getProductById(productId).getShop();
             Integer quantity = paymentBeans.getProductQuantity() > 0 ? paymentBeans.getProductQuantity()
                     : cartItemService.findProductByUser(productId, user.getId()).getQuantity();
-            ;
             Integer shopId = shop.getId();
             String shopName = shop.getName();
 

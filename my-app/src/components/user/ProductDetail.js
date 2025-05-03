@@ -10,7 +10,7 @@ import "swiper/css/zoom";
 import ChatButton from "./ChatButton";
 import axiosInstance from "../../utils/axiosInstance";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
-import { setListProductIds, setListVoucherIds } from "../../utils/cookie";
+import { getQuantityByNow, setListProductIds, setListVoucherIds, setQuantityByNow } from "../../utils/cookie";
 
 const ProductDetail = () => {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
@@ -184,9 +184,30 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    setListProductIds(JSON.stringify([product.id]));
-    setListVoucherIds(JSON.stringify([]));
-    navigate("/payment" , { state: { quantity: quantity } });
+    try {
+      // Validate product and quantity
+      if (!product?.id) {
+        showErrorToast("Không tìm thấy thông tin sản phẩm");
+        return;
+      }
+
+      if (!quantity || quantity <= 0 || quantity > product.inStock) {
+        showErrorToast("Số lượng sản phẩm không hợp lệ");
+        return;
+      }
+
+      setListProductIds(JSON.stringify([product.id]));
+      setListVoucherIds(JSON.stringify([]));
+      setQuantity(quantity);
+      setQuantityByNow(quantity);
+      console.log(getQuantityByNow());
+    
+      // Navigate to payment page
+      navigate("/payment");
+    } catch (error) {
+      console.error("Error in handleBuyNow:", error);
+      showErrorToast("Có lỗi xảy ra, vui lòng thử lại sau");
+    }
   };
 
   const handleReportProduct = () => {

@@ -129,13 +129,13 @@ const AdminShopDetail = () => {
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                             </svg>
-                            <Link to="/admin/shops" className="hover:text-blue-600 transition-colors">
+                            <Link to="/admin/stores" className="hover:text-blue-600 transition-colors">
                                 Quản lý cửa hàng
                             </Link>
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                             </svg>
-                            <span className="text-gray-900 font-medium">{shopDetail?.shopName || 'Chi tiết cửa hàng'}</span>
+                            <span className="text-gray-900 font-medium">{shopDetail?.shopSlug || 'Chi tiết cửa hàng'}</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             {shopDetail.approve === null && (
@@ -162,14 +162,21 @@ const AdminShopDetail = () => {
                             )}
                         </div>
                     </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Chi tiết cửa hàng {shopDetail?.shopSlug}</h1>
+                            <p className="text-gray-500 text-xs sm:text-sm mt-1">Chi tiết cửa hàng</p>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             {/* Main Content */}
             <div className="p-4">
                 {/* Banner Shop */}
-                <div className='rounded-lg border border-gray-300 p-6 transition-all duration-300  overflow-hidden'>
-                    {shopDetail?.banner ? (
+                {shopDetail?.banner && (
+                    <div className='rounded-lg border border-gray-300 p-6 transition-all duration-300  overflow-hidden mb-6'>
                         <div className='relative w-full h-[400px] rounded-lg overflow-hidden shadow-sm flex items-center justify-center '>
                             <img
                                 src={shopDetail.banner}
@@ -178,103 +185,109 @@ const AdminShopDetail = () => {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
                         </div>
-                    ) : (
-                        <div className="w-full h-[400px] bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                            <div className="text-center">
-                                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p className="text-gray-500 text-sm">Chưa có ảnh banner</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
                     {/* Left Column - Thông tin chủ sở hữu */}
                     <div className="flex flex-col h-full">
                         <div className="flex-1 rounded-lg border border-gray-300 p-6 transition-all duration-300">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin chủ sở hữu</h3>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Họ và tên</label>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Thông tin chủ sở hữu
+                            </h3>
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Hình</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <div className="flex items-center space-x-4">
+                                        <img
+                                            src={shopDetail?.avatar}
+                                            alt="Avatar"
+                                            className="h-12 w-12 rounded-full object-cover"
+                                        />
                                     </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.userFullName || 'Không có họ và tên'}</p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Email</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.email || 'Không có email'}</p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Số điện thoại</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.phone || 'Không có số điện thoại'}</p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">CCCD</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.cccd || 'Không có CCCD'}</p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Ngày sinh</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">
-                                            {shopDetail?.dob ? new Date(shopDetail.dob).toLocaleDateString('vi-VN') : 'Không có ngày sinh'}
-                                        </p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Giới tính</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.gender === null ? 'Không xác định' : shopDetail?.gender === true ? 'Nam' : 'Nữ'}</p>
-                                    </div>
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Địa chỉ</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.address || 'Không có địa chỉ'}</p>
-                                    </div>
-
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Họ và tên</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.userFullName || 'Không có họ và tên'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Email</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.email || 'Không có email'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Số điện thoại</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.phone || 'Không có số điện thoại'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">CCCD</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.cccd || 'Không có CCCD'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Ngày sinh</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">
+                                        {shopDetail?.dob ? new Date(shopDetail.dob).toLocaleDateString('vi-VN') : 'Không có ngày sinh'}
+                                    </p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Giới tính</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.gender === null ? 'Không xác định' : shopDetail?.gender === true ? 'Nam' : 'Nữ'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Địa chỉ</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.address || 'Không có địa chỉ'}</p>
                                 </div>
 
                             </div>
                         </div>
 
                         <div className="mt-6 rounded-lg border p-6 border-gray-300 transition-all duration-300">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin tài khoản ngân hàng</h3>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Chủ tài khoản</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.bankOwnerName || 'Không có chủ tài khoản'}</p>
-                                    </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Thông tin tài khoản ngân hàng
+                            </h3>
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Chủ tài khoản</p>
                                 </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Số tài khoản</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.bankOwnerNumber || 'Không có số tài khoản'}</p>
-                                    </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.bankOwnerName || 'Không có chủ tài khoản'}</p>
                                 </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="col-span-1">
-                                        <label className="text-sm font-medium text-gray-500">Ngân hàng</label>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-900">{shopDetail?.bankProvideName || 'Không có ngân hàng'}</p>
-                                    </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Số tài khoản</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.bankOwnerNumber || 'Không có số tài khoản'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Ngân hàng</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.bankProvideName || 'Không có ngân hàng'}</p>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -282,160 +295,140 @@ const AdminShopDetail = () => {
                     <div className="flex flex-col h-full">
                         {/* Shop Information Card */}
                         <div className="flex-1 rounded-lg border border-gray-300 p-6 transition-all duration-300">
-                            <div className="flex items-center space-x-6">
-                                <div className="flex-shrink-0">
-                                    <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg overflow-hidden">
-                                        {shopDetail?.image ? (
-                                            <img
-                                                src={shopDetail.image}
-                                                alt="Ảnh cửa hàng"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            shopDetail?.shopName?.charAt(0)
-                                        )}
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                Thông tin cửa hàng
+                            </h3>
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Hình</p>
+                                </div>
+                                <div className="col-span-8">
+                                    <div className="flex items-center space-x-4">
+                                        <img
+                                            src={shopDetail?.avatar}
+                                            alt="Avatar"
+                                            className="h-12 w-12 rounded-full object-cover"
+                                        />
                                     </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <h2 className="text-2xl font-bold text-gray-900 truncate">
-                                        {shopDetail?.shopName || 'Không có tên cửa hàng'}
-                                    </h2>
-                                    <div className="mt-3 flex items-center space-x-6">
-                                        <span className="flex items-center text-sm text-gray-500">
-                                            <svg className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {shopDetail?.shopCreatAt ? new Date(shopDetail?.shopCreatAt).toLocaleDateString('vi-VN') : 'Không có ngày tạo'}
-                                        </span>
-                                        <span className="flex items-center text-sm text-gray-500">
-                                            <svg className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {shopDetail?.verify ? 'Đã xác thực' : 'Chưa xác thực'}
-                                        </span>
-                                    </div>
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Tên cửa hàng</p>
+                                </div>
+                                <div className="col-span-8">
+                                    <p className="text-sm text-gray-900">{shopDetail?.shopName || 'Không có tên cửa hàng'}</p>
+                                </div>
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Ngày tạo</p>
+                                </div>
+                                <div className="col-span-8">
+                                    <p className="text-sm text-gray-900">{shopDetail?.shopCreatAt ? new Date(shopDetail.shopCreatAt).toLocaleDateString('vi-VN') : 'Không có ngày tạo'}</p>
+                                </div>
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Trạng thái xác thực</p>
+                                </div>
+                                <div className="col-span-8">
+                                    <p className="text-sm text-gray-900">{shopDetail?.userActive === true ? 'Đã xác thực' : 'Chưa xác thực'}</p>
                                 </div>
                             </div>
                         </div>
-
                         <div className="mt-6 rounded-lg border p-6 border-gray-300 transition-all duration-300">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-6">Địa chỉ cửa hàng</h3>
-                            <div className="grid grid-cols-1 gap-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Họ tên</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.addressFullName || 'Không có họ tên'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Số điện thoại</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.addressPhone || 'Không có số điện thoại'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Tỉnh/Thành phố</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.provinceName || 'Không có tỉnh/thành phố'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Quận/Huyện</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.districtName || 'Không có quận/huyện'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Phường/Xã</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.wardName || 'Không có phường/xã'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 block mb-1">Địa chỉ chi tiết</label>
-                                            <p className="text-sm text-gray-900  p-2.5 rounded-md">{shopDetail?.street || 'Không có địa chỉ'}</p>
-                                        </div>
-                                    </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Địa chỉ cửa hàng
+                            </h3>
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Họ và tên</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.addressFullName || 'Không có chủ tài khoản'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Số điện thoại</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.addressPhone || 'Không có số tài khoản'}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="text-sm font-medium text-gray-500">Địa chỉ chi tiết</p>
+                                </div>
+                                <div className="col-span-9">
+                                    <p className="text-sm text-gray-900">{shopDetail?.addressShop || 'Không có ngân hàng'}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Shop Status */}
                         <div className="mt-6 rounded-lg border p-6 border-gray-300 transition-all duration-300">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Trạng thái cửa hàng</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                {/* Hoạt động */}
-                                <div className={`p-4 rounded-lg border ${shopDetail?.status ? 'bg-green-50 border-green-200' : ' border-gray-200'}`}>
-                                    <div className="flex items-center space-x-3">
-                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${shopDetail?.status ? 'bg-green-100' : 'bg-gray-100'}`}>
-                                            <svg className={`h-5 w-5 ${shopDetail?.status ? 'text-green-600' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={shopDetail?.status ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">Hoạt động</p>
-                                            <p className={`text-sm ${shopDetail?.status ? 'text-green-600' : 'text-gray-600'}`}>
-                                                {shopDetail?.status ? 'Đang hoạt động' : 'Chưa hoạt động'}
-                                            </p>
-                                        </div>
-                                    </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Trạng thái cửa hàng
+                            </h3>
+                            <div className="grid grid-cols-12 gap-6">
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Trạng thái duyệt</p>
                                 </div>
-
-                                {/* Duyệt */}
-                                <div className={`p-4 rounded-lg border ${shopDetail?.approve === true ? 'bg-green-50 border-green-200' :
-                                    shopDetail?.approve === null ? 'bg-yellow-50 border-yellow-200' :
-                                        'bg-red-50 border-red-200'}`}>
-                                    <div className="flex items-center space-x-3">
-                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${shopDetail?.approve === true ? 'bg-green-100' :
-                                            shopDetail?.approve === null ? 'bg-yellow-100' :
-                                                'bg-red-100'}`}>
-                                            <svg className={`h-5 w-5 ${shopDetail?.approve === true ? 'text-green-600' :
-                                                shopDetail?.approve === null ? 'text-yellow-600' :
-                                                    'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={
-                                                    shopDetail?.approve === true ? "M5 13l4 4L19 7" :
-                                                        shopDetail?.approve === null ? "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" :
-                                                            "M6 18L18 6M6 6l12 12"
-                                                } />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">Trạng thái duyệt</p>
-                                            <p className={`text-sm ${shopDetail?.approve === true ? 'text-green-600' :
-                                                shopDetail?.approve === null ? 'text-yellow-600' :
-                                                    'text-red-600'}`}>
-                                                {shopDetail?.approve === true ? 'Đã xác nhận' :
-                                                    shopDetail?.approve === null ? 'Chờ xác nhận' :
-                                                        'Từ chối'}
-                                            </p>
-                                        </div>
-                                    </div>
+                                <div className="col-span-8">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shopDetail?.approve === null
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : shopDetail?.approve === true
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                        }`}>
+                                        {shopDetail?.approve === null ? 'Chờ duyệt' : shopDetail?.approve === true ? 'Đã duyệt' : 'Từ chối'}
+                                    </span>
                                 </div>
+                                {
+                                    shopDetail?.status === true && (
+                                        <>
+                                            <div className="col-span-4">
+                                                <p className="text-sm font-medium text-gray-500">Trạng thái khóa</p>
+                                            </div>
+                                            <div className="col-span-8">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    Đã khóa
+                                                </span>
+                                            </div>
+                                        </>
+                                    )
+                                }
 
-                                {/* Kích hoạt */}
-                                <div className={`p-4 rounded-lg border ${shopDetail?.active ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                    <div className="flex items-center space-x-3">
-                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${shopDetail?.active ? 'bg-green-100' : 'bg-red-100'}`}>
-                                            <svg className={`h-5 w-5 ${shopDetail?.active ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={shopDetail?.active ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">Kích hoạt</p>
-                                            <p className={`text-sm ${shopDetail?.active ? 'text-green-600' : 'text-red-600'}`}>
-                                                {shopDetail?.active ? 'Đang kích hoạt' : 'Bị tắt'}
-                                            </p>
-                                        </div>
-                                    </div>
+                                <div className="col-span-4">
+                                    <p className="text-sm font-medium text-gray-500">Trạng thái hoạt động</p>
+                                </div>
+                                <div className="col-span-8">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shopDetail?.active === true
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}>
+                                        {shopDetail?.active === true ? 'Đang hoạt động' : 'Đã tạm dừng'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                </div>
                 {/* Shop Description */}
                 <div className="mt-6 rounded-lg border border-gray-300 p-6 transition-all duration-300">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Mô tả cửa hàng</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        Mô tả cửa hàng
+                    </h3>
                     <div className="prose max-w-none">
-                        {shopDetail?.description ? (
-                            <p className="text-gray-600 whitespace-pre-line leading-relaxed">{shopDetail.description}</p>
-                        ) : (
-                            <p className="text-gray-400 italic">Không có mô tả</p>
-                        )}
+                        <p className="text-gray-600 whitespace-pre-line leading-relaxed">
+                            {shopDetail?.description || 'Không có mô tả'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -518,9 +511,9 @@ const AdminShopDetail = () => {
 
                             <form className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <p className="block text-sm font-medium text-gray-700 mb-2">
                                         Lý do từ chối (có thể chọn nhiều)
-                                    </label>
+                                    </p>
                                     <div className="space-y-3">
                                         <div className="flex items-start">
                                             <input
@@ -532,9 +525,9 @@ const AdminShopDetail = () => {
                                                 onChange={() => handleReasonChange("Thông tin cửa hàng không đầy đủ hoặc không chính xác")}
                                                 checked={selectedRejectReasons.includes("Thông tin cửa hàng không đầy đủ hoặc không chính xác")}
                                             />
-                                            <label htmlFor="reason-info" className="ml-3 text-sm text-gray-700">
+                                            <p htmlFor="reason-info" className="ml-3 text-sm text-gray-700">
                                                 Thông tin cửa hàng không đầy đủ hoặc không chính xác
-                                            </label>
+                                            </p>
                                         </div>
 
                                         <div className="flex items-start">
@@ -547,9 +540,9 @@ const AdminShopDetail = () => {
                                                 onChange={() => handleReasonChange("Hình ảnh không đạt yêu cầu hoặc không phù hợp")}
                                                 checked={selectedRejectReasons.includes("Hình ảnh không đạt yêu cầu hoặc không phù hợp")}
                                             />
-                                            <label htmlFor="reason-images" className="ml-3 text-sm text-gray-700">
+                                            <p htmlFor="reason-images" className="ml-3 text-sm text-gray-700">
                                                 Hình ảnh không đạt yêu cầu hoặc không phù hợp
-                                            </label>
+                                            </p>
                                         </div>
 
                                         <div className="flex items-start">
@@ -562,9 +555,9 @@ const AdminShopDetail = () => {
                                                 onChange={() => handleReasonChange("Vi phạm chính sách của sàn thương mại")}
                                                 checked={selectedRejectReasons.includes("Vi phạm chính sách của sàn thương mại")}
                                             />
-                                            <label htmlFor="reason-policy" className="ml-3 text-sm text-gray-700">
+                                            <p htmlFor="reason-policy" className="ml-3 text-sm text-gray-700">
                                                 Vi phạm chính sách của sàn thương mại
-                                            </label>
+                                            </p>
                                         </div>
 
                                         <div className="flex items-start">
@@ -577,18 +570,18 @@ const AdminShopDetail = () => {
                                                 onChange={() => handleReasonChange("other")}
                                                 checked={selectedRejectReasons.includes("other")}
                                             />
-                                            <label htmlFor="reason-other" className="ml-3 text-sm text-gray-700">
+                                            <p htmlFor="reason-other" className="ml-3 text-sm text-gray-700">
                                                 Lý do khác
-                                            </label>
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {selectedRejectReasons.includes('other') && (
                                     <div>
-                                        <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
+                                        <p htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
                                             Chi tiết lý do
-                                        </label>
+                                        </p>
                                         <textarea
                                             id="reason"
                                             value={rejectReason}

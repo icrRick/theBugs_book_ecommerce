@@ -124,10 +124,9 @@ public class AuthorController {
                                 urlImage = CloudinaryUpload.uploadImage(authorBean.getImage());
                         }
 
-                        Author author = new Author();
-                        author.setId(id);
+                        Author author = authorService.getAuthorById(id);
                         author.setName(authorBean.getName());
-                        author.setUrlImage(urlImage);
+                        author.setUrlImage(urlImage != null ? urlImage : author.getUrlImage());
                         author.setUrlLink(authorBean.getUrlLink());
 
                         AuthorDTO updatedAuthor = authorService.updateAuthor(author);

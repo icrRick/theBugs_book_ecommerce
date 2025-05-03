@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
-import { cookie, getAddressId, getListVoucherIds, removeListProductIds, removeListVoucherIds, setListOrderId } from '../../utils/cookie'
+import { cookie, getAddressId, getListVoucherIds, getQuantity, getQuantityByNow, removeListProductIds, removeListVoucherIds, setListOrderId } from '../../utils/cookie'
 import { calculateShippingFree } from "../../utils/ShippingFree"
 import axiosInstance from "../../utils/axiosInstance"
 import axios from "axios"
@@ -125,7 +125,6 @@ const Payment = () => {
 
         const productIdsStr = getListProductIds();
         const voucherIdsStr = getListVoucherIds();
-
         if (!productIdsStr || !voucherIdsStr) {
             navigate('/cart');
             return;
@@ -139,11 +138,12 @@ const Payment = () => {
             return;
         }
         // Lấy quantity từ state nếu có nêu không thì là 0
-        const { quantity } = location.state || { quantity: 0 };
+        const quantity = getQuantityByNow() || 0;
         const requestBody = {
             productIntegers: productIds,
+          
+            voucherIntegers: voucherIds,
             productQuantity: quantity, 
-            voucherIntegers: voucherIds
         };
 
         try {
@@ -381,9 +381,10 @@ const Payment = () => {
                     removeListVoucherIds();
                 } else {
                     navigate("/payment-cod");
+                    removeListProductIds();
+                    removeListVoucherIds();
                 }
-                removeListProductIds();
-                removeListVoucherIds();
+              
             }
         } catch (error) {
             console.error("Lỗi khi đặt hàng:", error.response.data.message);

@@ -44,17 +44,40 @@ public class AdminReportShopController {
         }
     }
 
-    @PostMapping("/reject")
-    public ResponseEntity<ResponseData> postRejctReportProduct(@RequestBody ReportRejectBean reportRejectBean) {
+    @PostMapping("/approve")
+    public ResponseEntity<ResponseData> postApproveReportProduct(@RequestParam(required = false) Integer id) {
         try {
-            boolean checkApprove = adminReportShopService.reject(reportRejectBean.getId(),
-                    reportRejectBean.getReasons());
+            boolean checkApprove = adminReportShopService.approve(id);
             if (checkApprove) {
-                return ResponseEntityUtil.OK("Từ chối báo cáo sản phẩm thành công", null);
+                return ResponseEntityUtil.OK("Duyệt báo cáo sản phẩm thành công", null);
             }
-            return ResponseEntityUtil.badRequest("Lỗi khi từ chỗi mã: " + reportRejectBean.getId());
+            return ResponseEntityUtil.badRequest("Lỗi khi duyệt mã: " + id);
+
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }
     }
+    @PostMapping("/reject")
+    public ResponseEntity<ResponseData> postRejectReportShop(@RequestBody ReportRejectBean reportRejectBean) {
+        try {
+            boolean checkApprove = adminReportShopService.reject(reportRejectBean.getId(),
+                    reportRejectBean.getReasons());
+            if (checkApprove) {
+                return ResponseEntityUtil.OK("Từ chối báo cáo cửa hàng thành công", null);
+            }
+            return ResponseEntityUtil.badRequest("Lỗi khi từ chối mã: " + reportRejectBean.getId());
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/detail")
+    public ResponseEntity<ResponseData> getDetail(@RequestParam(required = true) Integer id) {
+        try {
+            return ResponseEntityUtil.OK("Lấy thông tin thành công", adminReportShopService.getReportShop(id));
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+        }
+    }
+
 }

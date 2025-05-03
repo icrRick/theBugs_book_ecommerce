@@ -2,7 +2,9 @@ package com.thebugs.back_end.services.super_admin;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,20 +12,44 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.thebugs.back_end.entities.Product;
+import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.entities.ReportShop;
+import com.thebugs.back_end.entities.ReportShopImage;
+import com.thebugs.back_end.entities.Shop;
+import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.AdminReportMapper;
+import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.ReportShopJPA;
+import com.thebugs.back_end.repository.RoleJPA;
+import com.thebugs.back_end.repository.ShopJPA;
+import com.thebugs.back_end.repository.UserJPA;
+import com.thebugs.back_end.services.user.ProductService;
 import com.thebugs.back_end.utils.EmailUtil;
 
 @Service
 public class AdminReportShopService {
 
-    
     @Autowired
     private ReportShopJPA reportShopJPA;
 
     @Autowired
     private AdminReportMapper adminReportMapper;
+
+
+    @Autowired
+    private ShopJPA shopJPA;
+
+
+    @Autowired
+    private UserJPA userJPA;
+
+    @Autowired
+    private RoleJPA roleJPA;
+
+
+    @Autowired
+    private ProductJPA productJPA;
 
     @Autowired
     private EmailUtil emailUtil;
@@ -80,33 +106,54 @@ public class AdminReportShopService {
         return reportShopJPA.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy" + id));
     }
 
+    public Object getReportShop(Integer id) {
+        ReportShop reportProduct = getById(id);
+        return adminReportMapper.toReportShop(reportProduct);
+    }
+
     public boolean approve(Integer id) {
-        ReportShop ReportShop = getById(id);
-        List<ReportShop> ReportShops = findReportShopsByProductAndActive(ReportShop, null);
-        boolean check = updateActiveAndSendEmail(ReportShops);
+        ReportShop reportShop = getById(id);
+        List<ReportShop> reportShops = findReportShopsByshopAndActive(reportShop, null);
+        boolean check = updateActiveAndSendEmail(reportShops);
         return check;
     }
 
-    public boolean updateActiveAndSendEmail(List<ReportShop> ReportShops) {
-        for (ReportShop ReportShop : ReportShops) {
+    public boolean updateActiveAndSendEmail(List<ReportShop> reportShops) {
+        Set<Integer> emailedShops = new HashSet<>();
+
+        for (ReportShop reportShop : reportShops) {
             try {
-                ReportShop.setActive(true);
-                ReportShop.setApprovalDate(new Date());
-                reportShopJPA.save(ReportShop);
+          
+                reportShop.setActive(true);
+                reportShop.setApprovalDate(new Date());
+                reportShopJPA.save(reportShop);
 
-                String emailUser = ReportShop.getUser().getEmail();
-                String emailShop = ReportShop.getShop().getUser().getEmail();
+                String emailUser = reportShop.getUser().getEmail();
+                boolean sentUserEmail = emailUtil.sendEmailApprove(
+                        emailUser, "Báo cáo cửa hàng", reportShop.getShop().getShop_slug());
 
-                boolean checksendEmail = emailUtil.sendEmailApprove(
-                        emailUser, "Báo cáo cửa hàng", ReportShop.getShop().getShop_slug());
+                if (!sentUserEmail) {
+                    System.err.println("Gửi email cho người dùng thất bại: " + emailUser);
+                }
 
-                boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(
-                        emailShop, "Cửa hàng", ReportShop.getShop().getShop_slug(),
-                        ReportShop.getNote(), null);
+      
+                Integer shopId = reportShop.getShop().getId();
+                if (!emailedShops.contains(shopId)) {
+                    emailedShops.add(shopId);
 
-                if (!checksendEmail || !checksendEmailShop) {
-                    System.err.println(
-                            "Gửi email thất bại cho sản phẩm: " + ReportShop.getShop().getShop_slug());
+                    String emailShop = reportShop.getShop().getUser().getEmail();
+                    String shopSlug = reportShop.getShop().getShop_slug();
+
+                    List<String> imageUrls = reportShop.getReportShopImages().stream()
+                            .map(ReportShopImage::getImageName)
+                            .collect(Collectors.toList());
+
+                    boolean sentShopEmail = emailUtil.sendEmailRejectReport(
+                            emailShop, "Cửa hàng", shopSlug, imageUrls);
+
+                    if (!sentShopEmail) {
+                        System.err.println("Gửi email cho shop thất bại: " + shopSlug);
+                    }
                 }
 
             } catch (Exception e) {
@@ -114,9 +161,18 @@ public class AdminReportShopService {
                 e.printStackTrace();
             }
         }
-        // Product product = ReportShops.get(0).setShop();
-        // product.setStatus(true);
-        // productJPA.save(product);
+        Shop shop = reportShops.get(0).getShop(); 
+        shop.setStatus(true);
+        shopJPA.save(shop);
+        User user =shop.getUser();
+        user.setRole(roleJPA.findById(1).get());
+        userJPA.save(user);
+        List <Product> products = productJPA.findAllByShopId(shop.getId());
+        for (Product product : products) {
+            product.setStatus(true);
+            
+            productJPA.save(product);
+        }
         return true;
     }
 
@@ -124,10 +180,11 @@ public class AdminReportShopService {
         ReportShop reportShop = getById(id);
 
         String emailUser = reportShop.getUser().getEmail();
-        boolean checksendEmail = emailUtil.sendEmailReject(emailUser, "Báp cáo cửa hàng",
-        reportShop.getShop().getShop_slug(),
+        boolean checksendEmail = emailUtil.sendEmailReject(emailUser, "Báo cáo cửa hàng",
+                reportShop.getShop().getShop_slug(),
                 reasons);
         boolean checkUpdateApprove = updateActive(reportShop, false);
+
         return checksendEmail && checkUpdateApprove;
     }
 
@@ -143,9 +200,8 @@ public class AdminReportShopService {
         }
     }
 
-    public List<ReportShop> findReportShopsByProductAndActive(ReportShop reportShop, Boolean active) {
+    public List<ReportShop> findReportShopsByshopAndActive(ReportShop reportShop, Boolean active) {
         return reportShopJPA.findReportShopsByshopAndActive(reportShop.getShop().getId(), active);
     }
 
 }
-

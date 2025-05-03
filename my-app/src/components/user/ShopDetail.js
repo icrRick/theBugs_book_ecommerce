@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useLocation } from "react-router-dom"
 import ChatButton from "./ChatButton"
 
 import { showErrorToast } from "../../utils/Toast";
@@ -10,20 +10,25 @@ import axios from "axios"
 import Pagination from "../admin/Pagination";
 const ShopDetail = () => {
   const { id } = useParams()
+  const location = useLocation()
+  const initialState = location.state || {}
+  
   const [shop, setShop] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("price_desc");
+  const [searchQuery, setSearchQuery] = useState(initialState.searchQuery || "")
+  const [sortBy, setSortBy] = useState(initialState.sortBy || "price_desc");
   const [items, setItems] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(1000000000);
-  const [genres, setGenres] = useState([]);
-  const [authors, setAuthors] = useState([]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState('all');
+  const [currentPage, setCurrentPage] = useState(initialState.page || 1);
+  const [minPrice, setMinPrice] = useState(initialState.minPrice || 0);
+  const [maxPrice, setMaxPrice] = useState(initialState.maxPrice || 1000000000);
+  const [genres, setGenres] = useState(initialState.genres || []);
+  const [genreNames, setGenreNames] = useState(initialState.genreNames || []);
+  const [authors, setAuthors] = useState(initialState.authors || []);
+  const [authorNames, setAuthorNames] = useState(initialState.authorNames || []);
+  const [selectedPriceRange, setSelectedPriceRange] = useState(initialState.priceRange || 'all');
   const itemsPerPage = 12;
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -125,7 +130,9 @@ const ShopDetail = () => {
       minPrice: 0,
       maxPrice: 1000000000,
       sortType: "price_desc",
-      page: 1
+      page: 1,
+      genres: "",
+      authors: ""
     });
     
     // Gọi API trực tiếp thay vì thông qua handleFilter
@@ -149,43 +156,86 @@ const ShopDetail = () => {
       });
   }
 
-  const handleGenreChange = (genreId) => {
+  const handleGenreChange = (genreId, genreName) => {
     setGenres(prev => {
       if (prev.includes(genreId)) {
         return prev.filter(id => id !== genreId);
       }
       return [...prev, genreId];
     });
+    setGenreNames(prev => {
+      if (prev.includes(genreName)) {
+        return prev.filter(name => name !== genreName);
+      }
+      return [...prev, genreName];
+    });
   };
 
-  const handleAuthorChange = (authorId) => {
+  const handleAuthorChange = (authorId, authorName) => {
     setAuthors(prev => {
       if (prev.includes(authorId)) {
         return prev.filter(id => id !== authorId);
       }
       return [...prev, authorId];
     });
-  };
+    setAuthorNames(prev => {
+      if (prev.includes(authorName)) {
+        return prev.filter(name => name !== authorName);
+      }
+      return [...prev, authorName];
+    });
+  }
 
   const handleApplyFilter = () => {
     setCurrentPage(1);
+    // Cập nhật URL với tất cả các tham số lọc
+    updateURL({
+      productName: searchQuery,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      sortType: sortBy,
+      page: 1,
+      genres: genreNames.join(','),
+      authors: authorNames.join(',')
+    });
     handleFilter(id, 1);
   };
-
-  useEffect(() => {
+  const getQueryParams = () => {
     const params = new URLSearchParams(window.location.search);
-    const urlProductName = params.get("productName");
-    const urlMinPrice = parseInt(params.get("minPrice"));
-    const urlMaxPrice = parseInt(params.get("maxPrice"));
-    const urlSortType = params.get("sortType");
-    const urlPage = parseInt(params.get("page"));
+    const keyword = params.get("productName") || "";
+    const page = parseInt(params.get("page")) || 1;
+    const genresParam = params.get("genres") || "";
+    const authorsParam = params.get("authors") || "";
+    const minPrice = parseInt(params.get("minPrice")) || 0;
+    const maxPrice = parseInt(params.get("maxPrice")) || 1000000000;
+    const sortType = params.get("sortType") || "price_desc";
+    return { 
+      keyword, 
+      page, 
+      genres: genresParam.split(',').filter(g => g), 
+      authors: authorsParam.split(',').filter(a => a), 
+      minPrice, 
+      maxPrice, 
+      sortType 
+    };
+  };
 
-    if (urlProductName) setSearchQuery(urlProductName);
-    if (urlMinPrice) setMinPrice(urlMinPrice);
-    if (urlMaxPrice) setMaxPrice(urlMaxPrice);
-    if (urlSortType) setSortBy(urlSortType);
-    if (urlPage) setCurrentPage(urlPage);
-  }, []);
+  // Thêm useEffect để xử lý params từ URL khi component mount
+  useEffect(() => {
+    if (id) {
+      if (initialState.fromProductDetail) {
+        handleFilter(id, currentPage)
+      } else {
+        const params = getQueryParams()
+        if (params.keyword) setSearchQuery(params.keyword)
+        if (params.minPrice) setMinPrice(params.minPrice)
+        if (params.maxPrice) setMaxPrice(params.maxPrice)
+        if (params.sortType) setSortBy(params.sortType)
+        if (params.page) setCurrentPage(params.page)
+        handleFilter(id, params.page)
+      }
+    }
+  }, [shop])
 
   const fechData = async (id) => {
     setLoading(true)
@@ -368,7 +418,7 @@ const ShopDetail = () => {
                         value={genre.id}
                         className="mr-2"
                         checked={genres.includes(genre.id)}
-                        onChange={() => handleGenreChange(genre.id)}
+                        onChange={(e) => handleGenreChange(genre.id, genre.name)}
                       />
                       <label htmlFor={`genre-${genre.id}`}>{genre.name}</label>
                     </li>
@@ -387,7 +437,7 @@ const ShopDetail = () => {
                         value={author.id}
                         className="mr-2"
                         checked={authors.includes(author.id)}
-                        onChange={() => handleAuthorChange(author.id)}
+                        onChange={(e) => handleAuthorChange(author.id, author.name)}
                       />
                       <label htmlFor={`author-${author.id}`}>{author.name}</label>
                     </li>

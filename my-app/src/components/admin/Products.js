@@ -153,7 +153,7 @@ const Products = () => {
               <input
                 type="text"
                 id="search"
-                placeholder="Tìm kiếm theo tên, mã sản phẩm..."
+                placeholder="Tìm tên sản phẩm"
                 value={keyword}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out shadow-sm"
@@ -199,9 +199,7 @@ const Products = () => {
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tên SP
                   </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                    TT hoạt động
-                  </th>
+ 
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                     TT khóa
                   </th>
@@ -243,15 +241,7 @@ const Products = () => {
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.productName}</div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden sm:table-cell">
-                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          item?.active 
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {item?.active ? "Đang hoạt động" : "Ngừng hoạt động"}
-                        </span>
-                      </td>
+                   
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
                         <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           item?.status 

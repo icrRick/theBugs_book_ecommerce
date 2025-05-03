@@ -23,13 +23,13 @@ public class AdminShopMapper {
     private ApiGHNService apiGHNService;
 
     public Object toDTO(Product product) {
-
         String shopName = product.getShop().getName();
         String image = product.getShop().getImage();
         boolean verify = product.getShop().getUser().getVerify();
         Map<String, Object> map = new HashMap<>();
         map.put("shopName", shopName);
         map.put("shopImage", image != null ? image : ReplaceName.generatePlaceholderUrl(shopName));
+        map.put("shopSlug", product.getShop().getShop_slug());
         map.put("verify", verify);
         return map;
     }
@@ -65,6 +65,7 @@ public class AdminShopMapper {
             map.put("dob", user.getDob());
             map.put("userActive", user.isActive()); 
             map.put("address", user.getAddress());
+            map.put("avatar", user.getAvatar() != null ? user.getAvatar() : ReplaceName.generatePlaceholderUrl(user.getFullName()));
         }
     
         map.put("shopId", shop.getId());
@@ -78,6 +79,7 @@ public class AdminShopMapper {
         map.put("shopCreatAt", shop.getCreateAt());
         map.put("image", shop.getImage());
         map.put("banner", shop.getBanner());
+
         map.put("shopActive", shop.isActive()); 
         map.put("approve", shop.getApprove());
         map.put("status", shop.getStatus());
@@ -86,10 +88,10 @@ public class AdminShopMapper {
         if (address != null) {
             map.put("addressFullName", address.getFullName());
             map.put("addressPhone", address.getPhone());
-            map.put("provinceName", apiGHNService.getProvinceName(address.getProvinceId()));
-            map.put("districtName", apiGHNService.getDistrictName(address.getProvinceId(), address.getDistrictId()));
-            map.put("wardName", apiGHNService.getWardName(address.getDistrictId(), String.valueOf(address.getWardId())));
-            map.put("street", address.getStreet());
+            map.put("addressShop",address.getStreet()+", "
+            + apiGHNService.getWardName(address.getDistrictId(), String.valueOf(address.getWardId()))   
+            + ", " + apiGHNService.getDistrictName(address.getProvinceId(), address.getDistrictId())
+            + ", " + apiGHNService.getProvinceName(address.getProvinceId()));
         }
     
         return map;

@@ -1,23 +1,23 @@
 package com.thebugs.back_end.controllers.super_admin;
 
 import org.springframework.web.bind.annotation.RestController;
-import com.thebugs.back_end.beans.GenreBean;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.GenreService;
 import com.thebugs.back_end.utils.CloudinaryUpload;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,8 +35,6 @@ public class GenreController {
         @GetMapping("/list")
         public ResponseEntity<ResponseData> getPage(@RequestParam(required = false) String keyword,
                         @RequestParam(defaultValue = "1") int page) {
-
-                ResponseData responseData = new ResponseData();
                 try {
                         Map<String, Object> response = new HashMap<>();
                         Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
@@ -44,98 +42,42 @@ public class GenreController {
                         int count = genreService.totalItems(keyword);
                         response.put("arrayList", genres);
                         response.put("totalItems", count);
-                        responseData.setStatus(true);
-                        responseData.setMessage("Load thành công");
-                        responseData.setData(response);
+                        return ResponseEntityUtil.OK("Lấy thông tin thành công", response);
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi genre" + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return  ResponseEntityUtil.badRequest("Lỗi: " + e.getMessage());
                 }
-                return ResponseEntity.ok(responseData);
+            
         }
 
         @PostMapping("/delete")
         public ResponseEntity<ResponseData> postDeleteGenre(@RequestParam(required = true) Integer id) {
-
-                ResponseData responseData = new ResponseData();
                 try {
-                        boolean check = genreService.deleteGenre(id);
-                        if (check) {
-                                responseData.setStatus(true);
-                                responseData.setMessage("Xóa thành công");
-                                responseData.setData(null);
-                        } else {
-                                responseData.setStatus(false);
-                                responseData.setMessage("Xóa thất bại");
-                                responseData.setData(null);
-                        }
-
-                        return ResponseEntity.ok(responseData);
+                        return genreService.deleteGenre(id) 
+                        ? ResponseEntityUtil.OK("Xóa thành công", null)
+                        : ResponseEntityUtil.badRequest("Xóa thất bại");
                 } catch (Exception e) {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                        .body(new ResponseData(false, e.getMessage(), null));
+                        return  ResponseEntityUtil.badRequest("Lỗi: " + e.getMessage());
                 }
         }
 
-        @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ResponseData> postSaveGenre(
-                        @ModelAttribute GenreBean genreBean) {
-                ResponseData responseData = new ResponseData();
-                try {
-                        String urlImage = null;
-                        
-                        if (genreBean.getImage() != null && !genreBean.getImage().isEmpty()) {
-                                System.out.println("Image: " + genreBean.getImage().getOriginalFilename());
-                                urlImage = CloudinaryUpload.uploadImage(genreBean.getImage());
-                        } else {
-                                System.out.println("No image provided");
-                        }
-                        Genre genre = new Genre();
-                        genre.setName(genreBean.getName().trim());
-                        genre.setUrlImage(urlImage);
-                        GenreDTO genreDTO = genreService.add(genre);
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lưu thành công");
-                        responseData.setData(genreDTO);
-                        return ResponseEntity.ok(responseData);
-
-                } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Đã xảy ra lỗi: " + e.getMessage());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseData);
-                }
+        @PostMapping("/save")
+        public ResponseEntity<ResponseData> postSaveGenre1(
+                @RequestParam(required = false) Integer id,
+                @RequestParam String name,
+                @RequestParam(required = false) MultipartFile image) {
+            try {
+                String urlImage = (image != null && !image.isEmpty())
+                        ? CloudinaryUpload.uploadImage(image)
+                        : null;
+                Genre genre = new Genre();
+                genre.setId(id != null ? id : null);
+                genre.setName(name.trim());
+                genre.setUrlImage(urlImage);
+                return genreService.save(genre)
+                        ? ResponseEntityUtil.OK("Lưu thành công", null)
+                        : ResponseEntityUtil.badRequest("Lưu thất bại");
+            } catch (Exception e) {
+                return ResponseEntityUtil.badRequest("Đã xảy ra lỗi: " + e.getMessage());
+            }
         }
-
-        @PostMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ResponseData> postUpdateGenre( @RequestParam Integer id,
-                        @ModelAttribute GenreBean genreBean) {
-                ResponseData responseData = new ResponseData();
-
-                try {
-                        Genre genre = genreService.getGenreById(id);
-                        String urlImage = null;
-                        if (genreBean.getImage() != null && !genreBean.getImage().isEmpty()) {
-                                System.out.println("Image: " + genreBean.getImage().getOriginalFilename());
-                                urlImage = CloudinaryUpload.uploadImage(genreBean.getImage());
-                        } else {
-                              urlImage=genre.getUrlImage();
-                        }
-                  
-                        genre.setName(genreBean.getName().trim());
-                        genre.setUrlImage(urlImage);
-                        GenreDTO genreDTO = genreService.update(genre);
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lưu thành công");
-                        responseData.setData(genreDTO);
-                        return ResponseEntity.ok(responseData);
-
-                } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Đã xảy ra lỗi: " + e.getMessage());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseData);
-                }
-        }
-
-}
+}        

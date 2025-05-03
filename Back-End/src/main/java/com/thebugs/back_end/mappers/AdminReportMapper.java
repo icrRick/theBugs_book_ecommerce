@@ -11,6 +11,7 @@ import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.entities.ReportProductImage;
 import com.thebugs.back_end.entities.ReportShop;
 import com.thebugs.back_end.entities.ReportShopImage;
+import com.thebugs.back_end.utils.ReplaceName;
 
 @Component
 public class AdminReportMapper {
@@ -60,6 +61,7 @@ public class AdminReportMapper {
     public Object toReportShop(ReportShop reportShop){
         Map<String, Object> map = new HashMap<>();
         map.put("id", reportShop.getId());
+        map.put("shopImage", reportShop.getShop().getImage()!= null ? reportShop.getShop().getImage() : ReplaceName.generatePlaceholderUrl(reportShop.getShop().getName()));
         map.put("shopName", reportShop.getShop().getName());
         map.put("shopSlug", reportShop.getShop().getShop_slug());
         map.put("emailUser", reportShop.getUser().getEmail());
@@ -71,4 +73,7 @@ public class AdminReportMapper {
         map.put("images", toListReportShopImage(reportShop.getReportShopImages()));
         return map;
     }
+
+
+
 }

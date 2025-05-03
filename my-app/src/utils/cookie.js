@@ -21,6 +21,15 @@ export const removeAddressId = () => {
         return Cookies.remove('ADDRESS_ID');
 };
 
+export const setQuantityByNow = (quantity) => {
+        return Cookies.set('QUANTITY_BY_NOW', quantity);
+};
+export const getQuantityByNow = () => {
+        return Cookies.get('QUANTITY_BY_NOW');
+};
+export const removeQuantityByNow = () => {
+        return Cookies.remove('QUANTITY_BY_NOW');
+};
 export const setListProductIds = (listProductIds) => {
         return Cookies.set('LIST_PRODUCT_IDS', listProductIds);
 };
@@ -66,5 +75,8 @@ export const cookie= () => {
                 setListOrderId,
                 getListOrderId,
                 removeListOrderId,
+                setQuantityByNow,
+                getQuantityByNow,
+                removeQuantityByNow,
         };
 }

@@ -9,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +20,7 @@ import com.thebugs.back_end.dto.PublisherDTO;
 import com.thebugs.back_end.entities.Publisher;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.PublisherService;
+import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,84 +34,52 @@ public class PublisherController {
         private PublisherService publisherService;
 
         @PostMapping("/save")
-        public ResponseEntity<ResponseData> postSave(@RequestBody PublisherBean publisherBean,BindingResult result) {
-                ResponseData responseData = new ResponseData();
+        public ResponseEntity<ResponseData> postSave(@RequestBody PublisherBean publisherBean, BindingResult result) {
                 try {
-                       if (result.hasErrors()) {
+                        if (result.hasErrors()) {
                                 String errorMessages = result.getAllErrors().stream()
                                                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
                                                 .collect(Collectors.joining(", "));
-                                responseData.setStatus(false);
-                                responseData.setMessage(errorMessages);
-                                responseData.setData(null);
-                                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                                .body(responseData);
+                                return ResponseEntityUtil.badRequest("Đã xảy ra lỗi: " + errorMessages);
                         }
                         Publisher publisher = new Publisher();
                         publisher.setId(publisherBean.getId() != null ? publisherBean.getId() : null);
                         publisher.setName(publisherBean.getName().trim());
                         PublisherDTO publisherDTO = publisherService.save(publisher);
-                        responseData.setStatus(true);
-                        responseData.setMessage(publisherBean.getId() != null ? "Cập nhật Publisher thành công."
-                                        : "Thêm Publisher thành công.");
-                        responseData.setData(publisherDTO);
-                        return ResponseEntity.ok(responseData);
+                    
+                        return ResponseEntityUtil.OK("Lưu thành công", publisherDTO);
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Đã xảy ra lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return ResponseEntityUtil.badRequest("Đã xảy ra lỗi: " + e.getMessage());
                 }
 
         }
+
         @GetMapping("/list")
         public ResponseEntity<ResponseData> list(@RequestParam String keyword,
-                        @RequestParam(defaultValue = "1") int page
-                     ) {
-                ResponseData responseData = new ResponseData();
+                        @RequestParam(defaultValue = "1") int page) {
                 try {
                         Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
-                        List<PublisherDTO> publishers = publisherService.getPublishersByKeywordWithPagination(keyword, pageable);
+                        List<PublisherDTO> publishers = publisherService.getPublishersByKeywordWithPagination(keyword,
+                                        pageable);
                         Map<String, Object> response = Map.of(
                                         "arrayList", publishers,
                                         "totalItems", publisherService.countPublishersByKeyword(keyword));
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lấy danh sách Publisher thành công.");
-                        responseData.setData(response);
-                        return ResponseEntity.ok(responseData);
+                        return ResponseEntityUtil.OK("Lấy thông tin thành công", response);
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Đã xảy ra lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return ResponseEntityUtil.badRequest("Đã xảy ra lỗi: " + e.getMessage());
                 }
 
         }
 
         @PostMapping("/delete")
         public ResponseEntity<ResponseData> delete(@RequestParam Integer id) {
-                ResponseData responseData = new ResponseData();
                 try {
-                        boolean isDeleted = publisherService.deletePublisher(id);
-                        if (isDeleted) {
-                                responseData.setStatus(true);
-                                responseData.setMessage("Xóa nhà xuất bản thành công.");
-                                responseData.setData(null);
-                                return ResponseEntity.ok(responseData);
-                        } else {
-                                responseData.setStatus(false);
-                                responseData.setMessage("Không tìm thấy nhà xuất bản với ID: " + id);
-                                responseData.setData(null);
-                                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseData);
-                        }
+                        return publisherService.deletePublisher(id) ? ResponseEntityUtil.OK("Xóa thành công", null)
+                                        : ResponseEntityUtil.badRequest("Xóa thất bại");
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Đã xảy ra lỗi: " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return ResponseEntityUtil.badRequest("Đã xảy ra lỗi: " + e.getMessage());
                 }
-             
+
         }
-        
 
 }

@@ -50,6 +50,7 @@ const Genres = () => {
             defaultValues: {
                   name: "",
                   image: null,
+                  id: null,
             },
       });
 
@@ -113,8 +114,9 @@ const Genres = () => {
             setShowDeleteModal(true);
       };
 
-      const handleAdd = () => {
+      const handleAdd = (item) => {
             setIsEditing(false);
+            setSelectedItem(item);
             setShowModal(true);
             reset();
             setPreviewImage(null);
@@ -203,6 +205,12 @@ const Genres = () => {
                   // }
 
                   const formData = new FormData();
+                  if (selectedItem && selectedItem?.id !== null) {
+                        formData.append("id", selectedItem.id);
+                  } else {
+                        formData.append("id", '');
+                  }
+
                   formData.append("name", data.name.trim());
 
                   if (selectedFile) {
@@ -214,7 +222,7 @@ const Genres = () => {
                         ? `/admin/genre/update?id=${selectedItem.id}`
                         : "/admin/genre/add";
 
-                  const response = await axiosInstance.post(url, formData, {
+                  const response = await axiosInstance.post('/admin/genre/save', formData, {
                         headers: {
                               "Content-Type": "multipart/form-data",
                         },
@@ -255,7 +263,7 @@ const Genres = () => {
       return (
             <>
                   {isLoading && <Loading />}
-                  <div className="my-4 bg-white">
+                  <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
                         {/* Header */}
                         <div className="bg-white shadow-sm border-b border-gray-200">
                               <div className="p-4">
@@ -301,7 +309,7 @@ const Genres = () => {
                                           </div>
                                           <div className="flex-shrink-0">
                                                 <button
-                                                      onClick={handleAdd}
+                                                      onClick={() => handleAdd(null)}
                                                       className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                                                 >
                                                       <svg
@@ -354,7 +362,7 @@ const Genres = () => {
                                                 <input
                                                       type="text"
                                                       id="search"
-                                                      placeholder="Tìm kiếm thể loại..."
+                                                      placeholder="Tìm tên thể loại"
                                                       value={keyword}
                                                       onChange={(e) =>
                                                             handleSearch(
@@ -514,7 +522,7 @@ const Genres = () => {
 
                         {/* Modal */}
                         {showModal && (
-                              <div className="fixed inset-0 overflow-y-auto z-50">
+                              <div className="fixed inset-0 overflow-y-auto z-40">
                                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                                           <div
                                                 className="fixed inset-0 transition-opacity"
@@ -736,7 +744,7 @@ const Genres = () => {
 
                         {/* Delete Modal */}
                         {showDeleteModal && (
-                              <div className="fixed inset-0 overflow-y-auto z-50">
+                              <div className="fixed inset-0 overflow-y-auto z-40">
                                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                                           <div
                                                 className="fixed inset-0 transition-opacity"
