@@ -13,64 +13,105 @@ const Statistics = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [items, setItems] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
-  const [keyword, setKeyword] = useState("");
+
   const [currentPage, setCurrentPage] = useState(parseInt(queryParams.get('page')) || 1);
   const [startDate, setStartDate] = useState(queryParams.get('startDate') || '');
   const [endDate, setEndDate] = useState(queryParams.get('endDate') || '');
-
-
 
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 10;
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  const fetchData = async (startDate, endDate, page) => {
+  const getQueryParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    const startDate = params.get('startDate') || '';
+    const endDate = params.get('endDate') || '';
+    const currentPage = params.get('page') || 1;
+    return { startDate, endDate, currentPage };
+  }
+
+  // Cập nhật ngày và gọi API lần đầu khi component mount
+  useEffect(() => {
+    const start = new Date();
+    start.setDate(start.getDate() - 31);
+    const end = new Date();
+    const startDateString = start.toISOString().split('T')[0];
+    const endDateString = end.toISOString().split('T')[0];
+  
+    setStartDate(startDateString);
+    setEndDate(endDateString);
+  
+    updateUrlParams(startDateString, endDateString, 1);
+    fetchData();
+  }, []); // Chạy 1 lần khi component mount
+
+  // Lấy dữ liệu từ API
+  const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get(`/admin/revenue/shop/list?startDate=${startDate}&endDate=${endDate}&page=${page}`);
-      if (response.status === 200) {
+      const response = await axiosInstance.get(`/admin/revenue/shop/list?startDate=${startDate}&endDate=${endDate}&page=${currentPage}`);
+      if (response.status === 200 && response.data.status === true) {
         setItems(response.data.data.arrayList);
         setTotalItems(response.data.data.totalItems);
         setTotalRevenue(response.data.data.totalRevenue);
       }
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      showErrorToast("Có lỗi xảy ra khi tải dữ liệu thống kê");
+      showErrorToast("Có lỗi xảy ra khi tải dữ liệu thống kê " + error.response?.data?.message || error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Gọi API mỗi khi startDate, endDate, currentPage thay đổi
   useEffect(() => {
-    fetchData(startDate, endDate, currentPage);
-  }, [currentPage]);
+    if (getQueryParams().startDate && getQueryParams().endDate && getQueryParams().currentPage) {
+      fetchData();
+    }
+  }, [getQueryParams().startDate, getQueryParams().endDate, getQueryParams().currentPage]);
 
+  // Hàm thay đổi trang
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     updateUrlParams(startDate, endDate, newPage);
   };
 
+  // Hàm làm mới trang
   const handleRefresh = () => {
     setCurrentPage(1);
     setStartDate('');
     setEndDate('');
-
-    fetchData('', '', 1);
     updateUrlParams('', '', 1);
+    fetchData();
   };
 
+  // Hàm tìm kiếm
   const handleSearch = () => {
-    setCurrentPage(1);
-    fetchData(startDate, endDate, 1);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (end < start) {
+      showErrorToast("Ngày kết thúc phải sau ngày bắt đầu");
+      return;
+    }
+
+    if (diffDays > 31) {
+      showErrorToast("Khoảng thời gian tìm kiếm không được vượt quá 31 ngày");
+      return;
+    }
+
+    setCurrentPage(1); // Đặt lại trang về 1
     updateUrlParams(startDate, endDate, 1);
+    fetchData(); // Gọi lại API sau khi kiểm tra điều kiện hợp lệ
   };
 
+  // Cập nhật URL query parameters
   const updateUrlParams = (startDate, endDate, page) => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
@@ -83,10 +124,16 @@ const Statistics = () => {
     });
   };
 
+  // Hàm thay đổi ngày bắt đầu
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
+    const startDate = new Date(e.target.value);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 31);
+    setEndDate(endDate.toISOString().split('T')[0]);
   };
 
+  // Hàm thay đổi ngày kết thúc
   const handleEndDateChange = (e) => {
     setEndDate(e.target.value);
   };
@@ -247,7 +294,7 @@ const Statistics = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 w-8 sm:w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
-                        <span>Không tìm thấy cửa hàng nào</span>
+                        <span>Không tìm thấy dữ liệu</span>
                       </div>
                     </td>
                   </tr>

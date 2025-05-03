@@ -58,6 +58,8 @@ public class Product {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDate createdAt = LocalDate.now(); //
 
+    
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 

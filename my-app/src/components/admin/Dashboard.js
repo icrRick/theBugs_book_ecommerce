@@ -385,20 +385,20 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-
             <div className="rounded-lg border border-gray-300 p-4 transition-all duration-300 hover:shadow-md">
               <div className="flex items-center">
-                <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
+                <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-gray-500 font-medium">Tổng sản phẩm</p>
-                  <p className="text-xl font-bold text-gray-800">{data.totalProducts}</p>
+                  <p className="text-sm text-gray-500 font-medium">Tổng cửa hàng</p>
+                  <p className="text-xl font-bold text-gray-800">{data.totalShops}</p>
                 </div>
               </div>
             </div>
+          
 
             <div className="rounded-lg border border-gray-300 p-4 transition-all duration-300 hover:shadow-md">
               <div className="flex items-center">
@@ -428,16 +428,17 @@ const Dashboard = () => {
               </div>
             </div>
 
+          
             <div className="rounded-lg border border-gray-300 p-4 transition-all duration-300 hover:shadow-md">
               <div className="flex items-center">
-                <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+                <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-gray-500 font-medium">Tổng cửa hàng</p>
-                  <p className="text-xl font-bold text-gray-800">{data.totalShops}</p>
+                  <p className="text-sm text-gray-500 font-medium">Tổng sản phẩm</p>
+                  <p className="text-xl font-bold text-gray-800">{data.totalProducts}</p>
                 </div>
               </div>
             </div>

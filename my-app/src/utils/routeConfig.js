@@ -31,6 +31,7 @@ const AdminReportProducts = lazy(() => import("../components/admin/ReportProduct
 const ReportProductDetail = lazy(() =>
       import("../components/user/ReportProductDetail")
 );
+const AdminReportStoresDetail = lazy(() => import("../components/admin/AdminReportStoresDetail"));
 const Search = lazy(() => import("../components/user/Search"));
 const ShopDetail = lazy(() => import("../components/user/ShopDetail"));
 const LayoutAccount = lazy(() => import("../layouts/LayoutAccount"));
@@ -130,7 +131,7 @@ export const ADMIN_ROUTES = [
       { path: "authors", element: <Authors /> },
       { path: "shop/:shopSlug", element: <AdminShopDetail /> },
       { path: "product/:productCode", element: <AdminProductDetail /> },
-      
+      { path: "reports/stores/:id", element: <AdminReportStoresDetail /> },
       { path: "statistics", element: <Statistics /> },
 
 ];

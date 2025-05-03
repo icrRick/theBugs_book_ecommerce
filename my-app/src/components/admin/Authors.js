@@ -200,7 +200,7 @@ const Authors = () => {
   return (
     <>
       {isLoading && <Loading />}
-      <div className="my-4 bg-white">
+      <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
         {/* Header */}
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="p-4 ">
@@ -250,7 +250,7 @@ const Authors = () => {
                 <input
                   type="text"
                   id="search"
-                  placeholder="Tìm kiếm tác giả..."
+                  placeholder="Tìm tên tác giả"
                   value={keyword}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"

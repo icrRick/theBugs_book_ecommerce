@@ -266,13 +266,13 @@ public class EmailUtil {
         }
     }
 
-    public boolean sendEmailRejectReprot(String toEmail, String title, String ma, String reason, String url) {
+    public boolean sendEmailRejectReport(String toEmail, String title, String ma, List<String> imageUrls) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(toEmail);
             helper.setSubject("Thông báo");
-            helper.setText(rejectReport(title, ma, reason, url), true);
+            helper.setText(rejectReport(title, ma, imageUrls), true);
             helper.setFrom("lehqpc07896@fpt.edu.vn");
             mailSender.send(message);
             System.out.println("✅ HTML email sent to " + toEmail);
@@ -332,11 +332,12 @@ public class EmailUtil {
                                 Nội dung sẽ được hiển thị công khai (nếu áp dụng) và có hiệu lực ngay sau thời điểm xác nhận này.<br><br>
                                 Cảm ơn Quý khách đã tin tưởng và đồng hành cùng chúng tôi.
                             </div>
-                        <div class="footer">
-                    Trân trọng,<br>
-                    — Đội ngũ kiểm duyệt nội dung<br>
-                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
-                </div>
+                      <div class="footer">
+                            Trân trọng,<br>
+                            — Đội ngũ kiểm duyệt nội dung<br><br>
+                            Mọi thắc mắc xin vui lòng liên hệ: <a href="mailto:hle22082004@gmail.com">hle22082004@gmail.com</a>
+                        </div>
+
                         </div>
                     </body>
                 </html>
@@ -352,167 +353,184 @@ public class EmailUtil {
         }
 
         return """
-                                <html>
-                                    <head>
-                                        <meta charset="UTF-8">
-                                        <style>
-                                            body {
-                                                font-family: Arial, sans-serif;
-                                                background-color: #f4f4f4;
-                                                padding: 20px;
-                                            }
-                                            .container {
-                                                background-color: #ffffff;
-                                                padding: 25px;
-                                                border-radius: 8px;
-                                                max-width: 600px;
-                                                margin: auto;
-                                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                                            }
-                                            .header {
-                                                font-size: 22px;
-                                                font-weight: bold;
-                                                color: #e74c3c;
-                                                margin-bottom: 15px;
-                                                text-align: center;
-                                            }
-                                            .content {
-                                                font-size: 16px;
-                                                color: #333333;
-                                                line-height: 1.6;
-                                            }
-                                            .item-name {
-                                                font-weight: bold;
-                                                color: #2c3e50;
-                                            }
-                                            .reason-box {
-                                                background-color: #fff3f3;
-                                                padding: 15px;
-                                                border-left: 4px solid #e74c3c;
-                                                margin: 15px 0;
-                                                font-style: italic;
-                                            }
-                                            .footer {
-                                                margin-top: 30px;
-                                                font-size: 14px;
-                                                color: #888888;
-                                                text-align: center;
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="container">
-                                            <div class="header">%s chưa được duyệt</div>
-                                            <div class="content">
-                                                Xin chào bạn,<br><br>
-                                                Chúng tôi xin thông báo rằng <span class="item-name">%s</span> (Mã: <strong>%s</strong>) hiện chưa được duyệt trên hệ thống vì một số lý do sau:<br>
-                                                <div class="reason-box">
-                                                    <ul>%s</ul>
-                                                </div>
-                                                Nếu cần hỗ trợ thêm, bạn có thể liên hệ với đội ngũ kiểm duyệt bất kỳ lúc nào.
-                                            </div>
-                                           <div class="footer">
+                                                <html>
+                                                    <head>
+                                                        <meta charset="UTF-8">
+                                                        <style>
+                                                            body {
+                                                                font-family: Arial, sans-serif;
+                                                                background-color: #f4f4f4;
+                                                                padding: 20px;
+                                                            }
+                                                            .container {
+                                                                background-color: #ffffff;
+                                                                padding: 25px;
+                                                                border-radius: 8px;
+                                                                max-width: 600px;
+                                                                margin: auto;
+                                                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                                            }
+                                                            .header {
+                                                                font-size: 22px;
+                                                                font-weight: bold;
+                                                                color: #e74c3c;
+                                                                margin-bottom: 15px;
+                                                                text-align: center;
+                                                            }
+                                                            .content {
+                                                                font-size: 16px;
+                                                                color: #333333;
+                                                                line-height: 1.6;
+                                                            }
+                                                            .item-name {
+                                                                font-weight: bold;
+                                                                color: #2c3e50;
+                                                            }
+                                                            .reason-box {
+                                                                background-color: #fff3f3;
+                                                                padding: 15px;
+                                                                border-left: 4px solid #e74c3c;
+                                                                margin: 15px 0;
+                                                                font-style: italic;
+                                                            }
+                                                            .footer {
+                                                                margin-top: 30px;
+                                                                font-size: 14px;
+                                                                color: #888888;
+                                                                text-align: center;
+                                                            }
+                                                        </style>
+                                                    </head>
+                                                    <body>
+                                                        <div class="container">
+                                                            <div class="header">%s chưa được duyệt</div>
+                                                            <div class="content">
+                                                                Xin chào bạn,<br><br>
+                                                                Chúng tôi xin thông báo rằng <span class="item-name">%s</span> (Mã: <strong>%s</strong>) hiện chưa được duyệt trên hệ thống vì một số lý do sau:<br>
+                                                                <div class="reason-box">
+                                                                    <ul>%s</ul>
+                                                                </div>
+                                                                Nếu cần hỗ trợ thêm, bạn có thể liên hệ với đội ngũ kiểm duyệt bất kỳ lúc nào.
+                                                            </div>
+                                                         <div class="footer">
                     Trân trọng,<br>
-                    — Đội ngũ kiểm duyệt nội dung<br>
-                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
+                    — Đội ngũ kiểm duyệt nội dung<br><br>
+                    Mọi thắc mắc xin vui lòng liên hệ: <a href="mailto:hle22082004@gmail.com">hle22082004@gmail.com</a>
                 </div>
 
-                                        </div>
-                                    </body>
-                                </html>
-                                """
+                                                        </div>
+                                                    </body>
+                                                </html>
+                                                """
                 .formatted(title, title, ma, reasonsHtml.toString());
     }
 
-    public String rejectReport(String title, String ma, String reason, String url) {
+    public String rejectReport(String title, String ma, List<String> imageUrls) {
+        StringBuilder imageSection = new StringBuilder();
+
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            imageSection.append("""
+                        <div class="images">
+                            <p><strong>Hình ảnh liên quan đến vi phạm:</strong></p>
+                    """);
+
+            for (String url : imageUrls) {
+                imageSection.append(String.format(
+                        """
+                                    <img src="%s" alt="violation image" style="max-width:100%%; margin:10px 0; border:1px solid #ccc; border-radius:8px;" />
+                                """,
+                        url));
+            }
+
+            imageSection.append("</div>");
+        }
+
+        String note = "";
+        if ("Cửa hàng".equals(title)) {
+            note = """
+                        <strong>Lưu ý:</strong> Toàn bộ sản phẩm thuộc cửa hàng của Quý khách sẽ tạm thời
+                        <span style="color: red;"><strong>ngừng hiển thị</strong></span> trên hệ thống để phục vụ công tác kiểm tra và xử lý vi phạm.
+                        Tuy nhiên, các đơn hàng đã được đặt trước đó vẫn sẽ tiếp tục
+                        <span style="color: green;"><strong>được giao bình thường</strong></span> nếu không phát sinh vấn đề liên quan.<br><br>
+                    """;
+        } else if ("Sản phẩm".equals(title)) {
+            note = """
+                        <strong>Lưu ý:</strong> Sản phẩm của Quý khách sẽ tạm thời
+                        <span style="color: red;"><strong>ngừng hiển thị</strong></span> trên hệ thống để phục vụ công tác kiểm tra và xử lý vi phạm.
+                        Tuy nhiên, các đơn hàng đã được đặt trước đó vẫn sẽ tiếp tục
+                        <span style="color: green;"><strong>được giao bình thường</strong></span> nếu không phát sinh vấn đề liên quan.<br><br>
+                    """;
+        }
+
         return """
-                <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <style>
-                            body {
-                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                                background-color: #f0f2f5;
-                                margin: 0;
-                                padding: 40px;
-                            }
-                            .container {
-                                max-width: 650px;
-                                margin: auto;
-                                background-color: #ffffff;
-                                padding: 30px 40px;
-                                border-radius: 12px;
-                                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-                                color: #333333;
-                            }
-                            .header {
-                                font-size: 24px;
-                                font-weight: 700;
-                                color: #e74c3c;
-                                margin-bottom: 20px;
-                                text-align: center;
-                            }
-                            .content {
-                                font-size: 16px;
-                                line-height: 1.6;
-                                margin-bottom: 30px;
-                            }
-                            .reason {
-                                background-color: #fce4e4;
-                                padding: 15px;
-                                border-left: 5px solid #e74c3c;
-                                border-radius: 5px;
-                                margin: 20px 0;
-                                color: #c0392b;
-                                font-style: italic;
-                            }
-                            .btn {
-                                display: inline-block;
-                                padding: 12px 20px;
-                                background-color: #27ae60;
-                                color: white;
-                                text-decoration: none;
-                                border-radius: 6px;
-                                font-weight: bold;
-                                transition: background-color 0.3s ease;
-                            }
-                            .btn:hover {
-                                background-color: #1e8449;
-                            }
-                            .footer {
-                                text-align: center;
-                                font-size: 14px;
-                                color: #888888;
-                                margin-top: 30px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">Thông báo cấm nội dung "%s"</div>
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <style>
+                                body {
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                    background-color: #f0f2f5;
+                                    margin: 0;
+                                    padding: 40px;
+                                }
+                                .container {
+                                    max-width: 650px;
+                                    margin: auto;
+                                    background-color: #ffffff;
+                                    padding: 30px 40px;
+                                    border-radius: 12px;
+                                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+                                    color: #333333;
+                                }
+                                .header {
+                                    font-size: 24px;
+                                    font-weight: 700;
+                                    color: #e74c3c;
+                                    margin-bottom: 20px;
+                                    text-align: center;
+                                }
+                                .content {
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                    margin-bottom: 30px;
+                                }
+                                .images img {
+                                    display: block;
+                                    max-width: 100%%;
+                                    margin: 10px auto;
+                                }
+                                .footer {
+                                    text-align: center;
+                                    font-size: 14px;
+                                    color: #888888;
+                                    margin-top: 30px;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">Thông báo cấm "%s"</div>
 
-                            <div class="content">
-                                Kính gửi Quý khách,<br><br>
-                                Sau quá trình kiểm tra và đánh giá, chúng tôi xin thông báo rằng nội dung <strong>%s</strong> (Mã: <strong>%s</strong>) đã bị
-                                <span style="color: red;"><strong>cấm hoạt động</strong></span> trên hệ thống do vi phạm các quy định và chính sách của nền tảng.<br>
+                                <div class="content">
+                                    Kính gửi Quý khách,<br><br>
+                                    Sau quá trình kiểm tra và đánh giá, chúng tôi xin thông báo rằng <strong>%s</strong> (Mã: <strong>%s</strong>) đã bị
+                                    <span style="color: red;"><strong>cấm hoạt động</strong></span> trên hệ thống do vi phạm các quy định và chính sách của nền tảng.<br><br>
 
-                                <div class="reason">
-                                    Lý do: %s
+                                    %s
                                 </div>
 
-                                Quý khách có thể xem thêm thông tin chi tiết hoặc gửi phản hồi qua liên kết sau:<br><br>
-                                <a class="btn" href="%s" target="_blank">Xem chi tiết</a>
+
+                              <div class="footer">
+                                    Trân trọng,<br>
+                                    — Đội ngũ kiểm duyệt nội dung<br><br>
+                                    Mọi thắc mắc xin vui lòng liên hệ: <a href="mailto:hle22082004@gmail.com">hle22082004@gmail.com</a>
+                                </div>
+
                             </div>
-                            <div class="footer">
-                    Trân trọng,<br>
-                    — Đội ngũ kiểm duyệt nội dung<br>
-                    Liên hệ: <a href="hle22082004@gmail.com">hle22082004@gmail.com</a>
-                </div>
-                        </div>
-                    </body>
-                </html>
+                        </body>
+                    </html>
                 """
-                .formatted(title, title, ma, reason, url);
+                .formatted(title, title, ma, note, imageSection.toString());
     }
 
     public boolean checkEmail(String email) {

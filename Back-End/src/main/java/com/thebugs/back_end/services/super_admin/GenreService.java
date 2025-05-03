@@ -1,4 +1,5 @@
 package com.thebugs.back_end.services.super_admin;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +11,7 @@ import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.entities.Genre;
 import com.thebugs.back_end.mappers.GenreMapper;
 import com.thebugs.back_end.repository.GenreJPA;
+
 @Service
 public class GenreService {
 
@@ -45,10 +47,11 @@ public class GenreService {
 
         public GenreDTO update(Genre genre) {
                 Genre getGenreById = getGenreById(genre.getId());
-                if (getGenreById.getId() == 1) {
+                if (getGenreById != null && getGenreById.getId() == 1) {
                         throw new IllegalArgumentException("Không thể cập nhật genre với ID = 1");
+                        
                 }
-                genreJPA.findByNameExist(getGenreById.getId(), genre.getName())
+                genreJPA.findByNameExist(genre.getId(), genre.getName().trim())
                                 .ifPresent(existingGenre -> {
                                         throw new IllegalArgumentException("Tên thể loại đã tồn tại");
                                 });
@@ -56,13 +59,17 @@ public class GenreService {
                 return genreMapper.toDTO(saved);
         }
 
-        public GenreDTO add(Genre genre) {
-                genreJPA.findByNameExist(null, genre.getName().trim())
+        public boolean save(Genre genre) {
+                if (genre.getId() != null && genre.getId() == 1) {
+                        throw new IllegalArgumentException("Không thể cập nhật genre với ID = 1");
+                    }
+                genreJPA.findByNameExist(genre.getId(), genre.getName().trim())
                                 .ifPresent(existingGenre -> {
                                         throw new IllegalArgumentException("Tên thể loại đã tồn tại");
                                 });
-                Genre saved = genreJPA.save(genre);
-                return genreMapper.toDTO(saved);
+
+                genreJPA.save(genre);
+                return true;
         }
 
         public int totalItems(String keyword) {
@@ -82,8 +89,13 @@ public class GenreService {
                 return true;
         }
 
+        public Genre findById(Integer id) {
+                return genreJPA.findById(id)
+                                .orElse(new Genre());
+        }
+
         public Genre getGenreById(Integer id) {
-                
+
                 if (id == null) {
                         throw new IllegalArgumentException("ID thể loại không hợp lệ");
                 }
@@ -92,13 +104,12 @@ public class GenreService {
                                                 "Không tìm thấy đối tượng có id= " + id));
         }
 
-
         public List<GenreDTO> findDistinctGenresByShopSlug(String shopSlug) {
                 List<Genre> genres = genreJPA.findDistinctGenresByShopSlug(shopSlug);
                 return genres.stream()
-                             .map(genreMapper::toDTO)
-                             .sorted(Comparator.comparing(GenreDTO::getId).reversed())
-                             .collect(Collectors.toList());
+                                .map(genreMapper::toDTO)
+                                .sorted(Comparator.comparing(GenreDTO::getId).reversed())
+                                .collect(Collectors.toList());
         }
 
 }

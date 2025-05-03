@@ -344,4 +344,30 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             @Param("sortType") String sortType,
             @Param("filterDate") LocalDate filterDate);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND (p.approve IS NOT NULL OR p.approve = true)")
+    List<Product> findAllByShopId(@Param("shopId") Integer shopId);        
+
 }

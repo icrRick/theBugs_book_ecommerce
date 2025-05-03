@@ -21,4 +21,7 @@ public interface ReportShopJPA extends JpaRepository<ReportShop, Integer> {
     List<ReportShop> findReportShopsByshopAndActive(@Param("shopId") Integer shopId,
             @Param("active") Boolean active);
 
+
+            
+
 }

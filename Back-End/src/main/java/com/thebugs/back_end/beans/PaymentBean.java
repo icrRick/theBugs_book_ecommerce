@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class PaymentBean {
     private List<Integer> productIntegers ;
     private List<Integer> voucherIntegers =new ArrayList<>();
-    private int productQuantity =0;
+    private int productQuantity = 0;
 }

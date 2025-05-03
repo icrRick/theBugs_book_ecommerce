@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import axiosInstance from "../../utils/axiosInstance";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Loading from "../../utils/Loading";
 
 
@@ -188,6 +188,7 @@ export default function EditAddress() {
             .catch((error) => console.error("Error fetching wards:", error));
     }, [selectedDistrict, selectedWard, setValue]);
 
+    const location = useLocation();
 
     useEffect(() => {
         reset({
@@ -205,7 +206,7 @@ export default function EditAddress() {
             const response = await axiosInstance.post(`/user/address/save`, data);
             if (response.data.status === true) {
                 showSuccessToast(response.data.message);
-                navigate(-1);
+                navigate(-1, { state: { from: location.state } });
             } else {
                 showErrorToast(response.data.message);
             }

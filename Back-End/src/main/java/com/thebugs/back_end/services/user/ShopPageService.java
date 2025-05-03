@@ -53,11 +53,10 @@ public class ShopPageService {
         }
         LocalDate filterDate = null;
         if ("newest".equals(fillterShopPageBean.getSortType())) {
-            filterDate = LocalDate.now().minusDays(30); // Tính ngày 30 ngày trước
+            filterDate = LocalDate.now().minusDays(30); 
         }
         if (fillterShopPageBean.getProductName() == null) {
-            fillterShopPageBean.setProductName(""); // Nếu productName null, đặt thành chuỗi rỗng để tránh lỗi trong
-                                                    // query
+            fillterShopPageBean.setProductName(""); 
         }
   
 

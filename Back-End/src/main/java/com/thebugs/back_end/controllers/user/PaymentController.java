@@ -16,7 +16,6 @@ import com.thebugs.back_end.utils.ResponseEntityUtil;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,19 +34,12 @@ public class PaymentController {
 
         @PostMapping("/shipping-fee")
         public ResponseEntity<ResponseData> calculateShippingFee(@RequestBody ShippingFreeBean shippingFreeBean) {
-                ResponseData responseData = new ResponseData();
                 try {
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lấy phí vận chuyển thành công");
-                        responseData.setData(apiGHNService.calculateFee(shippingFreeBean.getShopId(),
-                                        shippingFreeBean.getAddressUserId(), shippingFreeBean.getWeight()));
-                        return ResponseEntity.ok(responseData);
+                        return ResponseEntityUtil.OK("Lấy phí vận chuyển thành công",
+                                        apiGHNService.calculateFee(shippingFreeBean.getShopId(),
+                                                        shippingFreeBean.getAddressUserId(), shippingFreeBean.getWeight()));
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Error");
-                        responseData.setData(e.getMessage());
-                        System.err.println("Error: " + e.getMessage());
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return ResponseEntityUtil.badRequest(e.getMessage());
                 }
 
         }
@@ -69,17 +61,11 @@ public class PaymentController {
         @PostMapping("/list")
         public ResponseEntity<ResponseData> list(@RequestHeader("Authorization") String authorizationHeader,
                         @RequestBody PaymentBean paymentBean) {
-                ResponseData responseData = new ResponseData();
                 try {
-                        responseData.setStatus(true);
-                        responseData.setMessage("Lấy dữ liệu thành công");
-                        responseData.setData(paymentService.list(authorizationHeader, paymentBean));
-                        return ResponseEntity.ok(responseData);
+                        return ResponseEntityUtil.OK("Lấy dữ liệu thành công",
+                                        paymentService.list(authorizationHeader, paymentBean));
                 } catch (Exception e) {
-                        responseData.setStatus(false);
-                        responseData.setMessage("Lỗi " + e.getMessage());
-                        responseData.setData(null);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseData);
+                        return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
                 }
 
         }

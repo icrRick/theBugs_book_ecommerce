@@ -2,7 +2,9 @@ package com.thebugs.back_end.services.super_admin;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.entities.ReportProduct;
+import com.thebugs.back_end.entities.ReportProductImage;
 import com.thebugs.back_end.mappers.AdminReportMapper;
 import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.ReportProductJPA;
@@ -22,7 +25,7 @@ public class AdminReportProductService {
 
     @Autowired
     private ProductJPA productJPA;
-    
+
     @Autowired
     private ReportProductJPA reportProductJPA;
 
@@ -97,6 +100,7 @@ public class AdminReportProductService {
     }
 
     public boolean updateActiveAndSendEmail(List<ReportProduct> reportProducts) {
+        Set<Integer> emailedShops = new HashSet<>();
         for (ReportProduct reportProduct : reportProducts) {
             try {
                 reportProduct.setActive(true);
@@ -104,18 +108,29 @@ public class AdminReportProductService {
                 reportProductJPA.save(reportProduct);
 
                 String emailUser = reportProduct.getUser().getEmail();
-                String emailShop = reportProduct.getProduct().getShop().getUser().getEmail();
+              
 
                 boolean checksendEmail = emailUtil.sendEmailApprove(
                         emailUser, "Báo cáo sản phẩm", reportProduct.getProduct().getProduct_code());
 
-                boolean checksendEmailShop = emailUtil.sendEmailRejectReprot(
-                        emailShop, "Sản phẩm", reportProduct.getProduct().getProduct_code(),
-                        reportProduct.getNote(),null);
+                Integer shopId = reportProduct.getProduct().getShop().getId();
+                if (!emailedShops.contains(shopId)) {
+                    emailedShops.add(shopId);
+                    String emailShop = reportProduct.getProduct().getShop().getUser().getEmail();
+                    
+                    List<String> imageUrls = reportProduct.getReportProductImages().stream()
+                            .map(ReportProductImage::getImageName)
+                            .collect(Collectors.toList());
 
-                if (!checksendEmail || !checksendEmailShop) {
-                    System.err.println(
-                            "Gửi email thất bại cho sản phẩm: " + reportProduct.getProduct().getProduct_code());
+                    boolean checksendEmailShop = emailUtil.sendEmailRejectReport(
+                            emailShop, "Sản phẩm", reportProduct.getProduct().getProduct_code(),
+                            imageUrls);
+
+                    if (!checksendEmail || !checksendEmailShop) {
+                        System.err.println(
+                                "Gửi email thất bại cho sản phẩm: " + reportProduct.getProduct().getProduct_code());
+                    }
+
                 }
 
             } catch (Exception e) {

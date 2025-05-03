@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 
 const ReportProductDetail = () => {
-  const { id } = useParams()
+  const { productCode } = useParams()
   const navigate = useNavigate()
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -17,7 +17,7 @@ const ReportProductDetail = () => {
 
         // Dữ liệu mẫu
         const reportData = {
-          id: Number.parseInt(id),
+          id: Number.parseInt(productCode),
           productId: 101,
           productName: "Đắc Nhân Tâm",
           productImage: "https://placehold.co/300x400/2ecc71/ffffff?text=Đắc+Nhân+Tâm",
@@ -64,7 +64,7 @@ const ReportProductDetail = () => {
     }
 
     fetchReportDetail()
-  }, [id])
+  }, [productCode])
 
   // Định dạng ngày tháng
   const formatDate = (dateString) => {

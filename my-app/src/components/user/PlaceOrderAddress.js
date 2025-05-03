@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import axiosInstance from "../../utils/axiosInstance";
 import StreetApiAddress from "./StreetApiAddress";
@@ -10,7 +10,7 @@ const PlaceOrderAddress = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [loading, setLoading] = useState(true);
-
+    const location = useLocation();
     const fetchData = async () => {
         setLoading(true);
         try {

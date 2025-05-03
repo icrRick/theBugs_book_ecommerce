@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.beans.ReportRejectBean;
-import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.super_admin.AdminReportProductService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
