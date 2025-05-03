@@ -12,7 +12,6 @@ const OrdersSeller = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "");
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [totalOrders, setTotalOrders] = useState(0);
@@ -135,12 +134,12 @@ const OrdersSeller = () => {
       if (nextUserName) params.set("userName", nextUserName);
       if (filters.startDate) params.set("startDate", filters.startDate);
       if (filters.endDate) params.set("endDate", filters.endDate);
-      params.set("page", 1); // reset về trang 1 khi search
+      params.set("page", 1);
       setSearchParams(params);
     }, 400),
     [activeTab, filters.startDate, filters.endDate]
   );
-  
+
   const getStatusNameFromId = (statusId) => {
     switch (statusId) {
       case "1":
@@ -160,8 +159,8 @@ const OrdersSeller = () => {
     }
   };
 
-
   const handlePageChange = (newPage) => {
+    window.scrollTo({ top: 0, behavior: "auto" });
     setCurrentPage(newPage);
     const params = new URLSearchParams();
     if (keyword) params.set("keyword", keyword);
@@ -173,8 +172,11 @@ const OrdersSeller = () => {
     setSearchParams(params);
   };
 
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const fetchOrders = async (page = 1, statusOrder = activeTab) => {
-    setIsLoading(true);
+    if (isFirstLoad) {
+      setIsLoading(true);
+    }
     showErrorToast(null);
     try {
       const response = await axiosInstance.get("/seller/order", {
@@ -189,26 +191,22 @@ const OrdersSeller = () => {
         },
       });
       const { data } = response.data;
-      console.log(response);
-      
       if (response.status === 200) {
-
         setOrders(data.objects || []);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));
       } else {
-        console.error("Không thể tải đơn hàng:", response.data.message);
-        showErrorToast(
-          response.data.message || "Không thể tải danh sách đơn hàng."
-        );
+        showErrorToast(response.data.message || "Không thể tải đơn hàng.");
         setOrders([]);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
       showErrorToast("Đã xảy ra lỗi khi tải đơn hàng.");
       setOrders([]);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsFirstLoad(false);
+      }, 300);
     }
   };
 
@@ -262,15 +260,19 @@ const OrdersSeller = () => {
     const params = new URLSearchParams(searchParams);
     const keyword = params.get("keyword") || "";
     const page = parseInt(params.get("page")) || 1;
+    const status = params.get("status") || "";
+
     setKeyword(keyword);
     setCurrentPage(page);
+    setActiveTab(status);
     setFilters({
       userName: params.get("userName") || "",
       startDate: params.get("startDate") || "",
       endDate: params.get("endDate") || "",
     });
-    fetchOrders(page, activeTab);
-  }, [searchParams, activeTab]);
+
+    fetchOrders(page, status);
+  }, [searchParams]);
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
@@ -300,13 +302,17 @@ const OrdersSeller = () => {
         error.response?.data?.message || "Đã xảy ra lỗi khi hủy đơn hàng!"
       );
       closeCancelModal();
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
     }
   };
 
   const handleTabClick = (tabId) => {
-    setIsTransitioning(true);
     setActiveTab(tabId);
     setCurrentPage(1);
+
     const params = new URLSearchParams();
     if (tabId) params.set("status", tabId);
     if (keyword) params.set("keyword", keyword);
@@ -314,11 +320,8 @@ const OrdersSeller = () => {
     if (filters.startDate) params.set("startDate", filters.startDate);
     if (filters.endDate) params.set("endDate", filters.endDate);
     params.set("page", 1);
-    setSearchParams(params);
 
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300);
+    setSearchParams(params);
   };
 
   const handleFilterChange = (e) => {
@@ -362,21 +365,60 @@ const OrdersSeller = () => {
   };
 
   const handleViewDetails = (orderId) => {
-    navigate(`/seller/order/${orderId}`);
+    setIsLoading(true);
+    setTimeout(() => {
+      sessionStorage.setItem("selectedOrderId", orderId);
+      const params = new URLSearchParams(searchParams);
+      params.set("selectedOrderId", orderId);
+      navigate(`/seller/order/${orderId}?${params.toString()}`);
+    }, 300);
   };
+
+  useEffect(() => {
+    let selectedOrderId =
+      searchParams.get("selectedOrderId") ||
+      sessionStorage.getItem("selectedOrderId");
+
+    if (selectedOrderId) {
+      const interval = setInterval(() => {
+        const element = document.getElementById(`order-${selectedOrderId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          clearInterval(interval);
+
+          sessionStorage.removeItem("selectedOrderId");
+
+          const params = new URLSearchParams(searchParams);
+          params.delete("selectedOrderId");
+          setSearchParams(params);
+        }
+      }, 300);
+
+      return () => clearInterval(interval);
+    }
+  }, [orders]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  useEffect(() => {
+    const selectedOrderId = sessionStorage.getItem("selectedOrderId");
+    if (!selectedOrderId) {
+      sessionStorage.removeItem("selectedOrderId");
+    }
+  }, []);
 
   const formatDate = (dateString) => {
     const options = {
       year: "numeric",
       month: "numeric",
       day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
     };
     return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
 
-  // Tính toán hiển thị "Hiển thị X-Y trên Z đơn hàng"
+  //math count page
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalOrders);
   const displayText =
@@ -489,14 +531,15 @@ const OrdersSeller = () => {
         </div>
       </div>
 
-      <div className="mb-4 text-sm text-gray-600">{displayText}</div>
+      <div className="mb-4 text-sm text-gray-600 ml-2 mb-2">{displayText}</div>
 
       <div
-        className={`space-y-6 transition-opacity duration-500 ${
-          isTransitioning ? "opacity-0" : "opacity-100"
+        className={`space-y-6 transition-opacity duration-300 ${
+          isLoading ? "opacity-50" : "opacity-100"
         }`}
+        style={{ minHeight: "calc(100vh - 350px)" }}
       >
-        {isLoading ? (
+        {isLoading && isFirstLoad ? (
           Array(3)
             .fill(0)
             .map((_, index) => (
@@ -525,39 +568,43 @@ const OrdersSeller = () => {
         ) : orders.length > 0 ? (
           orders.map((order) => (
             <div
-              key={order.id}
+              id={`order-${order.id}`}
+              key={order?.id}
               className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
             >
               <div className="p-5">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-sm">
                         Mã đơn hàng:
                       </span>
-                      <span className="font-medium">#{order.id}</span>
+                      <span className="font-medium">#{order?.id}</span>
                     </div>
-                    <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex items-center space-x-1">
                       <span className="text-gray-500 text-sm">Khách hàng:</span>
-                      <span className="font-medium">{order.customerInfo}</span>
+                      <span className="font-medium">{order?.customerInfo}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-sm">Ngày đặt:</span>
-                      <span>{formatDate(order.orderDate)}</span>
+                      <span>{formatDate(order?.orderDate)}</span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
-                      {order.paymentMethod || "Đã Thanh Toán"} •{" "}
-                      {order.paymentStatus || "Chưa thanh toán"}
+                      {order?.paymentMethod || "Đã Thanh Toán"} •{" "}
+                      {order?.paymentStatus || "Chưa thanh toán"}
                     </div>
                   </div>
+
+                  {/* Bên phải - Trạng thái, Tổng tiền, Lý do hủy */}
                   <div className="flex flex-col items-end space-y-2">
+                    {/* Trạng thái đơn */}
                     <div
                       className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
-                        statusConfig[order.orderStatusName]?.color ||
+                        statusConfig[order?.orderStatusName]?.color ||
                         "bg-gray-100 text-gray-800 border-gray-200"
                       }`}
                     >
-                      {statusConfig[order.orderStatusName]?.icon || (
+                      {statusConfig[order?.orderStatusName]?.icon || (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-5 w-5"
@@ -572,46 +619,49 @@ const OrdersSeller = () => {
                         </svg>
                       )}
                       <span className="font-medium">
-                        {order.orderStatusName || "Không xác định"}
+                        {order?.orderStatusName || "Không xác định"}
                       </span>
                     </div>
+
+                    {/* Tổng tiền */}
                     <div className="flex items-center">
-                      <span className="text-gray-600 mr-2">Tổng tiền:</span>
+                      <span className="text-gray-600 mr-2 text-sm">
+                        Tổng tiền:
+                      </span>
                       <span className="text-lg font-bold text-emerald-600">
-                        {order.totalPrice?.toLocaleString("vi-VN")}đ
+                        {formatCurrency(order?.totalPrice)}
                       </span>
                     </div>
+
+                    {/* Lý do hủy hoặc thông báo */}
                     {order.orderStatusName === "Hủy" && (
-                      <div className="text-sm text-red-600 mt-1 max-w-full">
-                        <p
-                          className="font-bold break-words overflow-wrap truncate"
-                          title={order?.noted} // Hiển thị toàn bộ nội dung khi hover
-                        >
-                          Lý do hủy:{" "}
-                          {order?.noted?.length > 80
-                            ? order.noted.substring(0, 80) + "..."
-                            : order.noted}
-                        </p>
+                      <div
+                        className="text-sm text-red-600 text-right font-bold truncate cursor-pointer"
+                        title={order?.noted}
+                      >
+                        Lý do hủy:{" "}
+                        {order?.noted?.length > 70
+                          ? order.noted.substring(0, 50) + "..."
+                          : order.noted}
                       </div>
                     )}
-                    {order.orderStatusName === "Đã duyệt" &&
-                      order.noted &&
-                      order.noted != null && (
-                        <div className="text-sm text-green-600 mt-1">
-                          <p className="font-bold">
-                            Thông báo : Đã thay đổi số lượng trong đơn hàng, vui
-                            lòng vào chi tiết để xem
-                          </p>
-                        </div>
-                      )}
+                    {order?.orderStatusName === "Đã duyệt" && order.noted && (
+                      <div className="text-sm text-green-600 text-right font-bold">
+                        Thông báo: Đã thay đổi số lượng, vui lòng vào chi tiết
+                        để xem.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Các nút hành động */}
               <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-wrap justify-end gap-3">
+                  {/* Nút Chi tiết */}
                   <button
                     onClick={() => handleViewDetails(order.id)}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1.5"
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center space-x-1.5 transition-colors"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -628,11 +678,13 @@ const OrdersSeller = () => {
                     </svg>
                     <span>Chi tiết</span>
                   </button>
+
+                  {/* Các nút theo trạng thái */}
                   {order.orderStatusName === "Chờ duyệt" && (
                     <>
                       <button
                         onClick={() => updateOrderStatus(order.id, 3)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-1.5 transition-colors"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -648,9 +700,10 @@ const OrdersSeller = () => {
                         </svg>
                         <span>Duyệt đơn</span>
                       </button>
+
                       <button
                         onClick={() => openCancelModal(order.id)}
-                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
+                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center space-x-1.5 transition-colors"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -668,11 +721,12 @@ const OrdersSeller = () => {
                       </button>
                     </>
                   )}
+
                   {order.orderStatusName === "Đã duyệt" && (
                     <>
                       <button
                         onClick={() => updateOrderStatus(order.id, 4)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-1.5 transition-colors"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -688,9 +742,10 @@ const OrdersSeller = () => {
                         </svg>
                         <span>Đang giao</span>
                       </button>
+
                       <button
                         onClick={() => openCancelModal(order.id)}
-                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
+                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center space-x-1.5 transition-colors"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -708,27 +763,26 @@ const OrdersSeller = () => {
                       </button>
                     </>
                   )}
+
                   {order.orderStatusName === "Đang giao" && (
-                    <>
-                      <button
-                        onClick={() => updateOrderStatus(order.id, 5)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1.5"
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 5)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-1.5 transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>Đã giao</span>
-                      </button>
-                    </>
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>Đã giao</span>
+                    </button>
                   )}
                 </div>
               </div>

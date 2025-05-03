@@ -13,12 +13,10 @@ const Ordered = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "");
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [tabCounts, setTabCounts] = useState({});
   const [filters, setFilters] = useState({
     userName: searchParams.get("userName") || "",
     startDate: searchParams.get("startDate") || "",
@@ -34,6 +32,22 @@ const Ordered = () => {
   );
   const pageSize = 10;
   const [totalPages, setTotalPages] = useState(0);
+
+  function useDebounce(value, delay = 300) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+
+    return debouncedValue;
+  }
 
   const statusConfig = {
     "Chờ duyệt": {
@@ -169,22 +183,6 @@ const Ordered = () => {
     }
   };
 
-  const calculateTabCounts = (ordersList) => {
-    const counts = {};
-    tabs.forEach((tab) => {
-      if (tab.id === "") {
-        counts[tab.id] = ordersList.length;
-      } else {
-        counts[tab.id] = ordersList.filter(
-          (order) =>
-            getStatusIdFromName(order.orderStatusName) ===
-            Number.parseInt(tab.id)
-        ).length;
-      }
-    });
-    return counts;
-  };
-
   const fetchAllOrders = async (keyword = "", page = 1) => {
     setIsLoading(true);
     showErrorToast(null);
@@ -194,7 +192,7 @@ const Ordered = () => {
           keyword: keyword || undefined,
           page: page,
           size: pageSize,
-        }, 
+        },
       })
       .then((response) => {
         console.log(response);
@@ -202,20 +200,16 @@ const Ordered = () => {
         setOrders(response.data.data.objects);
         setTotalOrders(response.data.data.totalItems || 0);
         setTotalPages(Math.ceil(response.data.data.totalItems / pageSize));
-        setTabCounts(calculateTabCounts(response.data.data.objects));
       })
       .catch((error) => {
         console.log(error);
-
-        // showErrorToast(
-        //   error.response.data.message || "Không thể tải danh sách đơn hàng."
-        // );
         setAllOrders([]);
         setOrders([]);
-        setTabCounts({});
       })
       .finally(() => {
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       });
   };
 
@@ -233,6 +227,7 @@ const Ordered = () => {
       };
       const response = await axiosInstance.get("/user/order", { params });
       const { data, message } = response.data;
+
       if (response.status === 200) {
         const ordersList = data.objects || [];
         setOrders(ordersList);
@@ -246,7 +241,9 @@ const Ordered = () => {
       console.error("Error searching orders:", error);
       setOrders([]);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 200);
     }
   };
 
@@ -259,24 +256,28 @@ const Ordered = () => {
           cancelReason: newStatus === 2 ? "Lý do hủy mặc định" : "",
         }
       );
-      setIsLoading(true);
+
       const { message, status } = response.data;
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString());
+
         showSuccessToast(
           `Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`
         );
-        fetchAllOrders(keyword, currentPage);
+
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId
+              ? { ...order, orderStatusName: statusName }
+              : order
+          )
+        );
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`);
       }
     } catch (error) {
       console.error("Error updating order status:", error);
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
+      if (error.response?.data?.message) {
         showErrorToast(error.response.data.message);
       } else {
         showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái");
@@ -300,7 +301,7 @@ const Ordered = () => {
 
   const handleCancelOrder = async () => {
     if (!cancelReason.trim()) {
-      alert("Lý do hủy không được để trống!");
+      showErrorToast("Lý do hủy không được để trống!");
       return;
     }
     setIsLoading(true);
@@ -317,7 +318,7 @@ const Ordered = () => {
       if (status) {
         showSuccessToast("Đơn hàng đã được hủy thành công!");
         closeCancelModal();
-        fetchAllOrders(keyword, currentPage);
+        searchOrders(keyword, currentPage);
       } else {
         showErrorToast(`Hủy đơn hàng thất bại: ${message}`);
         closeCancelModal();
@@ -335,14 +336,16 @@ const Ordered = () => {
       showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng");
       closeCancelModal();
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 200);
     }
   };
 
   const handleTabClick = (tabId) => {
-    setIsTransitioning(true);
     setActiveTab(tabId);
     setCurrentPage(1);
+
     const params = new URLSearchParams();
     if (tabId) params.set("status", tabId);
     if (keyword) params.set("keyword", keyword);
@@ -351,25 +354,10 @@ const Ordered = () => {
     if (filters.endDate) params.set("endDate", filters.endDate);
     params.set("page", 1);
     setSearchParams(params);
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300);
-  };
-
-  const handleSearch = (value) => {
-    setKeyword(value);
-    setCurrentPage(1);
-    const params = new URLSearchParams();
-    if (value) params.set("keyword", value);
-    if (activeTab) params.set("status", activeTab);
-    if (filters.userName) params.set("userName", filters.userName);
-    if (filters.startDate) params.set("startDate", filters.startDate);
-    if (filters.endDate) params.set("endDate", filters.endDate);
-    params.set("page", 1);
-    setSearchParams(params);
   };
 
   const handlePageChange = (newPage) => {
+    window.scrollTo({ top: 0, behavior: "auto" });
     setCurrentPage(newPage);
     const params = new URLSearchParams();
     if (keyword) params.set("keyword", keyword);
@@ -419,7 +407,10 @@ const Ordered = () => {
   };
 
   const handleViewDetails = (orderId) => {
-    navigate(`/account/order/${orderId}`);
+    sessionStorage.setItem("selectedOrderId", orderId);
+    const params = new URLSearchParams(searchParams);
+    params.set("selectedOrderId", orderId);
+    navigate(`/account/order/${orderId}?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -433,37 +424,106 @@ const Ordered = () => {
       startDate: params.get("startDate") || "",
       endDate: params.get("endDate") || "",
     });
-    if (
-      keyword ||
-      filters.userName ||
-      filters.startDate ||
-      filters.endDate ||
-      activeTab
-    ) {
-      searchOrders(keyword, page);
-    } else {
-      fetchAllOrders(keyword, page);
+
+    fetchAllOrders(keyword, page);
+  }, []);
+
+  useEffect(() => {
+    let selectedOrderId = searchParams.get("selectedOrderId");
+
+    if (!selectedOrderId) {
+      selectedOrderId = sessionStorage.getItem("selectedOrderId");
     }
-  }, [searchParams]);
+
+    if (selectedOrderId) {
+      const interval = setInterval(() => {
+        const element = document.getElementById(`order-${selectedOrderId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          clearInterval(interval);
+
+          sessionStorage.removeItem("selectedOrderId");
+
+          const params = new URLSearchParams(searchParams);
+          params.delete("selectedOrderId");
+          setSearchParams(params);
+        }
+      }, 300);
+
+      return () => clearInterval(interval);
+    }
+  }, [orders, searchParams]);
 
   const formatDate = (dateString) => {
     const options = {
       year: "numeric",
       month: "numeric",
       day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
     };
     return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
 
-  const filteredOrders = activeTab
-    ? orders.filter(
-        (order) =>
-          getStatusIdFromName(order.orderStatusName) ===
-          Number.parseInt(activeTab)
-      )
-    : orders;
+  //fillter fe
+  const debouncedUserName = useDebounce(filters.userName, 300);
+  const debouncedStartDate = useDebounce(filters.startDate, 300);
+  const debouncedEndDate = useDebounce(filters.endDate, 300);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (debouncedUserName) {
+      params.set("userName", debouncedUserName);
+    } else {
+      params.delete("userName");
+    }
+
+    if (debouncedStartDate) {
+      params.set("startDate", debouncedStartDate);
+    } else {
+      params.delete("startDate");
+    }
+
+    if (debouncedEndDate) {
+      params.set("endDate", debouncedEndDate);
+    } else {
+      params.delete("endDate");
+    }
+
+    params.set("page", 1);
+    setSearchParams(params);
+  }, [debouncedUserName, debouncedStartDate, debouncedEndDate]);
+
+  const filteredOrders = allOrders.filter((order) => {
+    const matchesStatus =
+      !activeTab ||
+      getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab);
+
+    const matchesName =
+      !debouncedUserName ||
+      (order.customerInfo &&
+        order.customerInfo
+          .toLowerCase()
+          .includes(debouncedUserName.toLowerCase()));
+
+    const matchesStartDate =
+      !debouncedStartDate ||
+      (order.orderDate &&
+        new Date(order.orderDate) >= new Date(debouncedStartDate));
+
+    const matchesEndDate =
+      !debouncedEndDate ||
+      (order.orderDate &&
+        new Date(order.orderDate) <= new Date(debouncedEndDate));
+
+    return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
+  });
+
+  const filteredTotal = filteredOrders.length;
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, filteredTotal);
+  const displayText =
+    filteredTotal > 0
+      ? `Hiển thị ${startIndex}-${endIndex} trên ${filteredTotal} đơn hàng`
+      : "Không có đơn hàng";
 
   return (
     <div className="w-full mx-auto">
@@ -552,35 +612,22 @@ const Ordered = () => {
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={`
-                px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-                ${
-                  activeTab === tab.id
-                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }
-              `}
+      px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
+      ${
+        activeTab === tab.id
+          ? "bg-emerald-50 text-emerald-700 shadow-sm"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      }
+    `}
             >
               {tab.label}
-              {tab.id === "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">
-                  {tabCounts[tab.id] || 0}
-                </span>
-              )}
-              {tab.id !== "" && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">
-                  {tabCounts[tab.id] || 0}
-                </span>
-              )}
             </button>
           ))}
         </div>
       </div>
+      <div className="mb-4 text-sm text-gray-600 ml-2 mb-2">{displayText}</div>
 
-      <div
-        className={`space-y-6 transition-opacity duration-500 ${
-          isTransitioning ? "opacity-0" : "opacity-100"
-        }`}
-      >
+      <div className="space-y-6 min-h-[calc(100vh-300px)]">
         {isLoading ? (
           Array(3)
             .fill(0)
@@ -610,39 +657,51 @@ const Ordered = () => {
         ) : filteredOrders?.length > 0 ? (
           filteredOrders.map((order) => (
             <div
-              key={order.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-700 hover:shadow-md"
+              id={`order-${order?.id}`}
+              key={order?.id}
+              className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-700 hover:shadow-md "
             >
               <div className="p-5">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                  {/* Bên trái - Thông tin khách hàng */}
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-sm">
                         Mã đơn hàng:
                       </span>
-                      <span className="font-medium">#{order.id}</span>
+                      <span className="font-medium">#{order?.id}</span>
                     </div>
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-gray-500 text-sm">Khách hàng:</span>
-                      <span className="font-medium">{order.customerInfo}</span>
+                    <div className="flex items-start gap-1">
+                      <span className="text-gray-500 text-sm flex-shrink-0 whitespace-nowrap">
+                        Khách hàng:
+                      </span>
+                      <span
+                        className="font-medium break-words max-w-[500px] overflow-hidden text-ellipsis line-clamp-3"
+                        title={order?.customerInfo}
+                      >
+                        {order?.customerInfo}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500 text-sm">Ngày đặt:</span>
-                      <span>{formatDate(order.orderDate)}</span>
+                      <span>{formatDate(order?.orderDate)}</span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       {order.paymentMethod || "Đã Thanh Toán"} •{" "}
                       {order.paymentStatus || "Chưa thanh toán"}
                     </div>
                   </div>
+
+                  {/* Bên phải - Trạng thái + Tổng tiền + Lý do + Các nút */}
                   <div className="flex flex-col items-end space-y-2">
+                    {/* Trạng thái đơn hàng */}
                     <div
                       className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
-                        statusConfig[order.orderStatusName]?.color ||
+                        statusConfig[order?.orderStatusName]?.color ||
                         "bg-gray-100 text-gray-800 border-gray-200"
                       }`}
                     >
-                      {statusConfig[order.orderStatusName]?.icon || (
+                      {statusConfig[order?.orderStatusName]?.icon || (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-5 w-5"
@@ -660,38 +719,35 @@ const Ordered = () => {
                         {order.orderStatusName || "Không xác định"}
                       </span>
                     </div>
+                    {/* Tổng tiền */}
                     <div className="flex items-center">
-                      <span className="text-gray-600 mr-2">Tổng tiền:</span>
+                      <span className="text-gray-600 mr-2 text-sm">
+                        Tổng tiền:
+                      </span>
                       <span className="text-lg font-bold text-emerald-600">
                         {formatCurrency(order?.totalPrice)}
                       </span>
                     </div>
-                    {order.orderStatusName === "Hủy" && (
-                      <div className="text-sm text-red-600 mt-1 max-w-full">
-                        <p
-                          className="font-bold break-words overflow-wrap truncate"
-                          title={order?.noted} // Hiển thị toàn bộ nội dung khi hover
-                        >
-                          Lý do hủy:{" "}
-                          {order?.noted?.length > 30
-                            ? order.noted.substring(0, 30) + "..."
-                            : order.noted}
-                        </p>
+                    {order.orderStatusName === "Hủy" && order?.noted && (
+                      <div
+                        className="text-sm text-red-600 text-right truncate cursor-pointer font-bold"
+                        title={order?.noted}
+                      >
+                        Lý do hủy:{" "}
+                        {order?.noted?.length > 70
+                          ? order.noted.substring(0, 40) + "..."
+                          : order.noted}
                       </div>
                     )}
-                    {order.orderStatusName === "Đã duyệt" &&
-                      order.noted &&
-                      order.noted != null && (
-                        <div className="text-sm text-green-600 mt-1">
-                          <p className="font-bold">
-                            Thông báo : Đã thay đổi số lượng trong đơn hàng, vào
-                            chi tiết để xem
-                          </p>
-                        </div>
-                      )}
+                    {order.orderStatusName === "Đã duyệt" && order?.noted && (
+                      <div className="text-sm text-green-600 text-right">
+                        Thông báo: Đã thay đổi số lượng, vào chi tiết để xem.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
               <div className="p-4 bg-gray-50 border-t border-gray-100">
                 <div className="flex justify-end space-x-3">
                   <button
@@ -849,16 +905,16 @@ const Ordered = () => {
         )}
       </div>
 
-      {totalOrders > 0 && (
+      {filteredTotal > 0 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalPages={Math.ceil(filteredTotal / pageSize)}
           setCurrentPage={handlePageChange}
         />
       )}
       {isLoading && <Loading />}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-4 0">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Hủy đơn hàng

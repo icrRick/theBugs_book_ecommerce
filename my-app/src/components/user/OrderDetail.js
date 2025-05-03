@@ -10,7 +10,6 @@ const OrderDetail = () => {
   const { id } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [hasShowToast, setHasShowToast] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -31,12 +30,11 @@ const OrderDetail = () => {
   });
 
   const handleNavigate = () => {
-    navigate("/account/ordered");
+    navigate(-1);
   };
 
   const fetchOrderDetails = async (orderId) => {
     setLoading(true);
-    setError(null);
     try {
       const response = await axiosInstance.get(`/user/order/${orderId}`);
       if (!response.data.status) {
@@ -51,7 +49,9 @@ const OrderDetail = () => {
           "Đã xảy ra lỗi khi tải chi tiết đơn hàng"
       );
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
   };
 
@@ -68,6 +68,7 @@ const OrderDetail = () => {
   }, [item, hasShowToast]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (id) {
       fetchOrderDetails(id);
     }
@@ -275,9 +276,15 @@ const OrderDetail = () => {
                   Thông tin khách hàng
                 </h3>
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-700">{item?.fullName}</p>
-                  <p className="text-sm text-gray-700">{item?.phone}</p>
-                  <p className="text-sm text-gray-700">{item?.address}</p>
+                  <p className="text-sm text-gray-700 break-words max-w-[200px]">
+                    {item?.fullName}
+                  </p>
+                  <p className="text-sm text-gray-700 break-words max-w-[200px]">
+                    {item?.phone}
+                  </p>
+                  <p className="text-sm text-gray-700 break-words max-w-[300px]">
+                    {item?.address}
+                  </p>
                 </div>
               </div>
 
@@ -397,6 +404,15 @@ const OrderDetail = () => {
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
                                 {product?.productName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Tác giả: {product?.productAuthor}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Thể loại: {product?.productGenres}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Nhà xuất bản: {product?.productPublisher}
                               </div>
                             </div>
                           </div>
@@ -583,8 +599,8 @@ const OrderDetail = () => {
                         {...register("content", {
                           required: "Vui lòng nhập nhận xét của bạn",
                           minLength: {
-                            value: 10,
-                            message: "Nhận xét phải có ít nhất 10 ký tự",
+                            value: 3,
+                            message: "Nhận xét phải có ít nhất 3 ký tự",
                           },
                         })}
                         className={`w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[120px] ${

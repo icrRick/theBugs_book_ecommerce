@@ -25,9 +25,11 @@ import com.thebugs.back_end.entities.User;
 import com.thebugs.back_end.mappers.OrderMapper;
 import com.thebugs.back_end.repository.OrderItemJPA;
 import com.thebugs.back_end.repository.OrderJPA;
+import com.thebugs.back_end.repository.OrderPaymentJPA;
 import com.thebugs.back_end.repository.OrderStatusJPA;
 import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.repository.PromotionProductJPA;
+import com.thebugs.back_end.repository.UserJPA;
 import com.thebugs.back_end.services.user.UserService;
 import com.thebugs.back_end.utils.EmailUtil;
 import com.thebugs.back_end.utils.FormatCustomerInfo;
@@ -53,6 +55,10 @@ public class OrderSellerService {
         private PromotionProductJPA promotionProductJPA;
         @Autowired
         private EmailUtil emailUtil;
+        @Autowired
+        private UserJPA userJPA;
+        @Autowired
+        OrderPaymentJPA orderPaymentJPA;
 
         // code cua tam
         public ArrayList<OrderSimpleDTO> findOrders(String token, Date startDate, Date endDate,
@@ -105,6 +111,27 @@ public class OrderSellerService {
                                         ProductOrderDTO productOrderDTO = new ProductOrderDTO();
                                         productOrderDTO.setProductId(item.getProduct().getId());
                                         productOrderDTO.setProductName(item.getProduct().getName());
+                                        productOrderDTO.setProductAuthor(item.getProduct().getProductAuthors() != null
+                                                        && !item.getProduct().getProductAuthors().isEmpty()
+                                                                        ? item.getProduct().getProductAuthors().stream()
+                                                                                        .map(pa -> pa.getAuthor()
+                                                                                                        .getName())
+                                                                                        .collect(Collectors
+                                                                                                        .joining(", "))
+                                                                        : null);
+                                        productOrderDTO.setProductGenres(item.getProduct().getProductGenres() != null
+                                                        && !item.getProduct().getProductGenres().isEmpty()
+                                                                        ? item.getProduct().getProductGenres().stream()
+                                                                                        .map(pg -> pg.getGenre()
+                                                                                                        .getName())
+                                                                                        .collect(Collectors
+                                                                                                        .joining(", "))
+                                                                        : null);
+                                        productOrderDTO.setProductPublisher(item.getProduct().getPublisher()
+                                                        .getName() != null
+                                                        && !item.getProduct().getPublisher().getName().isEmpty()
+                                                                        ? item.getProduct().getPublisher().getName()
+                                                                        : null);
                                         productOrderDTO.setProductImage(
                                                         (item.getProduct().getImages() != null
                                                                         && !item.getProduct().getImages().isEmpty())
@@ -168,22 +195,18 @@ public class OrderSellerService {
                         } else {
                                 checkShopId.setNoted(cancelReason);
                                 if (checkShopId.getOrderPayment().getId() == 3) {
-                                        // String setNoted = "Đơn hàng của bạn đã được thanh toán, vui lòng liên hệ với
-                                        // Shop "
-                                        // + checkShopId.getShop().getName() + " để được hỗ trợ hoàn tiền "
-                                        // + checkShopId.getShop().getUser().getEmail();
-                                        getUserEmailNoted(orderId,
-                                                        checkShopId.getShop().getUser().getEmail());
+
+                                        getUserEmailNoted(orderId);
                                 }
 
                         }
                 }
                 if (orderStatusId == 3) {
                         updateProductQuantities(token, orderId);
-                        checkShopId.setDeliveredAt(new Date());
+
                 }
-                if (orderStatusId == 4) {
-                        checkShopId.setDeliveredAt(new Date());
+                if (orderStatusId == 5) {
+                        checkShopId.setOrderPayment(orderPaymentJPA.findById(2).get());
                 }
 
                 checkShopId.setOrderStatus(getByStatusToOrder(orderStatusId));
@@ -239,14 +262,15 @@ public class OrderSellerService {
                 return true;
         }
 
-        public boolean getUserEmailNoted(Integer orderId, String shopMail) {
+        public boolean getUserEmailNoted(Integer orderId) {
                 Order order = getById(orderId);
                 String mail = order.getUser().getEmail();
-                String shopPhone = "0965199249";
+                String emailAdmin = getEmailAdmin();
+                String phoneAdmin = getPhoneAdmin();
                 String orderNumber = ("#" + orderId);
-                String setSubject = ("Thông báo hoàn tiền cho đơn hàng " + "" + orderNumber + " "
+                String setSubject = ("Thông báo hoàn tiền cho đơn hàng" + " " + orderNumber + " "
                                 + "của bạn đã bị hủy");
-                emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, shopMail, shopPhone);
+                emailUtil.sendMailRefundContactRequest(mail, setSubject, orderNumber, emailAdmin, phoneAdmin);
                 return true;
         }
 
@@ -322,6 +346,18 @@ public class OrderSellerService {
 
                 }
                 return false;
+        }
+
+        public String getEmailAdmin() {
+                // Integer idUser = 3;
+                String emailAdmin = userJPA.findEmailAdmin().get(0).getEmail();
+                return emailAdmin;
+        }
+
+        public String getPhoneAdmin() {
+                // Integer idUser = 3;
+                String phoneAdmin = userJPA.findEmailAdmin().get(0).getPhone();
+                return phoneAdmin;
         }
 
 }

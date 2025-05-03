@@ -96,6 +96,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                                 p.price,
                                 i.imageName,
                                 COALESCE(AVG(r.rate), 0.0),
+                                 CAST(COALESCE(COUNT(r.id), 0) AS INTEGER),
                                 COALESCE(SUM(oi.quantity), 0),
                                 pr.promotionValue,
                                 COALESCE((p.price - (p.price * pr.promotionValue / 100)), 0.0),
@@ -118,7 +119,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                             WHERE p.active = true
                               AND p.approve = true
                               AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
-                              AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
+                             AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(:productName) OR LOWER(p.product_code) = LOWER(:productName))
                               AND (:minPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) >= :minPrice)
                               AND (:maxPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) <= :maxPrice)
                               AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
