@@ -505,8 +505,7 @@ const OrdersSeller = () => {
       <div
         className={`space-y-6 transition-opacity duration-300 ${
           isLoading ? "opacity-50" : "opacity-100"
-        }`}
-        style={{ minHeight: "calc(100vh - 350px)" }}
+        } ${orders.length < 2 ? "min-h-[calc(100vh-450px)]" : ""}`}
       >
         {isLoading && isFirstLoad ? (
           Array(3)

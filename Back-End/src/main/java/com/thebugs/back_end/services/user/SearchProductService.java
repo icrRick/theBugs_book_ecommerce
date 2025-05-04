@@ -1,14 +1,11 @@
 package com.thebugs.back_end.services.user;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.management.RuntimeErrorException;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -113,11 +110,8 @@ public class SearchProductService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
                 if (result.containsKey("hypotheses")) {
-                    System.out.println(
-                            "Gửi ==========================================================================================");
                     List<Map<String, String>> hypotheses = (List<Map<String, String>>) result.get("hypotheses");
                     return hypotheses.get(0).get("utterance");
-
                 }
             }
             throw new RuntimeException("Không thể nhận diện giọng nói từ FPT.AI.");

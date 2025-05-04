@@ -118,8 +118,9 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                 LEFT JOIN oi.reviews r
                 WHERE p.active = true
                   AND p.approve = true
+                  AND (p.status IS NULL OR p.status = false)
                   AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
-                 AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(:productName) OR LOWER(p.product_code) = LOWER(:productName))
+                  AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(:productName) OR LOWER(p.product_code) = LOWER(:productName))
                   AND (:minPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) >= :minPrice)
                   AND (:maxPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) <= :maxPrice)
                   AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
