@@ -28,7 +28,7 @@ const SellerOrderDetail = () => {
       console.error("Có vấn đề khi tải dữ liệu:", error);
       showErrorToast(
         error.response?.data?.message ||
-          "Đã xảy ra lỗi khi tải chi tiết đơn hàng"
+        "Đã xảy ra lỗi khi tải chi tiết đơn hàng"
       );
     } finally {
       setLoading(false);
@@ -161,10 +161,9 @@ const SellerOrderDetail = () => {
         </h2>
         <div className="flex flex-col items-end space-y-2">
           <div
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
-              statusConfig[item?.orderStatusName]?.color ||
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${statusConfig[item?.orderStatusName]?.color ||
               "bg-gray-100 text-gray-800 border-gray-200"
-            }`}
+              }`}
           >
             {statusConfig[item?.orderStatusName]?.icon || (
               <svg
@@ -237,7 +236,7 @@ const SellerOrderDetail = () => {
               </h3>
               <div className="space-y-3">
                 <p className="text-sm text-gray-700">
-                  Phương thức: Giao hang nhanh
+                  Phương thức: Giao hàng nhanh
                 </p>
                 <p className="text-sm text-gray-700">
                   Phí vận chuyển: {formatCurrency(item?.shippingFee)}
@@ -299,16 +298,17 @@ const SellerOrderDetail = () => {
                   </th>
                   <th
                     scope="col"
+                    className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Giá
+                  </th>
+                  <th
+                    scope="col"
                     className="px-6 py-4 text-center text-sm font-semibold text-gray-600 uppercase tracking-wider"
                   >
                     Số lượng
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider"
-                  >
-                    Đơn giá
-                  </th>
+
                   <th
                     scope="col"
                     className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider"
@@ -347,16 +347,21 @@ const SellerOrderDetail = () => {
                           </div>
                         </div>
                       </td>
+                    
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="text-sm text-gray-900">
+                          {formatCurrency(product?.priceProduct)}
+                        </div>
+                        <div className="text-sm text-gray-900 line-through">
+                          {formatCurrency(product?.oldPriceProduct)}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="text-sm text-gray-900">
                           {product?.quantityProduct}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="text-sm text-gray-900">
-                          {formatCurrency(product?.priceProduct)}
-                        </div>
-                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm text-gray-900">
                           {formatCurrency(product?.totalPriceProduct)}
@@ -376,8 +381,9 @@ const SellerOrderDetail = () => {
               <span>Tạm tính:</span>
               <span>{formatCurrency(item?.totalPrice)}</span>
             </div>
+
             <div className="flex justify-between items-center text-base text-green-600 mb-2">
-              <span>Giảm giá:</span>
+              <span>Giảm giá khuyến mãi:</span>
               <span>-{formatCurrency(item?.totalDiscount)}</span>
             </div>
             <div className="flex justify-between items-center text-base text-gray-700 mb-2">

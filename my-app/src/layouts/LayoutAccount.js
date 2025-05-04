@@ -48,8 +48,8 @@ const LayoutAccount = () => {
             >
               Báo cáo sản phẩm
             </NavLink>
-            <NavLink to="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
-              Bảo mật
+            <NavLink to="/account/report-shops" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+              Báo cáo cửa hàng
             </NavLink>
           </nav>
         </div>

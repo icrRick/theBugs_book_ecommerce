@@ -19,7 +19,8 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         // code cua tam
 
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
-                        "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, " +
+                        "o.shop.shop_slug, o.shop.name, o.orderPayment.id , o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        +
                         "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
                         "COALESCE(" +
                         "CASE WHEN v.id IS NOT NULL THEN " +
@@ -30,14 +31,15 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "LEFT JOIN o.orderItems oi " +
                         "LEFT JOIN o.voucher v " +
                         "WHERE o.shop.id = ?1 " +
-                        "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        "GROUP BY o.shop.shop_slug, o.shop.name, o.orderPayment.id, o.id,  o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +
                         "o.shippingFee, v.id, v.discountPercentage, v.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderByShopId(Integer shopId, Pageable pageable);
 
         // Order của User
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
-                        "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, " +
+                        "o.shop.shop_slug, o.shop.name, o.orderPayment.id, o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        +
                         "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
                         "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
                         "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
@@ -48,7 +50,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "LEFT JOIN o.orderItems oi " +
                         "LEFT JOIN o.voucher v " +
                         "WHERE o.user.id = ?1 " +
-                        "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        "GROUP BY o.shop.shop_slug, o.shop.name,o.orderPayment.id, o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +
                         "o.shippingFee, v.discountPercentage, v.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderByUserId(Integer userId, Pageable pageable);
@@ -57,7 +59,8 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         int countOrderByUserId(Integer userId);
 
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO(" +
-                        "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, " +
+                        "o.shop.shop_slug, o.shop.name,o.orderPayment.id, o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        +
                         "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - " +
                         "COALESCE(" +
                         "CASE WHEN v.id IS NOT NULL THEN " +
@@ -71,7 +74,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         "AND ((?2 IS NULL OR ?3 IS NULL) OR o.createdAt BETWEEN ?2 AND ?3) " +
                         "AND (?4 IS NULL OR o.orderStatus.id = ?4) " +
                         "AND (?5 IS NULL OR o.customerInfo LIKE CONCAT('%', ?5, '%')) " +
-                        "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        "GROUP BY o.shop.shop_slug, o.shop.name,o.orderPayment.id, o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         +
                         "o.shippingFee, v.id, v.discountPercentage, v.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderUserByDateAndKeyWordAndStatus(Integer userId, Date startDate, Date endDate,
@@ -96,7 +99,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
 
         // Tìm kiếm seller
         @Query("SELECT new com.thebugs.back_end.dto.OrderSimpleDTO("
-                        + "o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        + "o.shop.shop_slug, o.shop.name,o.orderPayment.id ,o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         + "COALESCE(SUM(oi.quantity * oi.price), 0) + o.shippingFee - "
                         + "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN "
                         + " LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
@@ -109,7 +112,7 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
                         + "AND ((?2 IS NULL OR ?3 IS NULL) OR o.createdAt BETWEEN ?2 AND ?3) "
                         + "AND (?4 IS NULL OR o.orderStatus.id = ?4) "
                         + "AND (?5 IS NULL OR o.customerInfo LIKE CONCAT('%', ?5, '%')) "
-                        + "GROUP BY o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
+                        + "GROUP BY o.shop.shop_slug, o.shop.name,o.orderPayment.id, o.id, o.customerInfo, o.createdAt, o.orderStatus.name, op.paymentMethod, op.paymentStatus, "
                         + "o.shippingFee, o.voucher.discountPercentage, o.voucher.maxDiscount, o.noted")
         Page<OrderSimpleDTO> findOrderbyDateOrStatusOrName(Integer shopId, Date startDate, Date endDate,
                         Integer orderStatusId, String keyword, Pageable pageable);
@@ -128,56 +131,29 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         @Query("SELECT o FROM Order o WHERE o.orderStatus.id = ?1 AND o.deliveredAt IS NOT NULL")
         List<Order> findDeliveredOrdersByStatus(@Param("statusId") int statusId);
 
-        @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
-                        "o.shop.id, " +
-                        "o.shop.name, " +
-                        "SUM(oi.olPrice * oi.quantity), " +
-                        "SUM(oi.olPrice * oi.quantity) * 0.05, " +
-                        "(COALESCE(SUM(oi.quantity * oi.price), 0) - " +
-                        "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
-                        "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
-                        +
-                        "ELSE 0 END) " +
-                        ") " +
-                        "FROM Order o " +
+        @Query("SELECT o FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
+                        "WHERE o.orderStatus.id >= 4 " +
                         "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
-                        "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
-                        "GROUP BY o.shop.id, o.shop.name "
-                        +
-                        "ORDER BY SUM(oi.olPrice * oi.quantity) DESC")
-        Page<AdminRevenueShopDTO> getShopRevenuePage(@Param("startDate") Date startDate,
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        Page<Order> getShopRevenuePage(@Param("startDate") Date startDate,
                         @Param("endDate") Date endDate,
                         Pageable pageable);
 
-        @Query("SELECT new com.thebugs.back_end.dto.AdminRevenueShopDTO(" +
-                        "o.shop.id, " +
-                        "o.shop.name, " +
-                        "SUM(oi.olPrice * oi.quantity), " +
-                        "SUM(oi.olPrice * oi.quantity) * 0.05, " +
-                        "(COALESCE(SUM(oi.quantity * oi.price), 0) - " +
-                        "CASE WHEN o.voucher.discountPercentage IS NOT NULL THEN " +
-                        "LEAST(COALESCE(SUM(oi.quantity * oi.price), 0) * o.voucher.discountPercentage / 100, o.voucher.maxDiscount) "
-                        +
-                        "ELSE 0 END) " +
-                        ") " +
-                        "FROM Order o " +
+        @Query("SELECT o FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
+                        "WHERE o.orderStatus.id >= 4 " +
                         "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
-                        "AND (:endDate IS NULL OR o.createdAt <= :endDate) " +
-                        "GROUP BY o.shop.id, o.shop.name " +
-                        "ORDER BY SUM(oi.olPrice * oi.quantity) DESC")
-        List<AdminRevenueShopDTO> getShopRevenue(@Param("startDate") Date startDate,
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        List<Order> getShopRevenue(@Param("startDate") Date startDate,
                         @Param("endDate") Date endDate);
 
         @Query("SELECT COUNT(DISTINCT o.shop.id) " +
                         "FROM Order o " +
                         "LEFT JOIN o.orderItems oi " +
-                        "WHERE o.orderStatus.id IN (4, 5, 6) " +
+                        "WHERE o.orderStatus.id  >= 4  " +
                         "AND o.orderPayment.id IN (2, 3) " +
                         "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
                         "AND (:endDate IS NULL OR o.createdAt <= :endDate)")

@@ -30,7 +30,11 @@ const Login = () => {
         if (userData && userData.role === 3) {
           navigate("/admin/dashboard");
         } else {
-          navigate("/home");
+          if(window.location.pathname === "/login"){
+            navigate("/home");
+          }else{
+            navigate(-1);
+          }
         }
         showSuccessToast("Đăng nhập thành công!");
       } else {

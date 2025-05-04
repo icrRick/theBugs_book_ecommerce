@@ -191,9 +191,7 @@ public class UserOrderService {
 
         if (currentStatus == 1) {
             if (newOrderStatusId == 2) {
-
                 return true;
-
             }
         } else if (currentStatus == 5) {
             if (newOrderStatusId == 6) {
@@ -251,6 +249,7 @@ public class UserOrderService {
                     productOrderDTO.setProductImage(
                             item.getProduct().getImages().getLast().getImageName());
                     productOrderDTO.setPriceProduct(item.getPrice());
+                    productOrderDTO.setOldPriceProduct(item.getOlPrice());
                     productOrderDTO.setQuantityProduct(item.getQuantity());
                     productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
                     productOrderDTO.setShopId(item.getProduct().getShop().getId());

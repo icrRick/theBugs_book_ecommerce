@@ -35,7 +35,7 @@ public class AdminRevenueShopController {
         try {
             Map<String, Object> map = new HashMap<>();
             Pageable pageable = PageRequest.of(page - 1, 10);
-            map.put("arrayList",  adminRevenueShopService.getShopRevenueList(startDate, endDate, pageable));
+            map.put("arrayList",  adminRevenueShopService.getShopRevenue(startDate, endDate, pageable));
             map.put("totalItems", adminRevenueShopService.total(startDate, endDate));
             map.put("totalRevenue", adminRevenueShopService.getTotalRevenue(startDate, endDate));
             return ResponseEntityUtil.OK("Load thành công", map);

@@ -1,127 +1,99 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { showErrorToast } from "../../utils/Toast";
+import axiosInstance from "../../utils/axiosInstance";
+import Pagination from "../admin/Pagination";
 
 const ReportProducts = () => {
-  const [reports, setReports] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("all")
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [reports, setReports] = useState([]);
 
-  // Giả lập dữ liệu báo cáo
-  useEffect(() => {
-    const fetchReports = async () => {
-      setLoading(true)
-      try {
-        // Giả lập API call
-        await new Promise((resolve) => setTimeout(resolve, 800))
 
-        // Dữ liệu mẫu
-        const sampleReports = [
-          {
-            id: 1,
-            productId: 101,
-            productName: "Đắc Nhân Tâm",
-            productImage: "https://placehold.co/100x100/2ecc71/ffffff?text=Đắc+Nhân+Tâm",
-            reason: "fake",
-            reasonText: "Sản phẩm giả mạo/không đúng mô tả",
-            description: "Sách bị thiếu trang và chất lượng in ấn kém so với mô tả.",
-            status: "pending",
-            createdAt: "2024-03-25T10:30:00",
-            updatedAt: "2024-03-25T10:30:00",
-            response: null,
-          },
-          {
-            id: 2,
-            productId: 102,
-            productName: "Nhà Giả Kim",
-            productImage: "https://placehold.co/100x100/3498db/ffffff?text=Nhà+Giả+Kim",
-            reason: "quality",
-            reasonText: "Chất lượng sản phẩm kém",
-            description: "Bìa sách bị rách và có vết bẩn khi nhận hàng.",
-            status: "processing",
-            createdAt: "2024-03-20T14:15:00",
-            updatedAt: "2024-03-22T09:45:00",
-            response: null,
-          },
-          {
-            id: 3,
-            productId: 103,
-            productName: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-            productImage: "https://placehold.co/100x100/9b59b6/ffffff?text=Tuổi+Trẻ",
-            reason: "copyright",
-            reasonText: "Vi phạm bản quyền",
-            description: "Sách có dấu hiệu là bản in lậu, không có mã ISBN và thông tin xuất bản.",
-            status: "resolved",
-            createdAt: "2024-03-15T08:20:00",
-            updatedAt: "2024-03-18T11:30:00",
-            response: "Cảm ơn bạn đã báo cáo. Chúng tôi đã xác minh và gỡ bỏ sản phẩm vi phạm khỏi cửa hàng.",
-          },
-          {
-            id: 4,
-            productId: 104,
-            productName: "Tôi Thấy Hoa Vàng Trên Cỏ Xanh",
-            productImage: "https://placehold.co/100x100/e74c3c/ffffff?text=Hoa+Vàng",
-            reason: "inappropriate",
-            reasonText: "Nội dung không phù hợp",
-            description: "Sách có nội dung không phù hợp với độ tuổi được ghi trên bìa.",
-            status: "rejected",
-            createdAt: "2024-03-10T16:45:00",
-            updatedAt: "2024-03-12T13:20:00",
-            response:
-              "Sau khi xem xét, chúng tôi nhận thấy sản phẩm tuân thủ các quy định về nội dung và được phân loại đúng độ tuổi theo nhà xuất bản.",
-          },
-        ]
+  const [isLoading, setIsLoading] = useState(false);
 
-        setReports(sampleReports)
-      } catch (error) {
-        console.error("Error fetching reports:", error)
-      } finally {
-        setLoading(false)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [activeTab, setActiveTab] = useState("all");
+  const itemsPerPage = 10;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+
+  const fetchData = async (active, page) => {
+    try {
+      const response = await axiosInstance.get(`/user/report/product/list?active=${active}&page=${page}`);
+      if (response.status === 200 && response.data.status === true) {
+        setReports(response.data.data.arrayList);
+        setTotalItems(response.data.data.totalItems);
       }
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      showErrorToast("Có lỗi xảy ra khi tải dữ liệu báo cáo" + error.response?.data?.message);
     }
+  };
 
-    fetchReports()
-  }, [])
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "null") {
+      params.set("active", null);
+    } else {
+      params.set("active", tab);
+    }
+    navigate(`/account/report-products?${params.toString()}`);
+    fetchData(tab, 1);
+  };
 
-  // Lọc báo cáo theo tab đang active
-  const filteredReports = reports.filter((report) => {
-    if (activeTab === "all") return true
-    return report.status === activeTab
-  })
+  const handleViewDetails = (report) => {
+    navigate(`/account/report-product-detail/${report.id}`);
+  };
 
-  // Định dạng ngày tháng
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date)
-  }
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", page);
+    navigate(`/account/report-products?${params.toString()}`);
+  };
 
-  // Lấy màu và text cho trạng thái
-  const getStatusInfo = (status) => {
-    switch (status) {
-      case "pending":
+  const getQueryParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    const activeValue = params.get("active") || "all";
+    const page = params.get("page") || 1;
+    return { activeValue, page };
+  };
+
+  useEffect(() => {
+    if (getQueryParams().activeValue === "null") {
+      setActiveTab("null");
+    } else {
+      setActiveTab(getQueryParams().activeValue);
+    }
+    setCurrentPage(Number(getQueryParams().page));
+    fetchData(getQueryParams().activeValue, getQueryParams().page);
+  }, []);
+
+
+
+  const getStatusInfo = (active) => {
+    switch (active) {
+      case "all":
+        return {
+          color: "bg-gray-100 text-gray-800",
+          text: "Tất cả",
+        }
+      case null:
         return {
           color: "bg-yellow-100 text-yellow-800",
-          text: "Chờ xử lý",
+          text: "Chờ duyệt",
         }
-      case "processing":
-        return {
-          color: "bg-blue-100 text-blue-800",
-          text: "Đang xử lý",
-        }
-      case "resolved":
+      case true:
         return {
           color: "bg-green-100 text-green-800",
-          text: "Đã giải quyết",
+          text: "Đã duyệt",
         }
-      case "rejected":
+      case false:
         return {
           color: "bg-red-100 text-red-800",
           text: "Từ chối",
@@ -132,14 +104,14 @@ const ReportProducts = () => {
           text: "Không xác định",
         }
     }
+
+
   }
 
-  // Xử lý xem chi tiết báo cáo
-  const handleViewDetail = (reportId) => {
-    navigate(`/account/report-product-detail/${reportId}`)
-  }
 
-  if (loading) {
+
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -151,116 +123,145 @@ const ReportProducts = () => {
     <div>
       <h2 className="text-lg font-semibold">Báo cáo sản phẩm</h2>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "all"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-          >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setActiveTab("pending")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "pending"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-          >
-            Chờ xử lý
-          </button>
-          <button
-            onClick={() => setActiveTab("processing")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "processing"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-          >
-            Đang xử lý
-          </button>
-          <button
-            onClick={() => setActiveTab("resolved")}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "resolved"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-          >
-            Đã giải quyết
-          </button>
-        </nav>
-      </div>
+        {/* Tab */}
+        <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-6">
+              <button
+                onClick={() => handleTabChange("all")}
+                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "all"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Tất cả
+              </button>
+              <button
+                onClick={() => handleTabChange("null")}
+                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "null"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Chờ duyệt
+              </button>
+              <button
+                onClick={() => handleTabChange("true")}
+                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "true"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Đã duyệt
+              </button>
+              <button
+                onClick={() => handleTabChange("false")}
+                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${activeTab === "false"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Từ chối
+              </button>
+            </nav>
+          </div>
+          {/* Results stats */}
+          {reports.length > 0 && (
+            <div className="flex flex-wrap justify-between items-center mb-4">
+              <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+                <span className="hidden sm:inline">Hiển thị</span>{" "}
+                <span className="font-medium">{startItem}-{endItem}</span>{" "}
+                <span className="hidden sm:inline">trên</span>{" "}
+                <span className="font-medium">{totalItems}</span> sản phẩm{" "}
+                <span className="inline sm:hidden">• Trang {currentPage}</span>
+              </div>
 
-      {/* Danh sách báo cáo */}
-      {filteredReports.length > 0 ? (
-        <div className="space-y-4">
-          {filteredReports.map((report) => (
-            <div
-              key={report.id}
-              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="flex flex-col md:flex-row md:items-center justify-between">
-                <div className="flex items-start space-x-4">
-                  <img
-                    src={report.productImage || "/placeholder.svg"}
-                    alt={report.productName}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
-                  <div>
-                    <h3 className="font-medium text-gray-800">{report.productName}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Lý do:</span> {report.reasonText}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">Ngày báo cáo: {formatDate(report.createdAt)}</p>
+
+            </div>
+          )}
+          {/* Content */}
+          <div className="grid gap-4">
+            {reports.length === 0 && (
+              <div className="flex justify-center items-center h-64">
+                <div className="text-gray-500">Không có báo cáo nào</div>
+              </div>
+            )}
+            {reports.length > 0 && reports.map((report) => (
+              <div
+                key={report.id}
+                className="bg-white rounded-lg border border-gray-200 p-5 hover:border-blue-200 hover:shadow-sm transition-all duration-300 group"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                        {report?.productName}
+                      </h3>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Mã sản phẩm: {report?.productCode}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Người báo cáo: {report?.emailUser}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          <span className="text-xs text-gray-500 mr-1">Trạng thái báo cáo:</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${getStatusInfo(report?.active).color}`}>
+                            {getStatusInfo(report?.active).text}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <span className="mr-1">Ngày tạo:</span>
+                          <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {report?.createAt}
+                        </div>
+                        {report?.active !== null && report?.approvalDate && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span className="mr-1">Ngày {report?.active ? "duyệt" : "từ chối"}:</span>
+                            <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {report?.approvalDate}
+                          </div>
+                        )}
+                      </div>
+                    
+                    </div>
                   </div>
-                </div>
+                  <div className="flex justify-end">
+                        <div className="flex gap-2">
 
-                <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusInfo(report.status).color}`}>
-                    {getStatusInfo(report.status).text}
-                  </span>
-                  <button
-                    onClick={() => handleViewDetail(report.id)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                  >
-                    Xem chi tiết
-                  </button>
+                          <button
+                            onClick={() => handleViewDetails(report)}
+                            className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-sm font-medium flex items-center shadow-sm hover:shadow"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Xem chi tiết
+                          </button>
+                        </div>
+                      </div>
+
                 </div>
               </div>
 
-              {/* Phản hồi nếu có */}
-              {report.response && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-sm font-medium text-gray-700">Phản hồi:</p>
-                  <p className="text-sm text-gray-600 mt-1">{report.response}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-16 w-16 mx-auto text-gray-400 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Không có báo cáo nào</h3>
-          <p className="text-gray-600 mb-6">Bạn chưa gửi báo cáo nào hoặc không có báo cáo nào phù hợp với bộ lọc.</p>
-        </div>
-      )}
-    </div>
+            ))}
+            {reports.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(
+                  totalItems / 10
+                )}
+                setCurrentPage={handlePageChange}
+              />
+            )}
+          </div>
+      </div>
   )
 }
 

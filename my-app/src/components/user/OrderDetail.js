@@ -426,6 +426,9 @@ const OrderDetail = () => {
                           <div className="text-sm text-gray-900">
                             {formatCurrency(product?.priceProduct)}
                           </div>
+                          <div className="text-sm text-gray-900 line-through">
+                            {formatCurrency(product?.oldPriceProduct)}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="text-sm text-gray-900">
@@ -480,7 +483,7 @@ const OrderDetail = () => {
                 <span>{formatCurrency(item?.totalPrice)}</span>
               </div>
               <div className="flex justify-between items-center text-base text-green-600 mb-2">
-                <span>Giảm giá:</span>
+                <span>Giảm giá khuyến mãi:</span>
                 <span>-{formatCurrency(item?.totalDiscount)}</span>
               </div>
               <div className="flex justify-between items-center text-base text-gray-700 mb-2">

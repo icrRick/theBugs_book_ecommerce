@@ -21,17 +21,19 @@ export const showSuccessToast = (message) => {
 export const showErrorToast = (message) => {
         toast.error(message, {
                 position: "top-right",
-                autoClose: 5000,
+                autoClose: 1000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,
-                draggable: true,
+                draggable: true, style: {
+                        marginTop: '45px',
+                }
         });
 };
 export const showInfoToast = (message) => {
         toast.info(message, {
                 position: "top-right",
-                autoClose: 5000,
+                autoClose: 1000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,

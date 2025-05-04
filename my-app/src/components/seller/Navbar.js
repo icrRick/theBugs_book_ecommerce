@@ -52,7 +52,7 @@ const Navbar = ({ setSidebarOpen, userMenuOpen, setUserMenuOpen }) => {
               >
                 <img
                   className="w-8 h-8 rounded-full"
-                  src="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
+                  src={userInfo?.avatar || "/placeholder.svg"}
                   alt="user photo"
                 />
               </button>

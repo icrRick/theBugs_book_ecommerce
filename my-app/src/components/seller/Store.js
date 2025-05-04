@@ -239,7 +239,10 @@ const Store = () => {
       }
     } catch (error) {
       console.error("Error fetching shop data:", error);
-      showErrorToast("Không thể tải thông tin cửa hàng");
+      showErrorToast(
+        "Không thể tải thông tin cửa hàng",
+        error.response.data.message
+      );
     } finally {
       setIsLoading(false);
     }

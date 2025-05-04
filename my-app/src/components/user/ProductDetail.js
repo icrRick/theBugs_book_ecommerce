@@ -11,8 +11,10 @@ import ChatButton from "./ChatButton";
 import axiosInstance from "../../utils/axiosInstance";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { getQuantityByNow, setListProductIds, setListVoucherIds, setQuantityByNow } from "../../utils/cookie";
+import { useAuth } from "../../contexts/AuthContext";
 
 const ProductDetail = () => {
+
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,7 +172,8 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     try {
-      console.log(id, quantity);
+   
+
       const response = await axiosInstance.post(`/user/cart/saveCartItemProductCode?productCode=${id}&quantity=${quantity}`);
       if (response.status === 200 && response.data.status === true) {
         showSuccessToast(response.data.message);
@@ -185,6 +188,9 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     try {
+      // Kiểm tra xác thực
+
+
       // Validate product and quantity
       if (!product?.id) {
         showErrorToast("Không tìm thấy thông tin sản phẩm");

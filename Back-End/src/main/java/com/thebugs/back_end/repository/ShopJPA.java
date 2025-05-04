@@ -58,7 +58,7 @@ public interface ShopJPA extends JpaRepository<Shop, Integer> {
         @Query("SELECT COUNT(s) FROM Shop s WHERE s.approve IS NULL")
         int countShopByApproveNull();
 
-        @Query("SELECT p FROM Shop p WHERE p.shop_slug = ?1 AND p.active = true AND (p.approve IS NOT NULL AND p.approve = true) AND (p.status IS NULL OR p.status != true) ")
-        Optional<Shop> _getShopByShopSlug(String shopSlug);     
+        @Query("SELECT p FROM Shop p WHERE p.shop_slug = ?1 AND p.active = true AND (p.approve IS NOT NULL AND p.approve  = true ) AND (p.status IS NULL OR p.status = false)")
+        Optional<Shop> _getShopByShopSlug(String shopSlug);
 
 }

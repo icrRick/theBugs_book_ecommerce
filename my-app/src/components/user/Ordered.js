@@ -7,8 +7,9 @@ import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
 import Loading from "../../utils/Loading";
-import { s_countCartItems, s_repurchaseCartItem } from "../service/cartItemService";
+import { s_repurchaseCartItem } from "../service/cartItemService";
 import { useAuth } from "../../contexts/AuthContext";
+import { setListOrderId } from "../../utils/cookie";
 
 const Ordered = () => {
   const navigate = useNavigate();
@@ -301,6 +302,7 @@ const Ordered = () => {
               : order
           )
         );
+        fetchAllOrders(keyword, currentPage);
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`);
       }
@@ -313,6 +315,7 @@ const Ordered = () => {
       }
     } finally {
       setIsLoading(false);
+
     }
   };
 
@@ -436,10 +439,7 @@ const Ordered = () => {
   };
 
   const handleViewDetails = (orderId) => {
-    sessionStorage.setItem("selectedOrderId", orderId);
-    const params = new URLSearchParams(searchParams);
-    params.set("selectedOrderId", orderId);
-    navigate(`/account/order/${orderId}?${params.toString()}`);
+    navigate(`/account/order/${orderId}`);
   };
 
   useEffect(() => {
@@ -554,7 +554,7 @@ const Ordered = () => {
       ? `Hiển thị ${startIndex}-${endIndex} trên ${filteredTotal} đơn hàng`
       : "Không có đơn hàng";
 
-    const {setCartCount } = useAuth();
+  const { setCartCount } = useAuth();
 
   const handleRepurchase = async (orderId) => {
     const response = await s_repurchaseCartItem(orderId);
@@ -566,74 +566,116 @@ const Ordered = () => {
     }
   };
 
+
+  const handleRePayment = async (order) => {
+    const orderIds = Array.isArray(orders) ? orders.map(o => o.id) : [orders.id];
+    const orderId = Math.floor(new Date().getTime() / 1000) + 10;
+    const responseVnpay = await axiosInstance.get("/user/payment-online/create-payment", {
+      params: {
+        orderId: orderId,
+        orderInfor: "Thanh toán đơn hàng " + order.id,
+        total: Number(order.totalPrice),
+      }
+    });
+
+    setListOrderId(JSON.stringify(orderIds));
+    if (responseVnpay.status === 200 && responseVnpay.data?.status === true) {
+      window.location.href = responseVnpay.data.data;
+    } else {
+      showErrorToast("Đã có lỗi xảy ra khi thanh toán lại đơn hàng!");
+    }
+
+
+  };
   return (
     <div className="w-full mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-6 w-6 mr-2 text-blue-600" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 mr-2 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
             />
           </svg>
           Bộ lọc đơn hàng
         </h2>
         <form onSubmit={handleFilterSubmit} className="grid grid-cols-12 gap-4">
-          <div className="col-span-7 space-y-2">
+          <div className="col-span-5 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="name-filter"
             >
               Tên khách hàng
             </label>
-            <input
-              type="text"
-              id="name-filter"
-              placeholder="Nhập tên khách hàng..."
-              value={filters.userName}
-              onChange={handleFilterChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                id="name-filter"
+                placeholder="Tên khách hàng"
+                value={filters.userName}
+                onChange={handleFilterChange}
+                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              />
+            </div>
           </div>
 
-          <div className="col-span-2 space-y-2">
+          <div className="col-span-3 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="start-date"
             >
               Từ ngày
             </label>
-            <input
-              type="date"
-              id="start-date"
-              value={filters.startDate || ""}
-              onChange={handleFilterChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <input
+                type="date"
+                id="start-date"
+                value={filters.startDate || ""}
+                onChange={handleFilterChange}
+                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              />
+            </div>
           </div>
 
-          <div className="col-span-2 space-y-2">
+          <div className="col-span-3 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="end-date"
             >
               Đến ngày
             </label>
-            <input
-              type="date"
-              id="end-date"
-              value={filters.endDate || ""}
-              onChange={handleFilterChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <input
+                type="date"
+                id="end-date"
+                value={filters.endDate || ""}
+                onChange={handleFilterChange}
+                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+              />
+            </div>
           </div>
 
           <div className="col-span-1 flex items-end">
@@ -660,19 +702,18 @@ const Ordered = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md mb-6 overflow-x-auto">
-        <div className="flex space-x-1 p-2 min-w-max border-b border-gray-100">
+      <div className="bg-white rounded-lg  border border-gray-200 shadow-sm mb-6 overflow-x-auto">
+        <div className="flex space-x-1 p-2 min-w-max ">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={`
       px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-      ${
-        activeTab === tab.id
-          ? "bg-emerald-50 text-emerald-700 shadow-sm"
-          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-      }
+      ${activeTab === tab.id
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }
     `}
             >
               {tab.label}
@@ -714,116 +755,148 @@ const Ordered = () => {
             <div
               id={`order-${order?.id}`}
               key={order?.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-700 hover:shadow-md "
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-700 hover:shadow-md "
             >
-              <div className="p-5">
-                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                  {/* Bên trái - Thông tin khách hàng */}
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500 text-sm">
-                        Mã đơn hàng:
-                      </span>
-                      <span className="font-medium">#{order?.id}</span>
-                    </div>
-                    <div className="flex items-start gap-1">
-                      <span className="text-gray-500 text-sm flex-shrink-0 whitespace-nowrap">
-                        Khách hàng:
-                      </span>
-                      <span
-                        className="font-medium break-words max-w-[500px] overflow-hidden text-ellipsis line-clamp-3"
-                        title={order?.customerInfo}
-                      >
-                        {order?.customerInfo}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-gray-500 text-sm">Ngày đặt:</span>
-                      <span>{formatDate(order?.orderDate)}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <div className="flex items-center mr-3">
-                        <span className="inline-block h-2 w-2 rounded-full bg-blue-300 mr-1.5"></span>
-                        <span>{order.paymentMethod || "Đã Thanh Toán"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className={`inline-block h-2 w-2 rounded-full mr-1.5 ${
-                          order.paymentStatus === "Đã thanh toán" ? "bg-green-400" : "bg-amber-400"
-                        }`}></span>
-                        <span className={
-                          order.paymentStatus === "Đã thanh toán" ? "text-green-600" : "text-amber-600"
-                        }>
-                          {order.paymentStatus || "Chưa thanh toán"}
-                        </span>
-                      </div>
-                    </div>
+              <div className="p-4">
+                {/* Header - Mã đơn + Trạng thái */}
+                <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-500 text-sm">Mã đơn hàng:</span>
+                    <span className="font-medium text-gray-800">#{order?.id}</span>
+                    <span className="text-gray-400">|</span>
+                    <span className="text-gray-500 text-sm">{formatDate(order?.orderDate)}</span>
                   </div>
-
-                  {/* Bên phải - Trạng thái + Tổng tiền + Lý do + Các nút */}
-                  <div className="flex flex-col items-end space-y-2">
-                    {/* Trạng thái đơn hàng */}
-                    <div
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
-                        statusConfig[order?.orderStatusName]?.color ||
-                        "bg-gray-100 text-gray-800 border-gray-200"
+                  <div
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${statusConfig[order?.orderStatusName]?.color ||
+                      "bg-gray-100 text-gray-800 border-gray-200"
                       }`}
-                    >
-                      {statusConfig[order?.orderStatusName]?.icon || (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                      <span className="font-medium">
-                        {order.orderStatusName || "Không xác định"}
-                      </span>
-                    </div>
-                    {/* Tổng tiền */}
-                    <div className="flex items-center">
-                      <span className="text-gray-600 mr-2 text-sm">
-                        Tổng tiền:
-                      </span>
-                      <span className="text-lg font-bold text-emerald-600">
-                        {formatCurrency(order?.totalPrice)}
-                      </span>
-                    </div>
-                    {order.orderStatusName === "Hủy" && order?.noted && (
-                      <div
-                        className="text-sm text-red-600 text-right truncate cursor-pointer font-bold"
-                        title={order?.noted}
+                  >
+                    {statusConfig[order?.orderStatusName]?.icon || (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3.5 w-3.5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
                       >
-                        Lý do hủy:{" "}
-                        {order?.noted?.length > 70
-                          ? order.noted.substring(0, 40) + "..."
-                          : order.noted}
-                      </div>
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     )}
-                    {order.orderStatusName === "Đã duyệt" && order?.noted && (
-                      <div className="text-sm text-green-600 text-right">
-                        Thông báo: Đã thay đổi số lượng, vào chi tiết để xem.
+                    <span className="font-medium">
+                      {order.orderStatusName || "Không xác định"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="flex flex-col md:flex-row justify-between gap-6">
+                  {/* Left Column - Thông tin */}
+                  <div className="flex-1">
+                    <div className="space-y-2.5 text-sm">
+                      {/* Thông tin khách hàng */}
+                      <div className="rounded-lg p-3">
+                        <div className="flex items-start gap-2 mb-2">
+                          <svg className="w-4 h-4 text-gray-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <div>
+                            <span className="text-gray-500">Khách hàng:</span>
+                            <p className="font-medium text-gray-800 break-words mt-0.5">
+                              {order?.customerInfo}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                          <div className="flex items-center">
+                            <span className="text-gray-500">Shop:</span>
+                            <a
+                              href={`/shop/${order?.shopSlug}`}
+                              className="ml-1 font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {order?.shopName}
+                            </a>
+                          </div>
+                        </div>
                       </div>
-                    )}
+
+                      {/* Thông tin thanh toán */}
+                      <div className=" rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                              </svg>
+                              <span className="text-gray-600">{order.paymentMethod || "Online Payment"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {order.paymentStatus === "Đã thanh toán" ? (
+                                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              )}
+                              <span className={
+                                order.paymentStatus === "Đã thanh toán"
+                                  ? "text-green-600"
+                                  : "text-amber-600"
+                              }>
+                                {order.paymentStatus || "Chưa thanh toán"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-gray-500">Tổng tiền:</span>
+                            <span className="text-lg font-bold text-emerald-600">
+                              {formatCurrency(order?.totalPrice)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Thông báo */}
+                      {(order.orderStatusName === "Hủy" || order.orderStatusName === "Đã duyệt") && order?.noted && (
+                        <div className={`text-xs rounded-lg p-3 ${order.orderStatusName === "Hủy"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-green-50 text-green-600"
+                          }`}>
+                          <span className="font-medium">
+                            {order.orderStatusName === "Hủy" ? "Lý do hủy:" : "Thông báo:"}
+                          </span>
+                          <p className="mt-0.5 line-clamp-2" title={order?.noted}>
+                            {order.orderStatusName === "Hủy"
+                              ? order?.noted
+                              : "Đã thay đổi số lượng, vào chi tiết để xem."
+                            }
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <div className="flex justify-end space-x-3">
+                <div className="flex justify-end space-x-2">
                   <button
                     onClick={() => handleViewDetails(order.id)}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1.5 shadow-sm"
+                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-1 shadow-sm"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-blue-600"
+                      className="h-4 w-4 text-blue-600"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -840,11 +913,11 @@ const Ordered = () => {
                     <>
                       <button
                         onClick={() => openCancelModal(order.id)}
-                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5 shadow-sm"
+                        className="px-3 py-1.5 text-sm bg-white border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors flex items-center space-x-1 shadow-sm"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
+                          className="h-4 w-4"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -861,11 +934,11 @@ const Ordered = () => {
                   {order.orderStatusName === "Đã giao" && (
                     <button
                       onClick={() => updateOrderStatus(order.id, 6)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5 shadow-sm"
+                      className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center space-x-1 shadow-sm"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
+                        className="h-4 w-4"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -882,11 +955,11 @@ const Ordered = () => {
                   {order.orderStatusName === "Đã nhận" && (
                     <button
                       onClick={() => handleRepurchase(order.id)}
-                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-1.5 shadow-sm"
+                      className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors flex items-center space-x-1 shadow-sm"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
+                        className="h-4 w-4"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -897,6 +970,26 @@ const Ordered = () => {
                         />
                       </svg>
                       <span>Mua lại</span>
+                    </button>
+                  )}
+                  {order.orderPaymentId === 4 && (
+                    <button
+                      onClick={() => handleRePayment(order)}
+                      className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors flex items-center space-x-1 shadow-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>Thanh toán lại</span>
                     </button>
                   )}
                 </div>

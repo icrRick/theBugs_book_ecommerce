@@ -27,10 +27,12 @@ const Login = lazy(() => import("../components/auth/Login"));
 const Register = lazy(() => import("../components/auth/Register"));
 const ChangePassword = lazy(() => import("../components/auth/ChangePassword"));
 const ReportProducts = lazy(() => import("../components/user/ReportProducts"));
+const ReportShops = lazy(() => import("../components/user/ReportShops"));
 const AdminReportProducts = lazy(() => import("../components/admin/ReportProducts"));
 const ReportProductDetail = lazy(() =>
       import("../components/user/ReportProductDetail")
 );
+const ReportShopDetail = lazy(() => import("../components/user/ReportShopDetail"));
 const AdminReportStoresDetail = lazy(() => import("../components/admin/AdminReportStoresDetail"));
 const Search = lazy(() => import("../components/user/Search"));
 const ShopDetail = lazy(() => import("../components/user/ShopDetail"));
@@ -72,14 +74,13 @@ const EditAddress = lazy(() => import("../components/user/EditAddress"));
 const PlaceOrderAddress = lazy(() =>
       import("../components/user/PlaceOrderAddress")
 );
-const Otp = lazy(() => import("../components/auth/OtpInput"));
-
+const ReportShop = lazy(() => import("../components/user/ReportShop"));
 const AdminProducts = lazy(() => import("../components/admin/Products"));
 const AdminProductDetail = lazy(() => import("../components/admin/AdminProductDetail"));
+
 export const PUBLIC_ROUTES = [
       { path: "/", element: <Navigate to="/home" /> },
       { path: "home", element: <Home /> },
-  
       { path: "product-detail/:id", element: <ProductDetail /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
@@ -92,16 +93,16 @@ export const PUBLIC_ROUTES = [
 ];
 export const USER_ROUTES = [
   { path: "report-product/:id", element: <Report /> },
+  { path: "report-shop/:id", element: <ReportShop /> },
   { path: "register-seller", element: <SellerRegistration /> },
   { path: 'cart', element: <Cart /> },
   { path: "payment-cod", element: <PaymentCOD /> },
   { path: 'place-order-address', element: <PlaceOrderAddress /> },
   { path: "user/payment-status", element: <PaymentStatus /> },
   { path: 'payment', element: <Payment /> },
-
   {
     path: "account",
-    element: <ProtectedRoute requiredRoles={[1, 2]}><LayoutAccount /></ProtectedRoute>,
+    element: <LayoutAccount />,
     children: [
       { path: "profile", element: <Profile /> },
       { path: "address", element: <Address /> },
@@ -112,8 +113,9 @@ export const USER_ROUTES = [
       { path: "favorite", element: <Favorite /> },
       { path: "report-products", element: <ReportProducts /> },
       { path: "report-product-detail/:id", element: <ReportProductDetail /> },
+      { path: "report-shops", element: <ReportShops /> },
+      { path: "report-shop-detail/:id", element: <ReportShopDetail /> },
       { path: "change-password", element: <ChangePassword /> },
-
     ],
   },
 ]

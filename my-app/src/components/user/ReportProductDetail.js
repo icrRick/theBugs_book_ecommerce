@@ -1,70 +1,42 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import axiosInstance from "../../utils/axiosInstance"
+import { showErrorToast, showSuccessToast } from "../../utils/Toast"
+import Loading from "../../utils/Loading"
 
 const ReportProductDetail = () => {
-  const { productCode } = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
   const [report, setReport] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const fetchReportDetail = async (id) => {
+    setIsLoading(true)
+    try {
+      const response = await axiosInstance.get(`/user/report/product/detail?id=${id}`);
+      if (response.status === 200 && response.data.status == true) {
+        setReport(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching report details:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchReportDetail = async () => {
-      setLoading(true)
-      try {
-        // Giả lập API call
-        await new Promise((resolve) => setTimeout(resolve, 800))
-
-        // Dữ liệu mẫu
-        const reportData = {
-          id: Number.parseInt(productCode),
-          productId: 101,
-          productName: "Đắc Nhân Tâm",
-          productImage: "https://placehold.co/300x400/2ecc71/ffffff?text=Đắc+Nhân+Tâm",
-          shopName: "Shop A",
-          reason: "fake",
-          reasonText: "Sản phẩm giả mạo/không đúng mô tả",
-          description:
-            "Sách bị thiếu trang và chất lượng in ấn kém so với mô tả. Trang 45-60 bị thiếu hoàn toàn. Bìa sách có dấu hiệu là bản photocopy chứ không phải bản in chính hãng như mô tả.",
-          status: "pending",
-          createdAt: "2024-03-25T10:30:00",
-          updatedAt: "2024-03-25T10:30:00",
-          response: null,
-          contactEmail: "user@example.com",
-          contactPhone: "0912345678",
-          images: [
-            "https://placehold.co/300x400/2ecc71/ffffff?text=Evidence+1",
-            "https://placehold.co/300x400/3498db/ffffff?text=Evidence+2",
-            "https://placehold.co/300x400/e74c3c/ffffff?text=Evidence+3",
-          ],
-          timeline: [
-            {
-              id: 1,
-              status: "created",
-              statusText: "Báo cáo đã được tạo",
-              date: "2024-03-25T10:30:00",
-              note: "Báo cáo của bạn đã được ghi nhận.",
-            },
-            {
-              id: 2,
-              status: "reviewing",
-              statusText: "Đang xem xét",
-              date: "2024-03-25T14:45:00",
-              note: "Nhân viên của chúng tôi đang xem xét báo cáo của bạn.",
-            },
-          ],
-        }
-
-        setReport(reportData)
-      } catch (error) {
-        console.error("Error fetching report details:", error)
-      } finally {
-        setLoading(false)
-      }
+    if (id) {
+      fetchReportDetail(id);
     }
+  }, [id]);
 
-    fetchReportDetail()
-  }, [productCode])
+
+
+
+
+
+
+
 
   // Định dạng ngày tháng
   const formatDate = (dateString) => {
@@ -73,48 +45,7 @@ const ReportProductDetail = () => {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     }).format(date)
-  }
-
-  // Lấy màu và text cho trạng thái
-  const getStatusInfo = (status) => {
-    switch (status) {
-      case "pending":
-        return {
-          color: "bg-yellow-100 text-yellow-800",
-          text: "Chờ xử lý",
-        }
-      case "processing":
-        return {
-          color: "bg-blue-100 text-blue-800",
-          text: "Đang xử lý",
-        }
-      case "resolved":
-        return {
-          color: "bg-green-100 text-green-800",
-          text: "Đã giải quyết",
-        }
-      case "rejected":
-        return {
-          color: "bg-red-100 text-red-800",
-          text: "Từ chối",
-        }
-      default:
-        return {
-          color: "bg-gray-100 text-gray-800",
-          text: "Không xác định",
-        }
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    )
   }
 
   if (!report) {
@@ -148,9 +79,10 @@ const ReportProductDetail = () => {
 
   return (
     <div>
+      {isLoading && <Loading />}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <button onClick={() => navigate("/account/reports")} className="mr-4 text-gray-600 hover:text-gray-900">
+          <button onClick={() => navigate("/account/report-products")} className="mr-4 text-gray-600 hover:text-gray-900">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -163,55 +95,73 @@ const ReportProductDetail = () => {
           </button>
           <h2 className="text-lg font-semibold">Chi tiết báo cáo #{report.id}</h2>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusInfo(report.status).color}`}>
-          {getStatusInfo(report.status).text}
-        </span>
+
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <div className="flex items-start space-x-4">
-            <img
-              src={report.productImage || "/placeholder.svg"}
-              alt={report.productName}
-              className="w-20 h-20 object-cover rounded-md"
-            />
-            <div>
-              <h3 className="font-medium text-gray-800">{report.productName}</h3>
-              <p className="text-sm text-gray-600 mt-1">Shop: {report.shopName}</p>
-              <p className="text-sm text-gray-500 mt-1">Ngày báo cáo: {formatDate(report.createdAt)}</p>
-            </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <div className="flex items-start space-x-4">
+          <img
+            src={report?.productImage || "/placeholder.svg"}
+            alt={report?.productName}
+            className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+          />
+          <div>
+            <h3 className="font-medium text-gray-800 text-xl">{report?.productName}</h3>
+            <p className="text-sm text-gray-600 mt-1">Mã sản phẩm: {report?.productCode}</p>
+            <p className="text-sm text-gray-500 mt-1">Email người dùng: {report?.emailUser}</p>
           </div>
         </div>
-
-        <div className="space-y-6">
-          <div>
-            <h4 className="text-md font-semibold text-gray-700 mb-2">Lý do báo cáo</h4>
-            <p className="text-gray-800">{report.reasonText}</p>
+        <div className="mt-4 md:mt-0 flex flex-col items-end space-y-2">
+          <div className="text-sm">
+            <span className={`px-3 py-1 rounded-full text-sm ${report?.active === null
+              ? 'bg-yellow-100 text-yellow-800'
+              : report?.active
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+              }`}>
+              {report?.active === null
+                ? 'Chờ duyệt'
+                : report?.active
+                  ? 'Đã duyệt'
+                  : 'Từ chối'}
+            </span>
           </div>
-
-          <div>
-            <h4 className="text-md font-semibold text-gray-700 mb-2">Mô tả chi tiết</h4>
-            <p className="text-gray-800 whitespace-pre-line">{report.description}</p>
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">Ngày tạo:</span> {formatDate(report?.createAt)}
           </div>
+          {report?.active && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium"> Ngày  {report?.active === true ? 'duyệt' : 'từ chối'}:</span> {formatDate(report?.approvalDate)}
+            </div>
+          )}
+        </div>
+      </div>
 
-          {report.images && report.images.length > 0 && (
-            <div>
-              <h4 className="text-md font-semibold text-gray-700 mb-2">Hình ảnh minh họa</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {report.images.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image || "/placeholder.svg"}
-                      alt={`Hình ảnh ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all duration-300 rounded-lg">
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-md font-semibold text-gray-700 mb-2">Lý do báo cáo</h4>
+          <p className="text-gray-800">{report?.note}</p>
+        </div>
+
+        {report?.images && report?.images.length > 0 && (
+          <div>
+            <h4 className="text-md font-semibold text-gray-700 mb-4">Hình ảnh minh chứng</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+              {report?.images.map((image, index) => (
+                <div key={index} className="relative group overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-gray-50">
+                  <img
+                    src={image?.name || "/placeholder.svg"}
+                    alt={`Hình ảnh ${index + 1}`}
+                    className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 flex items-center justify-center">
                       <a
-                        href={image}
+                        href={image?.name}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="opacity-0 group-hover:opacity-100 bg-white p-2 rounded-full"
+                        className="bg-white/95 hover:bg-white p-2.5 rounded-full transform hover:scale-110 transition-all duration-200 shadow-sm"
+                        title="Xem ảnh gốc"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -236,61 +186,12 @@ const ReportProductDetail = () => {
                       </a>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(report.contactEmail || report.contactPhone) && (
-            <div>
-              <h4 className="text-md font-semibold text-gray-700 mb-2">Thông tin liên hệ</h4>
-              {report.contactEmail && (
-                <p className="text-gray-800">
-                  <span className="font-medium">Email:</span> {report.contactEmail}
-                </p>
-              )}
-              {report.contactPhone && (
-                <p className="text-gray-800">
-                  <span className="font-medium">Số điện thoại:</span> {report.contactPhone}
-                </p>
-              )}
-            </div>
-          )}
-
-          {report.response && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h4 className="text-md font-semibold text-gray-700 mb-2">Phản hồi từ hệ thống</h4>
-              <p className="text-gray-800">{report.response}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Timeline */}
-      {report.timeline && report.timeline.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Tiến trình xử lý</h3>
-          <div className="relative">
-            {report.timeline.map((event, index) => (
-              <div key={event.id} className="mb-8 flex">
-                <div className="flex flex-col items-center mr-4">
-                  <div className="rounded-full bg-blue-500 text-white flex items-center justify-center w-8 h-8">
-                    {index + 1}
-                  </div>
-                  {index < report.timeline.length - 1 && <div className="h-full w-0.5 bg-blue-500"></div>}
                 </div>
-                <div className="flex flex-col pb-6">
-                  <div className="flex items-center mb-1">
-                    <h4 className="text-md font-medium text-gray-800">{event.statusText}</h4>
-                    <span className="text-sm text-gray-500 ml-2">({formatDate(event.date)})</span>
-                  </div>
-                  <p className="text-gray-600">{event.note}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

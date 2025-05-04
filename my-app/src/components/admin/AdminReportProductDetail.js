@@ -238,9 +238,11 @@ const AdminReportProductDetail = () => {
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Ngày tạo:</span> {formatDate(report?.createAt)}
               </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Ngày {report?.active === null ? 'duyệt' : 'từ chối'}:</span> {formatDate(report?.approvalDate)}
-              </div>
+              {report?.active && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium"> Ngày  {report?.active === true ? 'duyệt' : 'từ chối'}:</span> {formatDate(report?.approvalDate)}
+                </div>
+              )}
             </div>
           </div>
 
@@ -253,7 +255,7 @@ const AdminReportProductDetail = () => {
             {report?.images && report?.images.length > 0 && (
               <div>
                 <h4 className="text-md font-semibold text-gray-700 mb-4">Hình ảnh minh chứng</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
                   {report?.images.map((image, index) => (
                     <div key={index} className="relative group overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-300 bg-gray-50">
                       <img
