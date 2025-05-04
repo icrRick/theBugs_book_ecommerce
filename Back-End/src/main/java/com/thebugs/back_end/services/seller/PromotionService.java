@@ -84,7 +84,7 @@ public class PromotionService {
                         promotion.setPromotionProducts(promotionProducts);
                         promotion.setCreateAt(new Date());
                         promotion.setActive(true);
-                        promotion.setFlashSale(false);
+                        promotion.setFlashSale(true);
                         promotionJPA.save(promotion);
                         return new ResponseData(true, "Thêm thành công", null, 201);
                 } catch (Exception e) {

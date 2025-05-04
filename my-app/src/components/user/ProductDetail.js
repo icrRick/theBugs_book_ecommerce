@@ -37,6 +37,8 @@ const ProductDetail = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [newReview, setNewReview] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
+  const mainSwiperKey = useRef(`main-${Date.now()}`).current;
+  const thumbsSwiperKey = useRef(`thumbs-${Date.now()}`).current;
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -58,19 +60,21 @@ const ProductDetail = () => {
         const apiProduct = productData.data;
 
         // Fetch reviews
-        const reviewsResponse = await fetch(`http://localhost:8080/product-detail/${id}/reviews`)
+        const reviewsResponse = await fetch(
+          `http://localhost:8080/product-detail/${id}/reviews`
+        );
         if (!reviewsResponse.ok) {
-          throw new Error(`HTTP error! Status: ${reviewsResponse.status}`)
+          throw new Error(`HTTP error! Status: ${reviewsResponse.status}`);
         }
-        const reviewsData = await reviewsResponse.json()
+        const reviewsData = await reviewsResponse.json();
 
-        let reviews = []
+        let reviews = [];
         if (reviewsData.status && reviewsData.data) {
-          reviews = reviewsData.data.map(review => ({
+          reviews = reviewsData.data.map((review) => ({
             id: review.id,
             user: {
               name: review.user.name,
-              avatar: review.user.avatar || null
+              avatar: review.user.avatar || null,
             },
             date: review.date,
             rating: review.rating,
@@ -80,9 +84,9 @@ const ProductDetail = () => {
             shop: {
               name: review.shop.name,
               logo: review.shop.logo || null,
-              verify: review.shop.verify
-            }
-          }))
+              verify: review.shop.verify,
+            },
+          }));
         }
 
         // Map API data to frontend product structure
@@ -173,7 +177,7 @@ const ProductDetail = () => {
         if (!similarResponse.ok) {
           throw new Error(`HTTP error! Status: ${similarResponse.status}`);
         }
-        const similarData = await similarResponse.json()
+        const similarData = await similarResponse.json();
 
         if (similarData.status && similarData.data) {
           const mappedSimilarProducts = similarData.data.map((item) => ({
@@ -248,10 +252,10 @@ const ProductDetail = () => {
         return;
       }
 
-      setListProductIds(JSON.stringify([product.id]))
-      setListVoucherIds(JSON.stringify([]))
-      setQuantity(quantity)
-      setQuantityByNow(quantity)
+      setListProductIds(JSON.stringify([product.id]));
+      setListVoucherIds(JSON.stringify([]));
+      setQuantity(quantity);
+      setQuantityByNow(quantity);
 
       navigate("/payment");
     } catch (error) {
@@ -363,15 +367,19 @@ const ProductDetail = () => {
   const flashSalePercentage =
     product.hasFlashSale && product.flashSaleQuantity > 0
       ? (product.flashSaleSold / product.flashSaleQuantity) * 100
-      : 0
+      : 0;
 
   const renderProductImages = () => {
     if (!product || !product.images || product.images.length === 0) {
       return (
         <div className="rounded-xl overflow-hidden bg-gray-50 mb-4 aspect-[3/4] flex items-center justify-center">
-          <img src="/placeholder.svg" alt="No image available" className="w-full h-full object-contain" />
+          <img
+            src="/placeholder.svg"
+            alt="No image available"
+            className="w-full h-full object-contain"
+          />
         </div>
-      )
+      );
     }
 
     return (
@@ -385,13 +393,19 @@ const ProductDetail = () => {
           loop={product.images.length > 1}
           spaceBetween={10}
           navigation={true}
-          thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+          thumbs={{
+            swiper:
+              thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null,
+          }}
           modules={[FreeMode, Navigation, Thumbs, Zoom]}
           zoom={true}
           className="product-main-swiper rounded-xl overflow-hidden bg-gray-50 mb-4 aspect-[3/4]"
         >
           {product.images.map((img, index) => (
-            <SwiperSlide key={`main-${img.id}`} onClick={() => handleImageClick(index)}>
+            <SwiperSlide
+              key={`main-${img.id}`}
+              onClick={() => handleImageClick(index)}
+            >
               <div className="swiper-zoom-container w-full h-full cursor-zoom-in">
                 <img
                   src={img.image || "/placeholder.svg"}
@@ -429,8 +443,8 @@ const ProductDetail = () => {
           </Swiper>
         )}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -608,11 +622,15 @@ const ProductDetail = () => {
                     ).toLocaleString()}
                   </span>
                   {(selectedVariant?.price || product.price) >
-                    (selectedVariant?.discountPrice || product.discountPrice) && (
-                      <span className="text-xl text-gray-500 line-through">
-                        đ{(selectedVariant?.price || product.price).toLocaleString()}
-                      </span>
-                    )}
+                    (selectedVariant?.discountPrice ||
+                      product.discountPrice) && (
+                    <span className="text-xl text-gray-500 line-through">
+                      đ
+                      {(
+                        selectedVariant?.price || product.price
+                      ).toLocaleString()}
+                    </span>
+                  )}
                 </div>
                 {product.hasFlashSale && (
                   <>
@@ -623,9 +641,12 @@ const ProductDetail = () => {
                     </div>
                     <div className="mt-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-red-600 text-sm font-medium">Đã bán {product.flashSaleSold}</span>
+                        <span className="text-red-600 text-sm font-medium">
+                          Đã bán {product.flashSaleSold}
+                        </span>
                         <span className="text-gray-600 text-sm">
-                          Còn lại: {product.flashSaleQuantity - product.flashSaleSold}
+                          Còn lại:{" "}
+                          {product.flashSaleQuantity - product.flashSaleSold}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -748,7 +769,8 @@ const ProductDetail = () => {
                   <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
                     <i className="bi bi-star-fill text-yellow-400 mr-2"></i>
                     <span>
-                      {product.shop.shopRating} ({product.shop.shopRatingCount} đánh giá)
+                      {product.shop.shopRating} ({product.shop.shopRatingCount}{" "}
+                      đánh giá)
                     </span>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
@@ -830,7 +852,6 @@ const ProductDetail = () => {
             </div>
           )}
 
-
           {/* Đánh giá */}
           {activeTab === "reviews" && (
             <div>
@@ -855,16 +876,22 @@ const ProductDetail = () => {
                         ></i>
                       ))}
                     </div>
-                    <div className="text-gray-600">{product.reviews.length} đánh giá</div>
+                    <div className="text-gray-600">
+                      {product.reviews.length} đánh giá
+                    </div>
                   </div>
                 </div>
 
                 {/* Danh sách đánh giá */}
                 <div className="md:w-2/3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">Đánh giá từ khách hàng</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Đánh giá từ khách hàng
+                    </h3>
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-600 mr-2">Phản hồi bởi:</span>
+                      <span className="text-sm text-gray-600 mr-2">
+                        Phản hồi bởi:
+                      </span>
                       <div className="flex items-center">
                         {product.shop && product.shop.logo && (
                           <img
@@ -873,7 +900,9 @@ const ProductDetail = () => {
                             className="w-8 h-8 rounded-full object-cover mr-2"
                           />
                         )}
-                        <span className="font-medium text-gray-800">{product.shop.name}</span>
+                        <span className="font-medium text-gray-800">
+                          {product.shop.name}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -915,18 +944,27 @@ const ProductDetail = () => {
                                 {[...Array(5)].map((_, index) => (
                                   <i
                                     key={index}
-                                    className={`bi ${index < Math.floor(review.rating) ? "bi-star-fill" : "bi-star"}`}
+                                    className={`bi ${
+                                      index < Math.floor(review.rating)
+                                        ? "bi-star-fill"
+                                        : "bi-star"
+                                    }`}
                                   ></i>
                                 ))}
                               </div>
-                              <p className="text-gray-700 mb-3">{review.content}</p>
+                              <p className="text-gray-700 mb-3">
+                                {review.content}
+                              </p>
                               {review.reply && (
                                 <div className="ml-4 mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
                                   <div className="flex items-start">
                                     <div className="flex-shrink-0 mr-3">
                                       {review.shop && review.shop.logo && (
                                         <img
-                                          src={review.shop.logo || "/placeholder.svg"}
+                                          src={
+                                            review.shop.logo ||
+                                            "/placeholder.svg"
+                                          }
                                           alt={`${review.shop.name} logo`}
                                           className="w-8 h-8 rounded-full object-cover border border-gray-200"
                                         />
@@ -934,7 +972,9 @@ const ProductDetail = () => {
                                     </div>
                                     <div className="flex-1">
                                       <div className="flex items-center mb-1">
-                                        <span className="font-medium text-gray-800">{review.shop.name}</span>
+                                        <span className="font-medium text-gray-800">
+                                          {review.shop.name}
+                                        </span>
                                         {review.shop.verify && (
                                           <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -953,7 +993,9 @@ const ProductDetail = () => {
                                           • {formatDate(review.reply_at)}
                                         </span>
                                       </div>
-                                      <p className="text-gray-700">{review.reply}</p>
+                                      <p className="text-gray-700">
+                                        {review.reply}
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
