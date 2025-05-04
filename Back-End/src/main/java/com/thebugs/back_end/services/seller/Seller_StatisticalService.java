@@ -1,5 +1,6 @@
 package com.thebugs.back_end.services.seller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,29 +23,31 @@ public class Seller_StatisticalService {
   private StatisticalRevenueJPA g_StatisticalRevenueJPA;
 
   public int countAllProductByShopId(int shopId) {
+
     return g_StatisticalProductJPA.countAllProductByShopId(shopId);
   }
 
-  public int countSoldProductByShopId(int shopId) {
-    return g_StatisticalRevenueJPA.countSoldProductByShopId(shopId);
+  public int countSoldProductByShopId(int shopId, LocalDate startDate, LocalDate endDate) {
+    return g_StatisticalRevenueJPA.countSoldProductByShopId(shopId, startDate, endDate);
   }
 
-  public List<Child_Product_DTO> findSellingProductWithImage(int shopId) {
-    List<String> productCode = new ArrayList<>();
+  public List<Child_Product_DTO> findSellingProductWithImage(int shopId, LocalDate startDate, LocalDate endDate) {
     Sort sort = Sort.by(Sort.Direction.DESC, "countSold");
-    return g_StatisticalRevenueJPA.findSellingProductWithImage(shopId, sort);
+    return g_StatisticalRevenueJPA.findSellingProductWithImage(shopId, startDate, endDate, sort);
   }
 
   public List<Child_Chart_DTO> getChartDataGenresProductByShopId(int shopId) {
-    return g_StatisticalProductJPA.getChartDataGenresProductByShopId(shopId);
+    Sort sort = Sort.by(Sort.Direction.DESC, "countGenre");
+    return g_StatisticalProductJPA.getChartDataGenresProductByShopId(shopId, sort);
   }
 
   public List<Child_Chart_DTO> getChartDataWarehouseProductByShopId(int shopId) {
     return g_StatisticalProductJPA.getChartDataProductStatusByShopId(shopId);
   }
 
-  public List<Child_Table_DTO> getChartDataRevenueByShopId(int shopId) {
-    List<Object[]> data= g_StatisticalProductJPA.getProductSummaryByShopId(shopId);
+  public List<Child_Table_DTO> getChartDataRevenueByShopId(int shopId, LocalDate startDate, LocalDate endDate) {
+    Sort sort = Sort.by(Sort.Direction.DESC, "soldProduct");
+    List<Object[]> data = g_StatisticalProductJPA.getProductSummaryByShopId(shopId, startDate, endDate, sort);
     List<Child_Table_DTO> childTableDTOList = mapToChildTableDTOList(data);
     return childTableDTOList;
   }

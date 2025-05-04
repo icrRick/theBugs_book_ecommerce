@@ -11,7 +11,8 @@ import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.seller.Seller_StatisticalService;
 import com.thebugs.back_end.services.user.UserService;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,39 +31,47 @@ public class Seller_StatisticalController {
   @Autowired
   private UserService g_UserService;
 
-  @GetMapping("/test")
-  public Object getMethodName() {
-    return null;
-  }
-
   @GetMapping("")
   public ResponseEntity<ResponseData> getStatisticalProducts(@RequestHeader("Authorization") String token,
-      @RequestParam(value = "startDate", required = false) String startDate,
-      @RequestParam(value = "endDate", required = false) String endDate) {
+      @RequestParam(required = false) String startDate,
+      @RequestParam(required = false) String endDate) {
+    try {
+      int shopId = g_UserService.getUserToken(token).getShop().getId();
+      DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+      System.out.println("COntrollerne");
+      // Parse String → LocalDate hoặc gán mặc định
+      LocalDate end = (endDate != null) ? LocalDate.parse(endDate, formatter) : LocalDate.now();
+      LocalDate start = (startDate != null) ? LocalDate.parse(startDate, formatter) : end.minusDays(30);
 
-    int shopId = g_UserService.getUserToken(token).getShop().getId();
+      ProductStatistical_DTO statistical_DTO = new ProductStatistical_DTO();
 
-    ProductStatistical_DTO statistical_DTO = new ProductStatistical_DTO();
+      List<Child_Product_DTO> childProducts = g_Seller_StatisticalService.findSellingProductWithImage(shopId, start,
+          end);
 
-    List<Child_Product_DTO> childProducts = g_Seller_StatisticalService.findSellingProductWithImage(shopId);
-    int countAllProducts = g_Seller_StatisticalService.countAllProductByShopId(shopId);
-    int countSoldProducts = g_Seller_StatisticalService.countSoldProductByShopId(shopId);
-    List<Child_Chart_DTO> childGenresChart = g_Seller_StatisticalService.getChartDataGenresProductByShopId(shopId);
-    List<Child_Chart_DTO> childWarehouseChart = g_Seller_StatisticalService
-        .getChartDataWarehouseProductByShopId(shopId);
-    List<Child_Table_DTO> childTable = g_Seller_StatisticalService.getChartDataRevenueByShopId(shopId);
+      int countAllProducts = g_Seller_StatisticalService.countAllProductByShopId(shopId);
+      int countSoldProducts = g_Seller_StatisticalService.countSoldProductByShopId(shopId, start, end);
 
-    statistical_DTO.setMostSoldProduct(childProducts.getFirst());
-    statistical_DTO.setLeastSoldProduct(childProducts.getLast());
-    statistical_DTO.setAllProduct(countAllProducts);
-    statistical_DTO.setSoldProduct(countSoldProducts);
-    statistical_DTO.setChart_GenresProduct(childGenresChart);
-    statistical_DTO.setChart_WareHouseProduct(childWarehouseChart);
-    statistical_DTO.setTable_ProductStatistical(childTable);
+      List<Child_Chart_DTO> childGenresChart = g_Seller_StatisticalService.getChartDataGenresProductByShopId(shopId);
+      List<Child_Chart_DTO> childWarehouseChart = g_Seller_StatisticalService
+          .getChartDataWarehouseProductByShopId(shopId);
+      List<Child_Table_DTO> childTable = g_Seller_StatisticalService.getChartDataRevenueByShopId(shopId, start,
+          end);
+      if (childProducts.size() > 0) {
+        statistical_DTO.setMostSoldProduct(childProducts.getFirst());
+        statistical_DTO.setLeastSoldProduct(childProducts.getLast());
+      }
+      statistical_DTO.setAllProduct(countAllProducts);
+      statistical_DTO.setSoldProduct(countSoldProducts);
+      statistical_DTO.setChart_GenresProduct(childGenresChart);
+      statistical_DTO.setChart_WareHouseProduct(childWarehouseChart);
+      statistical_DTO.setTable_ProductStatistical(childTable);
 
-    ResponseData responseData = new ResponseData(true, "Thống kê sản phẩm thành công", statistical_DTO);
-
-    return ResponseEntity.status(HttpStatus.valueOf(201)).body(responseData);
+      ResponseData responseData = new ResponseData(true, "Thống kê sản phẩm thành công", statistical_DTO);
+      return ResponseEntity.status(HttpStatus.valueOf(201)).body(responseData);
+    } catch (Exception e) {
+      ResponseData responseData = new ResponseData(false, "Thống kê sản phẩm thất bại", null);
+      return ResponseEntity.status(HttpStatus.valueOf(401)).body(responseData);
+    }
   }
 
   @GetMapping("/revenue")
