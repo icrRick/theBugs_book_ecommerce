@@ -200,7 +200,9 @@ const OrdersSeller = () => {
         setOrders([]);
       }
     } catch (error) {
-      showErrorToast("Đã xảy ra lỗi khi tải đơn hàng. " + error.response?.data?.message);
+      showErrorToast(
+        "Đã xảy ra lỗi khi tải đơn hàng. " + error.response?.data?.message
+      );
       setOrders([]);
     } finally {
       setTimeout(() => {
@@ -236,7 +238,7 @@ const OrdersSeller = () => {
       console.error("Error updating order status:", error);
       showErrorToast(
         error.response?.data?.message ||
-        "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!"
+          "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!"
       );
       closeCancelModal();
       fetchOrders(currentPage, activeTab);
@@ -368,7 +370,6 @@ const OrdersSeller = () => {
   const handleViewDetails = (orderId) => {
     setIsLoading(true);
     setTimeout(() => {
-
       navigate(`/seller/order/${orderId}`);
     }, 300);
   };
@@ -376,8 +377,6 @@ const OrdersSeller = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
-
-
 
   const formatDate = (dateString) => {
     const options = {
@@ -489,9 +488,10 @@ const OrdersSeller = () => {
               onClick={() => handleTabClick(tab.id)}
               className={`
                 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-                ${activeTab === tab.id
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                ${
+                  activeTab === tab.id
+                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }
               `}
             >
@@ -562,16 +562,16 @@ const OrdersSeller = () => {
                       {order?.paymentMethod || "Đã Thanh Toán"} •{" "}
                       {order?.paymentStatus || "Chưa thanh toán"}
                     </div>
-
                   </div>
 
                   {/* Bên phải - Trạng thái, Tổng tiền, Lý do hủy */}
                   <div className="flex flex-col items-end space-y-2">
                     {/* Trạng thái đơn */}
                     <div
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${statusConfig[order?.orderStatusName]?.color ||
+                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
+                        statusConfig[order?.orderStatusName]?.color ||
                         "bg-gray-100 text-gray-800 border-gray-200"
-                        }`}
+                      }`}
                     >
                       {statusConfig[order?.orderStatusName]?.icon || (
                         <svg
@@ -602,7 +602,6 @@ const OrdersSeller = () => {
                       </span>
                     </div>
 
-
                     {order?.orderStatusName === "Đã duyệt" && order.noted && (
                       <div className="text-sm text-green-600 text-right font-bold">
                         Thông báo: Đã thay đổi số lượng, vui lòng vào chi tiết
@@ -610,10 +609,7 @@ const OrdersSeller = () => {
                       </div>
                     )}
                   </div>
-
-
                 </div>
-
               </div>
               <div>
                 {/* Lý do hủy hoặc thông báo */}
@@ -622,8 +618,7 @@ const OrdersSeller = () => {
                     className="text-sm text-red-600 font-bold px-5 "
                     title={order?.noted}
                   >
-                    Lý do hủy:{" "}
-                    {order?.noted}
+                    Lý do hủy: {order?.noted}
                   </div>
                 )}
               </div>

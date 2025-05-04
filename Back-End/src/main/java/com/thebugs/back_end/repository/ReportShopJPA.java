@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.thebugs.back_end.entities.ReportShop;
-import com.thebugs.back_end.entities.ReportShop;
 
 public interface ReportShopJPA extends JpaRepository<ReportShop, Integer> {
     @Query("SELECT r FROM ReportShop r WHERE (:active IS NULL AND r.active IS NULL) OR (:active IS NOT NULL AND r.active = :active)")
@@ -65,49 +64,52 @@ public interface ReportShopJPA extends JpaRepository<ReportShop, Integer> {
             """)
     int checkReportShopByUser(@Param("shopSlug") String shopSlug, @Param("userId") Integer userId);
 
+    // code của Tâm
 
+    @Query("""
+                SELECT r FROM ReportShop r
+                WHERE r.shop.id = :shopId
+                  AND (
+                       (:active IS NULL AND r.active IS NULL)
+                    OR (:active IS NOT NULL AND r.active = :active)
+                  )
+            """)
+    Page<ReportShop> findReportShopsByActiveByShopId(
+            @Param("active") Boolean active,
+            @Param("shopId") Integer shopId,
+            Pageable pageable);
 
+    @Query("""
+                SELECT COUNT(r) FROM ReportShop r
+                WHERE r.shop.id = :shopId
+                  AND (
+                       (:active IS NULL AND r.active IS NULL)
+                    OR (:active IS NOT NULL AND r.active = :active)
+                  )
+            """)
+    int countByActiveByShopId(
+            @Param("active") Boolean active,
+            @Param("shopId") Integer shopId);
 
+    @Query("SELECT r FROM ReportShop r WHERE r.shop.id = :shopId ")
+    Page<ReportShop> findAllByShopId(@Param("shopId") Integer shopId, Pageable pageable);
 
+    @Query("""
+                SELECT COUNT(r) FROM ReportShop r
+                WHERE r.shop.id = :shopId
 
+            """)
+    int countAllByShopId(
+            @Param("shopId") Integer shopId);
 
+    @Query("""
+                SELECT r FROM ReportShop r
+                WHERE r.shop.id = :shopId
+                AND r.id = :id
 
+            """)
+    ReportShop getDetailById(
+            @Param("shopId") Integer shopId,
+            @Param("id") Integer id);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 }

@@ -22,7 +22,6 @@ public interface ReportProductJPA extends JpaRepository<ReportProduct, Integer> 
   List<ReportProduct> findReportProductsByProductAndActive(@Param("productId") Integer productId,
       @Param("active") Boolean active);
 
-      
   @Query("""
           SELECT r FROM ReportProduct r
           WHERE r.user.id = :userId
@@ -66,54 +65,4 @@ public interface ReportProductJPA extends JpaRepository<ReportProduct, Integer> 
       """)
   int checkReportProductByUser(@Param("productCode") String productCode, @Param("userId") Integer userId);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 }

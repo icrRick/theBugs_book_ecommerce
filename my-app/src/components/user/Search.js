@@ -213,20 +213,20 @@ const Search = () => {
 
   const formatSold = (sold) => {
     if (sold >= 1000000) {
-      return (sold / 1000000).toFixed(1).replace(".0", "") + "m"; // triệu
+      return (sold / 1000000).toFixed(1).replace(".0", "") + "m";
     }
     if (sold >= 1000) {
-      return (sold / 1000).toFixed(1).replace(".0", "") + "k"; // nghìn
+      return (sold / 1000).toFixed(1).replace(".0", "") + "k";
     }
     return sold.toString();
   };
 
   const formatSumCountReview = (countRateProduct) => {
     if (countRateProduct >= 1000000) {
-      return (countRateProduct / 1000000).toFixed(1).replace(".0", "") + "m"; // triệu
+      return (countRateProduct / 1000000).toFixed(1).replace(".0", "") + "m";
     }
     if (countRateProduct >= 1000) {
-      return (countRateProduct / 1000).toFixed(1).replace(".0", "") + "k"; // nghìn
+      return (countRateProduct / 1000).toFixed(1).replace(".0", "") + "k";
     }
     return countRateProduct.toString();
   };
@@ -366,7 +366,7 @@ const Search = () => {
                   onChange={handleSortChange}
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="relevance"></option>
+                  <option value="relevance">Sắp xếp theo</option>
                   <option value="price-asc">Giá: Thấp đến cao</option>
                   <option value="price-desc">Giá: Cao đến thấp</option>
                   <option value="rating">Đánh giá cao</option>

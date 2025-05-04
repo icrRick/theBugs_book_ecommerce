@@ -11,13 +11,10 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.cors.CorsConfiguration;
 
 import com.thebugs.back_end.services.CustomUserDetailsService;
 import com.thebugs.back_end.services.user.OAuth2UserService;
-import com.thebugs.back_end.utils.CustomAuthenticationEntryPoint;
 import com.thebugs.back_end.utils.JwtAuthenticationFilter;
 import com.thebugs.back_end.utils.OAuth2LoginSuccessHandler;
 
@@ -56,36 +53,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(request -> {
-                CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-                config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(Arrays.asList("*"));
-                config.setAllowCredentials(true);
-                return config;
-            }))
-            .authorizeHttpRequests(requests -> requests
-                .requestMatchers(
-                    "/login", "/comment/**", "/logout", "/register",
-                    "/api/users/**", "/home", "/home/**", "/", "/products",
-                    "/auth/**", "/genre/list", "/product-detail/**", "/images/**",
-                    "/forgotpassword", "/updatepassword/**", "/shopdetail/**",
-                    "/payment-online/**", "/reviews/**", "/forgot/**", "/api-ghn/**",
-                    "/oauth2/**", "/login/oauth2/**", "/auth/**",
-                    "/search/**", "/shop/**"
-                ).permitAll()
-                .requestMatchers("/admin/**").hasAuthority("admin")
-                .requestMatchers("/user/**").hasAnyAuthority("user", "seller")
-                .requestMatchers("/seller/**").hasAuthority("seller")
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(e -> e.authenticationEntryPoint(new CustomAuthenticationEntryPoint()))
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .oauth2Login(oauth -> oauth
-                .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
-                .successHandler(oAuth2LoginSuccessHandler)
-                .failureUrl("/auth/loginFailure")
-            );
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(Arrays.asList("*"));
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
+                .authorizeHttpRequests(requests -> requests
+                        .requestMatchers(
+                                "/login", "/comment/**", "/logout", "/register",
+                                "/api/users/**", "/home", "/home/**", "/", "/products",
+                                "/auth/**", "/genre/list", "/product-detail/**", "/images/**",
+                                "/forgotpassword", "/updatepassword/**", "/shopdetail/**",
+                                "/payment-online/**", "/reviews/**", "/forgot/**", "/api-ghn/**",
+                                "/oauth2/**", "/login/oauth2/**", "/auth/**",
+                                "/search/**", "/shop/**", "/author/**"
+                        ).permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("admin")
+                        .requestMatchers("/user/**").hasAnyAuthority("user", "seller")
+                        .requestMatchers("/seller/**").hasAuthority("seller")
+                        .anyRequest().authenticated())
+                .exceptionHandling(e -> e.authenticationEntryPoint(new CustomAuthenticationEntryPoint()))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureUrl("/auth/loginFailure"));
 
         return http.build();
     }
