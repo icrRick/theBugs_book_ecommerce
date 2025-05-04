@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.thebugs.back_end.dto.ReviewDTO;
 import com.thebugs.back_end.dto.Seller_ReviewDTO;
 import com.thebugs.back_end.entities.Review;
 
@@ -52,16 +53,14 @@ public interface ReviewJPA extends JpaRepository<Review, Integer> {
 
     @Query("SELECT r FROM Review r WHERE r.orderItem.id = ?1 AND r.user.id = ?2")
     Optional<Review> findExitsReviewByOrderItemId(Integer orderItemId, Integer userId);
-   
+
     @Query("""
-        SELECT 
-           COALESCE(AVG(r.rate), 0) 
-        FROM Review r
-        WHERE r.orderItem.product.id = :productId
-    """)
+                SELECT
+                   COALESCE(AVG(r.rate), 0)
+                FROM Review r
+                WHERE r.orderItem.product.id = :productId
+            """)
     double getAverageRateByProductId(@Param("productId") Integer productId);
-    
-    
 
     @Query("""
                 SELECT COUNT(r)
@@ -70,23 +69,35 @@ public interface ReviewJPA extends JpaRepository<Review, Integer> {
             """)
     int countReviewByProductId(@Param("productId") Integer productId);
 
-
-
-
     @Query("""
-        SELECT AVG(r.rate)
-        FROM Review r
-        WHERE r.orderItem.product.shop.id = :shopId
-    """)
+                SELECT AVG(r.rate)
+                FROM Review r
+                WHERE r.orderItem.product.shop.id = :shopId
+            """)
     double getAverageRateByShopId(@Param("shopId") Integer shopId);
-    
+
     @Query("""
-        SELECT COUNT(r)
-        FROM Review r
-        WHERE r.orderItem.product.shop.id = :shopId
-    """)
+                SELECT COUNT(r)
+                FROM Review r
+                WHERE r.orderItem.product.shop.id = :shopId
+            """)
     int countReviewByShopId(@Param("shopId") Integer shopId);
 
-
-    
+    @Query("SELECT new com.thebugs.back_end.dto.ReviewDTO(" +
+            "r.id, " +
+            "r.createdAt, " +
+            "r.rate, " +
+            "r.content, " +
+            "r.reply, " +
+            "r.replyAt, " +
+            "u.fullName, u.avatar, " +
+            "s.name, s.image, s.user.verify) " +
+            "FROM Review r " +
+            "JOIN r.orderItem oi " +
+            "JOIN oi.product p " +
+            "JOIN r.user u " +
+            "JOIN p.shop s " +
+            "WHERE p.id = :productId " +
+            "ORDER BY r.createdAt DESC")
+    List<ReviewDTO> findReviewsByProductId(Integer productId);
 }

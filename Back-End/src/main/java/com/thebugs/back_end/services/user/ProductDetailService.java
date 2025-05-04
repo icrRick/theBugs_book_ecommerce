@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import com.thebugs.back_end.dto.ProductDetailDTO;
 import com.thebugs.back_end.dto.ProductDetailDTO.ShopDTO;
 import com.thebugs.back_end.dto.RelatedProductDTO;
+import com.thebugs.back_end.dto.ReviewDTO;
 import com.thebugs.back_end.repository.ProductJPA;
+import com.thebugs.back_end.repository.ReviewJPA;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +18,9 @@ public class ProductDetailService {
 
     @Autowired
     private ProductJPA productJPA;
+
+    @Autowired
+    private ReviewJPA reviewJPA;
 
     public ProductDetailDTO getProductDetailById(Integer productId) {
         ProductDetailDTO productDetail = productJPA.findProductDetailById(productId);
@@ -57,4 +62,12 @@ public class ProductDetailService {
                 .collect(Collectors.toList());
     }
 
+    public List<ReviewDTO> getReviewsByProductId(Integer productId) {
+        List<ReviewDTO> reviews = reviewJPA.findReviewsByProductId(productId);
+
+        if (reviews == null || reviews.isEmpty()) {
+            return List.of();
+        }
+        return reviews;
+    }
 }

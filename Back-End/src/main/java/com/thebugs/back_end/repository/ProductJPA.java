@@ -162,8 +162,14 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "p.name, " +
             "p.product_code, " +
             "p.price, " +
-            "(p.price - COALESCE((p.price * COALESCE(pr.promotionValue, 0) / 100), 0.0)), " +
-            "COALESCE(pr.promotionValue, 0.0), " +
+            "CASE WHEN pr.id IS NOT NULL AND pr.flashSale = true AND pr.active = true " +
+            "AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE " +
+            "THEN (p.price - (p.price * COALESCE(pr.promotionValue, 0) / 100)) " +
+            "ELSE p.price END, " +
+            "COALESCE((SELECT pr2.promotionValue FROM Promotion pr2 JOIN pr2.promotionProducts pp2 " +
+            "WHERE pp2.product.id = p.id AND pr2.active = true " +
+            "AND pr2.startDate <= CURRENT_DATE AND pr2.expireDate >= CURRENT_DATE " +
+            "ORDER BY pr2.flashSale DESC, pr2.startDate DESC LIMIT 1), 0.0), " +
             "p.weight, " +
             "p.createdAt, " +
             "p.description, " +
@@ -172,18 +178,24 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "CAST(COALESCE(SUM(oi.quantity), 0) AS INTEGER), " +
             "p.quantity, " +
             "COALESCE(p.publisher.name, ''), " +
-            "CASE WHEN COALESCE(pr.flashSale, false) = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END, "
+            "CASE WHEN pr.id IS NOT NULL AND pr.flashSale = true AND pr.active = true " +
+            "AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END, " +
+            "CASE WHEN pr.id IS NOT NULL AND pr.flashSale = true AND pr.active = true " +
+            "AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN COALESCE(pp.quantity, 0) ELSE 0 END, "
             +
-            "CASE WHEN COALESCE(pr.flashSale, false) = true THEN COALESCE(pp.quantity, 0) ELSE 0 END, " +
-            "CASE WHEN COALESCE(pr.flashSale, false) = true THEN COALESCE(pp.soldQuantity, 0) ELSE 0 END) " +
+            "CASE WHEN pr.id IS NOT NULL AND pr.flashSale = true AND pr.active = true " +
+            "AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN COALESCE(pp.soldQuantity, 0) ELSE 0 END) "
+            +
             "FROM Product p " +
             "LEFT JOIN p.promotionProducts pp " +
             "LEFT JOIN pp.promotion pr " +
             "LEFT JOIN p.orderItems oi " +
             "LEFT JOIN oi.reviews r " +
             "LEFT JOIN p.publisher pub " +
-            "WHERE p.id = :productId AND p.active = true AND p.approve = true " +
-            "GROUP BY p.id, p.name, p.product_code, p.price, COALESCE(pr.promotionValue, 0.0), COALESCE(pr.flashSale, false), COALESCE(pr.active, false), COALESCE(pr.startDate, CURRENT_DATE), COALESCE(pr.expireDate, CURRENT_DATE), COALESCE(pp.quantity, 0), COALESCE(pp.soldQuantity, 0), p.weight, p.createdAt, p.description, p.quantity, COALESCE(pub.name, '')")
+            "WHERE p.id = :productId AND p.active = true AND (p.approve is not null and p.approve = true) " +
+            "AND (p.status is null or (p.status is not null and p.status = false)) " +
+            "GROUP BY p.id, p.name, p.product_code, p.price, pr.id, pp.quantity, pp.soldQuantity, p.weight, " +
+            "p.createdAt, p.description, p.quantity, p.publisher.name")
     ProductDetailDTO findProductDetailById(@Param("productId") Integer productId);
 
     @Query("SELECT new com.thebugs.back_end.dto.ProductDetailDTO$ShopDTO(" +
@@ -192,13 +204,13 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "s.name, " +
             "u.verify, " +
             "COALESCE(ROUND(AVG(r.rate), 1), 0.0), " +
-            "CAST(COALESCE(COUNT(r.id), 0) AS INTEGER), " + // Đếm số lượng đánh giá từ reviews
-            "CAST(COALESCE((SELECT COUNT(sp.id) FROM Product sp WHERE sp.shop.id = s.id AND sp.active = true AND sp.approve = true), 0) AS INTEGER), "
+            "CAST(COALESCE(COUNT(r.id), 0) AS INTEGER), " +
+            "CAST(COALESCE((SELECT COUNT(sp.id) FROM Product sp WHERE sp.shop.id = s.id AND sp.active = true AND sp.approve = true AND (sp.status is null or (sp.status is not null and sp.status = false))), 0) AS INTEGER), "
             +
             "s.shop_slug) " +
             "FROM Shop s " +
             "JOIN User u ON s.user.id = u.id " +
-            "LEFT JOIN s.products p2 " + // Nối với tất cả sản phẩm của cửa hàng
+            "LEFT JOIN s.products p2 " +
             "LEFT JOIN p2.orderItems oi " +
             "LEFT JOIN oi.reviews r " +
             "WHERE s.id = (SELECT p.shop.id FROM Product p WHERE p.id = :productId) " +
@@ -234,7 +246,9 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "LEFT JOIN pp.promotion pr " +
             "LEFT JOIN p.orderItems oi " +
             "LEFT JOIN oi.reviews r " +
-            "WHERE (pr IS NULL OR (pr.active = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE)) "
+            "WHERE p.active = true AND p.approve = true AND (p.status is null or (p.status is not null and p.status = false)) "
+            +
+            "AND (pr IS NULL OR (pr.active = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE)) "
             +
             "AND pg.genre.id IN (" +
             "   SELECT pg2.genre.id FROM ProductGenre pg2 WHERE pg2.product.product_code = :productCode" +

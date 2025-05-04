@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.thebugs.back_end.dto.ProductDetailDTO;
 import com.thebugs.back_end.dto.RelatedProductDTO;
+import com.thebugs.back_end.dto.ReviewDTO;
 import com.thebugs.back_end.entities.Product;
 import com.thebugs.back_end.repository.ProductJPA;
 import com.thebugs.back_end.services.user.ProductDetailService;
@@ -91,4 +92,29 @@ public class ProductDetailController {
         }
     }
 
+    @GetMapping("/{product_code}/reviews")
+    public ResponseEntity<Map<String, Object>> getProductReviews(@PathVariable String product_code) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Optional<Product> productOptional = productJPA.findProductCodeById(product_code);
+            if (!productOptional.isPresent()) {
+                response.put("status", false);
+                response.put("message", "Không tìm thấy sản phẩm với mã: " + product_code);
+                response.put("data", null);
+                return ResponseEntity.status(404).body(response);
+            }
+            Product product = productOptional.get();
+            List<ReviewDTO> reviews = productDetailService.getReviewsByProductId(product.getId());
+            response.put("status", true);
+            response.put("message", reviews.isEmpty() ? "Chưa có đánh giá nào cho sản phẩm này."
+                    : "Load danh sách đánh giá thành công");
+            response.put("data", reviews);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", false);
+            response.put("message", "Đã xảy ra lỗi khi load danh sách đánh giá: " + e.getMessage());
+            response.put("data", null);
+            return ResponseEntity.status(500).body(response);
+        }
+    }
 }

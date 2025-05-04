@@ -26,16 +26,16 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                                 COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0),
                                 COALESCE(pr.promotionValue, 0.0),
                                 CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END,
-                                CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE
+                                CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE
                                 THEN COALESCE((p.price * pr.promotionValue / 100), 0.0) ELSE 0.0 END,
                                 p.product_code,
-                                CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END
+                                CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END
                             )
                             FROM Product p
                             LEFT JOIN p.images i
                             LEFT JOIN p.promotionProducts pp
                             LEFT JOIN pp.promotion pr
-                            WHERE p.active = true AND p.approve = true
+                            WHERE p.active = true AND (p.approve is not null and p.approve = true) AND (p.status is null or (p.status is not null and p.status = false))
                             AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
                             ORDER BY p.id DESC
                         """)
@@ -51,17 +51,18 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
                         +
                         "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
                         +
                         ") " +
                         "FROM Product p " +
                         "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
                         "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id AND pr.active = true " +
-                        "WHERE p.active = true AND p.approve = true " +
+                        "WHERE p.active = true AND (p.approve is not null and p.approve = true) AND (p.status is null or (p.status is not null and p.status = false)) "
+                        +
                         "AND EXISTS (SELECT oi FROM OrderItem oi WHERE oi.product.id = p.id) " +
                         "AND COALESCE((SELECT ROUND(AVG(r.rate), 1) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0.0) >= 4.0 "
                         +
@@ -76,11 +77,11 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id = oi.id), 0), " +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
                         +
                         "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
                         +
                         ") " +
                         "FROM Product p " +
@@ -88,7 +89,8 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "LEFT JOIN Review r ON r.orderItem.id = oi.id " +
                         "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
                         "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id AND pr.active = true " +
-                        "WHERE p.active = true AND p.approve = true " +
+                        "WHERE p.active = true AND (p.approve is not null and p.approve = true) AND (p.status is null or (p.status is not null and p.status = false)) "
+                        +
                         "AND p.createdAt >= :thirtyDaysAgo " +
                         "GROUP BY p.id, p.name, p.price, COALESCE(pr.promotionValue, 0.0), p.createdAt " +
                         "ORDER BY p.createdAt DESC")
@@ -102,11 +104,11 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id = oi.id), 0), " +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
                         +
                         "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        "CASE WHEN pr.flashSale = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
                         +
                         ") " +
                         "FROM Product p " +
@@ -114,8 +116,10 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "LEFT JOIN Review r ON r.orderItem.id = oi.id " +
                         "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
                         "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id AND pr.active = true " +
-                        "WHERE p.active = true AND p.approve = true " +
+                        "WHERE p.active = true AND (p.approve is not null and p.approve = true) AND (p.status is null or (p.status is not null and p.status = false)) "
+                        +
                         "AND pr.promotionValue IS NOT NULL " +
+                        "AND pr.flashSale = true " +
                         "AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
                         +
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.createdAt " +
