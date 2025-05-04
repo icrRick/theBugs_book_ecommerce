@@ -1,6 +1,7 @@
 package com.thebugs.back_end.mappers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,5 +71,46 @@ public class AdminRevenueShopMapper {
         }
         return new ArrayList<>(revenueMap.values());
     }
+     
+    public Object toShopDTO(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+    
+        List<Map<String, Object>> orderList = new ArrayList<>();
+    
+        for (Order order : orders) {
+            double totalOriginal = 0.0;
+            double totalPromo = 0.0;
+            double totalDiscount = 0.0;
+    
+            for (OrderItem oi : order.getOrderItems()) {
+                totalOriginal += oi.getQuantity() * oi.getOlPrice();
+                totalPromo += oi.getQuantity() * oi.getPrice();
+            }
+    
+            if (order.getVoucher() != null && order.getVoucher().getDiscountPercentage() != null) {
+                double discountPercentage = order.getVoucher().getDiscountPercentage();
+                double maxDiscount = order.getVoucher().getMaxDiscount();
+                totalDiscount = Math.min(totalPromo * discountPercentage / 100, maxDiscount);
+            }
+    
+            double promoAfterDiscount = totalPromo - totalDiscount;
+    
+            Map<String, Object> orderSummary = new HashMap<>();
+            orderSummary.put("orderId", order.getId());
+            orderSummary.put("createdAt", order.getCreatedAt());
+            orderSummary.put("totalOlPrice", Math.round(totalOriginal * 10.0) / 10.0);
+            orderSummary.put("totalPromoPrice", Math.round(promoAfterDiscount * 10.0) / 10.0);
+    
+            orderList.add(orderSummary);
+        }
+    
+        return orderList;
+    }
+    
+    
+    
+    
     
 }

@@ -166,4 +166,57 @@ public interface OrderJPA extends JpaRepository<Order, Integer> {
         int countRevenueShops(@Param("startDate") Date startDate,
                         @Param("endDate") Date endDate);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        @Query("SELECT o FROM Order o " +
+                        "LEFT JOIN o.orderItems oi " +
+                        "WHERE o.orderStatus.id >= 4 " +
+                        "AND o.shop.id =:shopId "+
+                        "AND o.orderPayment.id IN (2, 3) " +
+                        "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        Page<Order> getShopRevenuePageShopId(@Param("startDate") Date startDate,
+                        @Param("endDate") Date endDate,
+                        @Param("shopId") Integer shopId,
+                        Pageable pageable);
+
+        @Query("SELECT o FROM Order o " +
+                        "LEFT JOIN o.orderItems oi " +
+                        "WHERE o.orderStatus.id >= 4 " +
+                        "AND o.shop.id =:shopId "+
+                        "AND o.orderPayment.id IN (2, 3) " +
+                        "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        List<Order> getShopRevenueShopId(@Param("startDate") Date startDate,
+                        @Param("endDate") Date endDate , @Param("shopId") Integer shopId);
+
+        @Query("SELECT COUNT(DISTINCT o.shop.id) " +
+                        "FROM Order o " +
+                        "LEFT JOIN o.orderItems oi " +
+                        "WHERE o.orderStatus.id  >= 4  " +
+                        "AND o.shop.id =:shopId "+
+                        "AND o.orderPayment.id IN (2, 3) " +
+                        "AND (:startDate IS NULL OR o.createdAt >= :startDate) " +
+                        "AND (:endDate IS NULL OR o.createdAt <= :endDate)")
+        int countRevenueShopId(@Param("startDate") Date startDate,
+                        @Param("endDate") Date endDate, @Param("shopId") Integer shopId);                
+
 }
