@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import axios from "axios";
@@ -180,6 +178,7 @@ const Store = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [banks, setBanks] = useState([]);
 
   const [storeData, setStoreData] = useState({
     name: "",
@@ -415,7 +414,23 @@ const Store = () => {
     setPreviewBanner(originalData.bannerUrl);
     setIsEditing(false);
   };
-
+  // Load banks when editing
+  useEffect(() => {
+    if (isEditing) {
+      fetchBanks();
+    }
+  }, [isEditing]);
+  // Fetch banks from VietQR API
+  const fetchBanks = useCallback(async () => {
+    try {
+      const response = await axios.get("https://api.vietqr.io/v2/banks");
+      if (response.data && response.data.data) {
+        setBanks(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching banks:", error);
+    }
+  }, []);
   // Loading state
   if (isLoading) {
     return (
@@ -1047,6 +1062,157 @@ const Store = () => {
                       </p>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bank Information */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-8 transition-all duration-300 hover:shadow-md">
+              <h3 className="text-lg font-medium text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2 text-emerald-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  ></path>
+                </svg>
+                Thông tin ngân hàng
+              </h3>
+
+              <div className="space-y-6">
+                {/* Bank Provider */}
+                <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngân hàng <span className="text-red-500">*</span>
+                  </label>
+                  {isEditing ? (
+                    <div className="relative">
+                      <select
+                        name="bankProvideName"
+                        value={storeData.bankProvideName || ""}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200 appearance-none"
+                      >
+                        <option value="">-- Chọn ngân hàng --</option>
+                        {banks.map((bank) => (
+                          <option key={bank.id} value={bank.shortName}>
+                            {bank.shortName} - {bank.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-800 flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-2 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                        ></path>
+                      </svg>
+                      {storeData.bankProvideName || "Chưa cập nhật"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bank Account Owner */}
+                <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên chủ tài khoản <span className="text-red-500">*</span>
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="bankOwnerName"
+                      value={storeData.bankOwnerName || ""}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder="Nhập tên chủ tài khoản"
+                    />
+                  ) : (
+                    <p className="text-gray-800 flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-2 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        ></path>
+                      </svg>
+                      {storeData.bankOwnerName || "Chưa cập nhật"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bank Account Number */}
+                <div className="transition-all duration-200 p-3 rounded-md hover:bg-gray-50">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số tài khoản <span className="text-red-500">*</span>
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="bankOwnerNumber"
+                      value={storeData.bankOwnerNumber || ""}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder="Nhập số tài khoản"
+                    />
+                  ) : (
+                    <p className="text-gray-800 flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-2 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        ></path>
+                      </svg>
+                      {storeData.bankOwnerNumber || "Chưa cập nhật"}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

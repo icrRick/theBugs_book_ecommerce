@@ -314,6 +314,7 @@ const Ordered = () => {
         showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái");
       }
     } finally {
+      fetchAllOrders(keyword, currentPage);
       setIsLoading(false);
 
     }
