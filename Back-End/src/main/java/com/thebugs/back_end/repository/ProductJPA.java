@@ -102,6 +102,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                     COALESCE((p.price - (p.price * pr.promotionValue / 100)), 0.0),
                     p.product_code,
                     s.id,
+                    s.shop_slug,
                     s.name
 
                 )

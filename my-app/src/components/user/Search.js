@@ -28,15 +28,15 @@ const Search = () => {
         const minPriceParams = searchParams.get("minPrice") || "";
         const maxPriceParams = searchParams.get("maxPrice") || "";
         const pageParam = parseInt(searchParams.get("page") || 1);
-        const genresIDs = searchParams.getAll("genresID");
+        const genreNames = searchParams.getAll("genres");
         const sortByParam = searchParams.get("sortBy") || "relevance";
 
         setPriceRange({ min: minPriceParams, max: maxPriceParams });
         setCurrentPage(pageParam);
 
-        if (genresIDs.length > 0) {
+        if (genreNames.length > 0 && genres.length > 0) {
           const selected = genres
-            .filter((cat) => genresIDs.includes(cat.id.toString()))
+            .filter((cat) => genreNames.includes(cat.name))
             .map((cat) => cat.name);
           setSelectedCategories(selected);
         } else {
@@ -47,7 +47,9 @@ const Search = () => {
         if (keyword) params.append("keyword", keyword);
         if (priceRange.min !== "") params.append("minPrice", priceRange.min);
         if (priceRange.max !== "") params.append("maxPrice", priceRange.max);
-        genresIDs.forEach((id) => params.append("genresID", id));
+        selectedCategories.forEach((catName) => {
+          params.append("genres", catName);
+        });
         params.append("page", pageParam);
         params.append("sortBy", sortByParam);
 
@@ -90,6 +92,26 @@ const Search = () => {
     setSearchParams(newParams);
   };
 
+  useEffect(() => {
+    const sortByParam = searchParams.get("sortBy") || "relevance";
+    setSortBy(sortByParam);
+
+    const minPrice = searchParams.get("minPrice") || "";
+    const maxPrice = searchParams.get("maxPrice") || "";
+    setPriceRange({ min: minPrice, max: maxPrice });
+
+    const genreNames = searchParams.getAll("genres");
+
+    if (genreNames.length > 0 && genres.length > 0) {
+      const selected = genres
+        .filter((cat) => genreNames.includes(cat.name))
+        .map((cat) => cat.name);
+      setSelectedCategories(selected);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [searchParams, genres]);
+
   const handleCategoryChange = (category) => {
     setLoading(true);
     setSelectedCategories((prev) => {
@@ -101,15 +123,15 @@ const Search = () => {
       }
 
       const params = new URLSearchParams(searchParams);
-      params.delete("genresID");
+      params.delete("genres"); // ✅ xóa các genres cũ từ URL
+
       newSelected.forEach((cat) => {
-        const catObj = genres.find((g) => g.name === cat);
-        if (catObj) {
-          params.append("genresID", catObj.id);
-        }
+        params.append("genres", cat);
       });
-      params.set("page", 1);
+
+      params.set("page", 1); // reset trang về đầu
       setSearchParams(params);
+
       setTimeout(() => {
         window.scrollTo({
           top: 0,
@@ -148,17 +170,16 @@ const Search = () => {
     if (keyword) params.set("keyword", keyword);
     if (priceRange.min) params.set("minPrice", priceRange.min);
     if (priceRange.max) params.set("maxPrice", priceRange.max);
+
     if (selectedCategories.length > 0) {
       selectedCategories.forEach((cat) => {
-        const catObj = genres.find((c) => c.name === cat);
-        if (catObj) params.append("genresID", catObj.id);
+        params.append("genres", cat);
       });
     }
 
     params.set("page", 1);
 
     setSearchParams(params);
-
     setIsFilterOpen(false);
 
     setTimeout(() => {
@@ -173,7 +194,7 @@ const Search = () => {
     const params = new URLSearchParams(searchParams);
 
     params.delete("keyword");
-    params.delete("genresID");
+    params.delete("genres");
     params.delete("minPrice");
     params.delete("maxPrice");
     params.set("page", 1);
@@ -512,7 +533,7 @@ const Search = () => {
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
                   <Link
-                    to={`/product-detail/${product?.productId}`}
+                    to={`/product-detail/${product?.productCode}`}
                     className="block"
                     // onClick={() => handleSelectProduct(product)}
                   >
@@ -577,7 +598,7 @@ const Search = () => {
 
                       <div className="flex items-center justify-between">
                         <Link
-                          to={`/shop/${product?.shopId}`}
+                          to={`/shop/${product?.shopSlug}`}
                           className="flex items-center text-gray-500 hover:text-gray-800 text-sm space-x-1"
                         >
                           <svg

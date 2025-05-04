@@ -19,6 +19,7 @@ public class SearchProductDTO {
     private Double discountPrice;
     private String productCode;
     private Integer shopId;
+    private String shopSlug;
     private String shopName;
 
 }

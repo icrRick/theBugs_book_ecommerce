@@ -47,7 +47,7 @@ public class SearchProductService {
                 .collect(Collectors.joining("")) + "%";
     }
 
-    public Map<String, Object> searchProduct(String keyword, List<Integer> genresID,
+    public Map<String, Object> searchProduct(String keyword, List<String> genreNames,
             Double minPrice, Double maxPrice,
             String sortBy, int page) {
 
@@ -57,8 +57,16 @@ public class SearchProductService {
             keyword = createCharacterPattern(keyword);
         }
 
+        List<Integer> genresIDs = null;
+        if (genreNames != null && !genreNames.isEmpty()) {
+            genresIDs = genreJPA.findByNameIn(genreNames)
+                    .stream()
+                    .map(g -> g.getId())
+                    .collect(Collectors.toList());
+        }
+
         Pageable pageable = PageRequest.of(page - 1, 16);
-        Page<SearchProductDTO> result = productJPA.searchProducts(keyword, minPrice, maxPrice, genresID, sortBy,
+        Page<SearchProductDTO> result = productJPA.searchProducts(keyword, minPrice, maxPrice, genresIDs, sortBy,
                 pageable);
 
         Map<String, Object> map = new HashMap<>();
