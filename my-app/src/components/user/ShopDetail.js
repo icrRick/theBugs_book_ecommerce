@@ -361,21 +361,20 @@ const ShopDetail = () => {
 
                 {/* Thông tin bổ sung */}
                 <div className="flex flex-wrap gap-3 mb-4 text-sm text-gray-600">
-                  <div className="flex items-center bg-gray-50 rounded-full ">
+                  <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
                     <i className="bi bi-star-fill text-yellow-400 mr-2"></i>
                     <span>{shop?.shopRating || 0} ({shop?.shopRatingCount || 0} đánh giá)</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full ">
+                  <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
                     <i className="bi bi-box text-gray-500 mr-2"></i>
                     <span>{shop?.productsCount} sản phẩm</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full ">
+                  <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
                     <i className="bi bi-geo-alt text-gray-500 mr-2"></i>
                     <span>{shop?.shopAddress || "Không có địa chỉ"}</span>
                   </div>
-                  <div className="flex items-center bg-gray-50 rounded-full ">
+                  <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
                     <i className="bi bi-calendar text-gray-500 mr-2"></i>
-                    {/* <span>Tham gia từ {new Date().toLocaleDateString('vi-VN')}</span> */}
                     {shop?.shopCreatAt}
                   </div>
                 </div>
@@ -400,155 +399,211 @@ const ShopDetail = () => {
         </div>
       </div>
 
-      {/* dùng swiperjs Free mode carousel nhiều item 1 item chứa hình ảnh số lượng đã bán và còn lại */}
+      {/* Phần sản phẩm đang giảm giá */}
       {
         promotion && promotion.length > 0 && (
-          <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Sản phẩm đang giảm giá hôm nay</h2>
-            <div className="relative featured-swiper-container">
-              <Swiper
-                slidesPerView={2}
-                spaceBetween={16}
-                freeMode={{
-                  enabled: true,
-                  sticky: false,
-                  momentumBounce: true,
-                  minimumVelocity: 0.1,
-                  momentum: true
-                }}
-                navigation={false}
-                autoplay={{
-                  delay: 5000,
-                  disableOnInteraction: false,
-                }}
-                pagination={{
-                  el: '.swiper-pagination',
-                  clickable: true,
-                  dynamicBullets: true,
-                  dynamicMainBullets: 3,
-                }}
-                grabCursor={true}
-                breakpoints={{
-                  640: {
-                    slidesPerView: 3,
-                    spaceBetween: 20,
-                  },
-                  768: {
-                    slidesPerView: 4,
-                    spaceBetween: 24,
-                  },
-                  1024: {
-                    slidesPerView: 5,
-                    spaceBetween: 28,
-                  },
-                }}
-                modules={[FreeMode, Autoplay, SwiperPagination]}
-                className="featured-products-swiper"
-              >
-                {promotion?.map((product) => (
-                  <SwiperSlide key={product.id}>
-                    <ProductCard product={product} />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-              <div className="swiper-pagination mt-4"></div>
+          <div className="mt-10 relative overflow-hidden">
+            {/* Banner nền với gradient và border */}
+            <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 rounded-2xl opacity-75"></div>
+            
+            {/* Viền trang trí */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400"></div>
+            
+            {/* Huy hiệu sale */}
+            <div className="absolute -top-3 -right-3 md:top-4 md:right-4 bg-red-600 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full shadow-lg transform rotate-12 z-10">
+              SALE
             </div>
+            
+            <div className="relative rounded-2xl shadow-lg p-6 md:p-8 border border-orange-100 z-0">
+              {/* Tiêu đề với icon */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-red-600 flex items-center">
+                  <i className="bi bi-lightning-charge-fill text-orange-500 mr-2 text-2xl"></i>
+                  <span>Sản phẩm đang giảm giá hôm nay</span>
+                </h2>
+                
+                {/* Badge chớp nháy "HOT" */}
+                <span className="inline-flex items-center justify-center px-3 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full shadow-sm animate-pulse">
+                  HOT DEAL
+                </span>
+              </div>
+              
+              <div className="relative featured-swiper-container">
+                <Swiper
+                  slidesPerView={2}
+                  spaceBetween={16}
+                  freeMode={{
+                    enabled: true,
+                    sticky: false,
+                    momentumBounce: true,
+                    minimumVelocity: 0.1,
+                    momentum: true
+                  }}
+                  navigation={false}
+                  autoplay={{
+                    delay: 5000,
+                    disableOnInteraction: false,
+                  }}
+                  pagination={{
+                    el: '.swiper-pagination',
+                    clickable: true,
+                    dynamicBullets: true,
+                    dynamicMainBullets: 3,
+                  }}
+                  grabCursor={true}
+                  breakpoints={{
+                    640: {
+                      slidesPerView: 3,
+                      spaceBetween: 20,
+                    },
+                    768: {
+                      slidesPerView: 4,
+                      spaceBetween: 24,
+                    },
+                    1024: {
+                      slidesPerView: 5,
+                      spaceBetween: 28,
+                    },
+                  }}
+                  modules={[FreeMode, Autoplay, SwiperPagination]}
+                  className="featured-products-swiper"
+                >
+                  {promotion?.map((product) => (
+                    <SwiperSlide key={product.id}>
+                      <div className="transform transition-transform duration-300">
+                        <ProductCard product={product} />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+                <div className="swiper-pagination mt-6"></div>
+              </div>
 
-            <style jsx="true">{`
-          .featured-swiper-container {
-            position: relative;
-            padding: 0;
-          }
-          
-          .swiper-pagination {
-            position: relative;
-            bottom: 0;
-            margin-top: 16px;
-          }
-          
-          .swiper-pagination-bullet {
-            width: 8px;
-            height: 8px;
-            margin: 0 4px;
-            background: #ddd;
-            opacity: 1;
-          }
-          
-          .swiper-pagination-bullet-active {
-            background: #4f46e5;
-            width: 24px;
-            border-radius: 4px;
-          }
-        `}</style>
+              <style jsx="true">{`
+            .featured-swiper-container {
+              position: relative;
+              padding: 0;
+            }
+            
+            .swiper-pagination {
+              position: relative;
+              bottom: 0;
+              margin-top: 16px;
+            }
+            
+            .swiper-pagination-bullet {
+              width: 8px;
+              height: 8px;
+              margin: 0 4px;
+              background: #fecaca;
+              opacity: 1;
+              transition: all 0.3s ease;
+            }
+            
+            .swiper-pagination-bullet-active {
+              background: #ef4444;
+              width: 24px;
+              border-radius: 4px;
+            }
+            
+            @keyframes pulsate {
+              0% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.1); opacity: 0.8; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            
+            .featured-products-swiper .swiper-slide {
+              transition: transform 0.3s ease;
+            }
+            
+            .featured-products-swiper .swiper-slide:hover {
+              z-index: 1;
+            }
+          `}</style>
+            </div>
           </div>
         )
       }
 
       {/* Product List */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-8">
         {/* Filter Sidebar */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-xl shadow-sm p-4 sticky top-0 ">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Bộ lọc</h3>
-            <ul className="space-y-4">
-              <li className="text-gray-600">
-                <h4 className="font-medium text-gray-700 mb-3">Thể loại</h4>
-                <ul className="space-y-2">
+          <div className="bg-white rounded-xl shadow-sm p-6 sticky top-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+              <i className="bi bi-funnel mr-2 text-indigo-600"></i>
+              Bộ lọc
+            </h3>
+            <ul className="space-y-6">
+              <li className="pb-5 border-b border-gray-100">
+                <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                  <i className="bi bi-tags mr-2 text-indigo-500"></i>
+                  Thể loại
+                </h4>
+                <ul className="space-y-2 pl-2">
                   {visibleGenres.map((genre) => (
                     <li key={genre.id} className="flex items-center">
                       <input
                         type="checkbox"
                         id={`genre-${genre.id}`}
                         value={genre.id}
-                        className="mr-2"
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-2"
                         checked={genres.includes(genre.id)}
                         onChange={() => handleGenreChange(genre.id, genre.name)}
                       />
-                      <label htmlFor={`genre-${genre.id}`}>{genre.name}</label>
+                      <label htmlFor={`genre-${genre.id}`} className="text-gray-600 cursor-pointer select-none hover:text-indigo-600 transition-colors">{genre.name}</label>
                     </li>
                   ))}
                 </ul>
                 {shop?.genres?.length > 5 && (
                   <button
                     onClick={() => setShowAllGenres(!showAllGenres)}
-                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-3 flex items-center"
                   >
+                    <i className={`bi ${showAllGenres ? 'bi-chevron-up' : 'bi-chevron-down'} mr-1`}></i>
                     {showAllGenres ? "Thu gọn" : `Xem thêm (${shop.genres.length - 5})`}
                   </button>
                 )}
               </li>
 
-              <li className="text-gray-600">
-                <h4 className="font-medium text-gray-700 mb-3">Tác giả</h4>
-                <ul className="space-y-2">
+              <li className="pb-5 border-b border-gray-100">
+                <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                  <i className="bi bi-person mr-2 text-indigo-500"></i>
+                  Tác giả
+                </h4>
+                <ul className="space-y-2 pl-2">
                   {visibleAuthors.map((author) => (
                     <li key={author.id} className="flex items-center">
                       <input
                         type="checkbox"
                         id={`author-${author.id}`}
                         value={author.id}
-                        className="mr-2"
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-2"
                         checked={authors.includes(author.id)}
                         onChange={(e) => handleAuthorChange(author.id, author.name)}
                       />
-                      <label htmlFor={`author-${author.id}`}>{author.name}</label>
+                      <label htmlFor={`author-${author.id}`} className="text-gray-600 cursor-pointer select-none hover:text-indigo-600 transition-colors">{author.name}</label>
                     </li>
                   ))}
                 </ul>
                 {shop?.authors?.length > 5 && (
                   <button
                     onClick={() => setShowAllAuthors(!showAllAuthors)}
-                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2"
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-3 flex items-center"
                   >
+                    <i className={`bi ${showAllAuthors ? 'bi-chevron-up' : 'bi-chevron-down'} mr-1`}></i>
                     {showAllAuthors ? "Thu gọn" : `Xem thêm (${shop.authors.length - 5})`}
                   </button>
                 )}
               </li>
 
-              <li className="text-gray-600">
-                <h4 className="font-medium text-gray-700 mb-3">Giá</h4>
+              <li className="pb-5 border-b border-gray-100">
+                <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                  <i className="bi bi-currency-dollar mr-2 text-indigo-500"></i>
+                  Giá
+                </h4>
                 <div className="space-y-4">
-                  <div className="relative">
+                  <div className="relative px-2">
                     <input
                       type="range"
                       min="0"
@@ -566,23 +621,25 @@ const ShopDetail = () => {
                       <span>200K+</span>
                     </div>
                   </div>
-                  <div className="text-sm">
-                    <p className="font-medium text-indigo-600">
-                      Khoảng giá: {minPrice.toLocaleString('vi-VN')}đ - {maxPrice === 1000000000 ? '∞' : maxPrice.toLocaleString('vi-VN') + 'đ'}
+                  <div className="bg-indigo-50 px-4 py-3 rounded-lg">
+                    <p className="font-medium text-indigo-700 text-sm">
+                      Khoảng giá: <span className="font-semibold">{minPrice.toLocaleString('vi-VN')}đ - {maxPrice === 1000000000 ? '∞' : maxPrice.toLocaleString('vi-VN') + 'đ'}</span>
                     </p>
                   </div>
                 </div>
               </li>
 
-              <li className="mt-4 flex gap-2">
+              <li className="mt-6 space-y-3">
                 <button
                   onClick={handleApplyFilter}
-                  className="w-full bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                  className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center">
+                  <i className="bi bi-funnel-fill mr-2"></i>
                   Áp dụng bộ lọc
                 </button>
                 <button
                   onClick={handleResetFilter}
-                  className="w-full bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                  className="w-full bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium flex items-center justify-center">
+                  <i className="bi bi-arrow-counterclockwise mr-2"></i>
                   Xóa bộ lọc
                 </button>
               </li>
@@ -592,73 +649,87 @@ const ShopDetail = () => {
 
         {/* Product List */}
         <div className="lg:col-span-9">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               {/* Search Input */}
-              <div className="flex-1">
+              <div className="flex-1 w-full">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Tìm kiếm sản phẩm..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                   />
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i className="bi bi-search"></i>
+                  </span>
                 </div>
               </div>
 
               {/* Sort Combobox */}
-              <div className="w-full md:w-48">
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
-                  value={sortBy}
-                  onChange={(e) => handleSort(e.target.value)}
-                >
-                  <option value="popular">Phổ biến nhất</option>
-                  <option value="price_asc">Giá tăng dần</option>
-                  <option value="price_desc">Giá giảm dần</option>
-                  <option value="newest">Mới nhất</option>
-                </select>
+              <div className="w-full md:w-56">
+                <div className="relative">
+                  <select
+                    className="w-full pl-10 pr-4 py-2.5 appearance-none border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                    value={sortBy}
+                    onChange={(e) => handleSort(e.target.value)}
+                  >
+                    <option value="popular">Phổ biến nhất</option>
+                    <option value="price_asc">Giá tăng dần</option>
+                    <option value="price_desc">Giá giảm dần</option>
+                    <option value="newest">Mới nhất</option>
+                  </select>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <i className="bi bi-sort-down"></i>
+                  </span>
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <i className="bi bi-chevron-down"></i>
+                  </span>
+                </div>
               </div>
 
               {/* Search Button */}
               <button
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
                 onClick={handleApplyFilter}
               >
-                <i className="bi bi-search"></i>
+                <i className="bi bi-search mr-1"></i>
+                <span className="hidden sm:inline">Tìm</span>
               </button>
 
               {/* Reset Button */}
               <button
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center"
                 onClick={handleResetFilter}
               >
-                <i className="bi bi-arrow-counterclockwise"></i>
+                <i className="bi bi-arrow-counterclockwise mr-1"></i>
+                <span className="hidden sm:inline">Đặt lại</span>
               </button>
             </div>
 
-            <div className="my-4">
-              <div className="flex flex-wrap justify-between items-center mb-4">
-                <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
-                  <span className="hidden sm:inline">Hiển thị</span>{" "}
-                  <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
-                  <span className="hidden sm:inline">trên</span>{" "}
-                  <span className="font-medium">{totalItems}</span> sản phẩm{" "}
-                  <span className="inline sm:hidden">• Trang {currentPage}</span>
+            <div className="my-6">
+              <div className="flex flex-wrap justify-between items-center">
+                <div className="text-xs sm:text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
+                  <span className="text-gray-500">Hiển thị</span>{" "}
+                  <span className="font-medium text-indigo-700">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+                  <span className="text-gray-500">trên</span>{" "}
+                  <span className="font-medium text-indigo-700">{totalItems}</span> sản phẩm{" "}
+                  <span className="text-gray-500">• Trang {currentPage}</span>
                 </div>
               </div>
             </div>
+            
             {/* Product grid will go here */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {items.map((item) => (
                 <ProductCard key={item?.id} product={item} />
               ))}
-
             </div>
+            
             {/* Pagination */}
             {items.length > 0 && (
-              <div className={`border-t border-gray-200 mt-4 ${isLoading ? 'opacity-50' : ''}`}>
+              <div className={`border-t border-gray-100 mt-8 pt-6 ${isLoading ? 'opacity-50' : ''}`}>
                 <Pagination currentPage={currentPage} totalPages={Math.ceil(totalItems / 10)} setCurrentPage={handlePageChange} />
               </div>
             )}

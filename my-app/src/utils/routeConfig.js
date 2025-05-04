@@ -12,6 +12,10 @@ import Products from "../components/seller/Products";
 import AdminShopDetail from "../components/admin/AdminShopDetail";
 import PaymentCOD from "../components/user/PaymentCOD";
 import AdminReportProductDetail from "../components/admin/AdminReportProductDetail";
+import SellerReportProducts from "../components/seller/SellerReportProducts";
+import SellerReportProductDetail from "../components/seller/SellerReportProductDetail";
+import SellerReportShops from "../components/seller/SellerReportShops";
+import SellerReportShopDetail from "../components/seller/SellerReportShopDetail";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -41,6 +45,7 @@ const SellerRegistration = lazy(() =>
       import("../components/seller/SellerRegistration")
 );
 const Report = lazy(() => import("../components/user/Report"));
+
 const ForgotPassword = lazy(() => import("../components/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("../components/auth/ResetPassword"));
 const OrdersSeller = lazy(() => import("../components/seller/OrdersSeller"));
@@ -156,4 +161,8 @@ export const SELLER_ROUTES = [
       { path: "stats/products", element: <StatisticProduct /> },
       { path: "stats/revenue", element: <StatisticRevenue /> },
       { path: "order/:orderId", element: <SellerOrderDetail /> },
+      { path: "report-products", element: <SellerReportProducts /> },
+      { path: "report-product/:id", element: <SellerReportProductDetail /> },
+      { path: "report-shops", element: <SellerReportShops /> },
+      { path: "report-shop/:id", element: <SellerReportShopDetail /> },
 ];

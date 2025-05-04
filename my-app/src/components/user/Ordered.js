@@ -547,12 +547,11 @@ const Ordered = () => {
     return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
   });
 
-  const filteredTotal = filteredOrders.length;
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, filteredTotal);
+  const endIndex = Math.min(currentPage * pageSize, totalOrders);
   const displayText =
-    filteredTotal > 0
-      ? `Hiển thị ${startIndex}-${endIndex} trên ${filteredTotal} đơn hàng`
+    totalOrders > 0
+      ? `Hiển thị ${startIndex}-${endIndex} trên ${totalOrders} đơn hàng`
       : "Không có đơn hàng";
 
   const { setCartCount } = useAuth();
@@ -1039,10 +1038,10 @@ const Ordered = () => {
         )}
       </div>
 
-      {filteredTotal > 0 && (
+      {totalOrders > 0 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={Math.ceil(filteredTotal / pageSize)}
+          totalPages={totalPages}
           setCurrentPage={handlePageChange}
         />
       )}
