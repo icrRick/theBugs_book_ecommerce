@@ -141,9 +141,9 @@ const Payment = () => {
         const quantity = getQuantityByNow() || 0;
         const requestBody = {
             productIntegers: productIds,
-          
+
             voucherIntegers: voucherIds,
-            productQuantity: quantity, 
+            productQuantity: quantity,
         };
 
         try {
@@ -384,11 +384,11 @@ const Payment = () => {
                     removeListProductIds();
                     removeListVoucherIds();
                 }
-              
+
             }
         } catch (error) {
             console.error("Lỗi khi đặt hàng:", error.response.data.message);
-            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau." , error.response.data.message);
+            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.", error.response.data.message);
         } finally {
             setIsLoading(false);
         }

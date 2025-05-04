@@ -12,7 +12,7 @@ const ShopDetail = () => {
   const { id } = useParams()
   const location = useLocation()
   const initialState = location.state || {}
-  
+
   const [shop, setShop] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +105,7 @@ const ShopDetail = () => {
         "genresIntegers": genres,
         "authorsIntegers": authors
       }
-    
+
       const response = await axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=${page}`, requestBody);
       if (response.status === 200 && response.data.status === true) {
         setItems(response.data.data.arrayList)
@@ -134,7 +134,7 @@ const ShopDetail = () => {
       genres: "",
       authors: ""
     });
-    
+
     // Gọi API trực tiếp thay vì thông qua handleFilter
     axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=1`, {
       productName: "",
@@ -209,14 +209,14 @@ const ShopDetail = () => {
     const minPrice = parseInt(params.get("minPrice")) || 0;
     const maxPrice = parseInt(params.get("maxPrice")) || 1000000000;
     const sortType = params.get("sortType") || "price_desc";
-    return { 
-      keyword, 
-      page, 
-      genres: genresParam.split(',').filter(g => g), 
-      authors: authorsParam.split(',').filter(a => a), 
-      minPrice, 
-      maxPrice, 
-      sortType 
+    return {
+      keyword,
+      page,
+      genres: genresParam.split(',').filter(g => g),
+      authors: authorsParam.split(',').filter(a => a),
+      minPrice,
+      maxPrice,
+      sortType
     };
   };
 
@@ -565,7 +565,7 @@ const ShopDetail = () => {
               >
                 <i className="bi bi-search"></i>
               </button>
-              
+
               {/* Reset Button */}
               <button
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

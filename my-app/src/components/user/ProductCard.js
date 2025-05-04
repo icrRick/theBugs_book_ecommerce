@@ -6,7 +6,7 @@ const ProductImage = ({ image, name, promotionValue }) => (
             src={image}
             alt={name || "Sản phẩm"}
             className="w-full h-52 object-cover"
-           
+
         />
         {promotionValue > 0 && (
             <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm">
@@ -35,7 +35,7 @@ const StarRating = ({ rate }) => {
 };
 
 const ProductPrice = ({ price, promotionValue }) => {
-    const discountedPrice = promotionValue > 0 
+    const discountedPrice = promotionValue > 0
         ? price * (1 - promotionValue / 100)
         : price;
 
@@ -73,12 +73,12 @@ const ProductStats = ({ reviewCount, purchased }) => (
 );
 
 const ProductCard = ({ product }) => {
- 
+
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            <a href={`/product-detail/${product.id}`} className="block">
-                <ProductImage 
+            <a href={`/product-detail/${product.productCode}`} className="block">
+                <ProductImage
                     image={product?.image}
                     name={product?.name}
                     promotionValue={product?.promotionValue}
@@ -92,12 +92,12 @@ const ProductCard = ({ product }) => {
                         <StarRating rate={product?.rate} />
                     </div>
 
-                    <ProductPrice 
+                    <ProductPrice
                         price={product?.price}
                         promotionValue={product?.promotionValue}
                     />
-                    
-                    <ProductStats 
+
+                    <ProductStats
                         reviewCount={product?.reviewCount}
                         purchased={product?.purchased}
                     />

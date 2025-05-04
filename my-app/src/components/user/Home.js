@@ -179,12 +179,12 @@ const Home = () => {
   }, []);
 
   const getProductImage = (product) => {
-    return product.productImage || "/placeholder.svg";
+    return product.imageName || "/placeholder.svg";
   };
 
   const calculateDiscountedPrice = (product) => {
     const price = product.price || 0;
-    if (!product.promotionValue) {
+    if (!product.hasFlashSale || !product.promotionValue) {
       return price;
     }
     return price - (price * product.promotionValue) / 100;
@@ -342,7 +342,7 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl p-6 md:p-8 shadow-xl">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-              <div className="flex items-center mb-4 md:mb-0">
+              <div className="flex_OK items-center mb-4 md:mb-0">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-8 w-8 text-yellow-300 mr-3"
@@ -474,9 +474,7 @@ const Home = () => {
 
       {/* Danh mục */}
       <section
-        className={`mb-12 transition-opacity duration-1000 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}
+        className={`mb-12 transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}
       >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
@@ -519,9 +517,7 @@ const Home = () => {
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       />
                       <div
-                        className={`absolute inset-0 bg-gradient-to-t ${
-                          genreColors[index % genreColors.length]
-                        } opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
+                        className={`absolute inset-0 bg-gradient-to-t ${genreColors[index % genreColors.length]} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
                       ></div>
                       <div className="absolute inset-0 flex items-center justify-center p-4">
                         <h3 className="font-bold text-white text-center text-lg drop-shadow-md">
@@ -557,31 +553,28 @@ const Home = () => {
             <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("popular")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "popular"
-                    ? "bg-emerald-500 text-white"
-                    : "text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "popular"
+                  ? "bg-emerald-500 text-white"
+                  : "text-gray-600 hover:bg-gray-200"
+                  }`}
               >
                 Phổ biến
               </button>
               <button
                 onClick={() => setActiveTab("new")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "new"
-                    ? "bg-emerald-500 text-white"
-                    : "text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "new"
+                  ? "bg-emerald-500 text-white"
+                  : "text-gray-600 hover:bg-gray-200"
+                  }`}
               >
                 Mới
               </button>
               <button
                 onClick={() => setActiveTab("sale")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "sale"
-                    ? "bg-emerald-500 text-white"
-                    : "text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "sale"
+                  ? "bg-emerald-500 text-white"
+                  : "text-gray-600 hover:bg-gray-200"
+                  }`}
               >
                 Giảm giá
               </button>
@@ -614,7 +607,7 @@ const Home = () => {
                   >
                     <div className="relative">
                       <Link
-                        to={`/product-detail/${product.productId}`}
+                        to={`/product-detail/${product.product_code}`}
                         className="block"
                       >
                         <img
@@ -627,7 +620,7 @@ const Home = () => {
                             Mới
                           </div>
                         )}
-                        {product.promotionValue > 0 && (
+                        {product.hasFlashSale && product.promotionValue > 0 && (
                           <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-md text-xs font-medium">
                             -{product.promotionValue}%
                           </div>
@@ -668,7 +661,7 @@ const Home = () => {
                       </div>
                     </div>
                     <Link
-                      to={`/product-detail/${product.productId}`}
+                      to={`/product-detail/${product.product_code}`}
                       className="block"
                     >
                       <div className="p-4 flex flex-col h-[140px]">
@@ -681,11 +674,10 @@ const Home = () => {
                               <svg
                                 key={index}
                                 xmlns="http://www.w3.org/2000/svg"
-                                className={`h-4 w-4 ${
-                                  index < Math.floor(getAverageRating(product))
-                                    ? "fill-current"
-                                    : "stroke-current fill-none"
-                                }`}
+                                className={`h-4 w-4 ${index < Math.floor(getAverageRating(product))
+                                  ? "fill-current"
+                                  : "stroke-current fill-none"
+                                  }`}
                                 viewBox="0 0 24 24"
                               >
                                 <path
@@ -698,18 +690,15 @@ const Home = () => {
                             ))}
                           </div>
                           <span className="text-xs text-gray-500 ml-1">
-                            ({getAverageRating(product)})
+                            ({product.reviewCount || 0} đánh giá)
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
-                            {product.promotionValue > 0 ? (
+                            {product.hasFlashSale && product.promotionValue > 0 ? (
                               <>
                                 <span className="text-emerald-600 font-bold">
-                                  {calculateDiscountedPrice(
-                                    product
-                                  )?.toLocaleString?.() || "0"}
-                                  đ
+                                  {calculateDiscountedPrice(product)?.toLocaleString?.() || "0"}đ
                                 </span>
                                 <span className="text-gray-400 text-sm line-through ml-2">
                                   {product.price?.toLocaleString?.() || "0"}đ
@@ -801,8 +790,7 @@ const Home = () => {
       </section>
 
       {/* Tác giả nổi bật */}
-      {/*}
-      <section className="mb-12">
+      {/* <section className="mb-12">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative">
@@ -848,8 +836,8 @@ const Home = () => {
             )}
           </div>
         </div>
-      </section>
-            */}
+      </section> */}
+
       {/* Testimonials */}
       {/* <section className="mb-12">
         <div className="container mx-auto px-4">
