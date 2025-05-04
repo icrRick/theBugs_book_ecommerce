@@ -39,6 +39,23 @@ public class EmailUtil {
         }
     }
 
+    public boolean sendEmailConfirmEmail(String toEmail, String token) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Xác nhận địa chỉ email");
+            helper.setText(confirmEmailContent(token), true);
+            helper.setFrom("lehqpc07896@fpt.edu.vn");
+            mailSender.send(message);
+            System.out.println("✅ Confirmation email sent to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public String orderContent(String email, String noted) {
         return "";
     }
@@ -724,4 +741,63 @@ public class EmailUtil {
             e.printStackTrace();
         }
     }
+
+    public String confirmEmailContent(String token) {
+        String confirmLink = "http://localhost:3000/confirm-email?token=" + token;
+
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='UTF-8'>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f2f2f2;
+                            padding: 20px;
+                        }
+                        .container {
+                            background-color: #fff;
+                            padding: 30px;
+                            border-radius: 10px;
+                            max-width: 600px;
+                            margin: auto;
+                            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                        }
+                        .btn {
+                            display: inline-block;
+                            padding: 12px 20px;
+                            background-color: #28a745;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            margin-top: 20px;
+                        }
+                        .btn:hover {
+                            background-color: #218838;
+                        }
+                        .footer {
+                            margin-top: 30px;
+                            font-size: 14px;
+                            color: #666;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <h2>Xác nhận địa chỉ email của bạn</h2>
+                        <p>Cảm ơn bạn đã đăng ký tài khoản tại The Bugs.</p>
+                        <p>Nhấn vào nút bên dưới để xác nhận email của bạn. Liên kết sẽ hết hạn sau <strong>15 phút</strong>.</p>
+                        <a class='btn' href='%s'>Xác nhận email</a>
+                        <p>Nếu bạn không yêu cầu đăng ký, vui lòng bỏ qua email này.</p>
+                        <div class='footer'>
+                            <p>Trân trọng,<br><strong>The Bugs Team</strong></p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                .formatted("http://localhost:3000/confirm-email?token=" + token);
+    }
+
 }

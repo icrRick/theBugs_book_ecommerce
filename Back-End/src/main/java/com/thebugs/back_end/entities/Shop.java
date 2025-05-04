@@ -1,5 +1,6 @@
 package com.thebugs.back_end.entities;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -67,6 +68,9 @@ public class Shop {
 
     @Column(nullable = true)
     private Boolean status;
+
+    @Column(nullable = true)
+    private LocalDateTime expiredAt;
 
     @OneToMany(mappedBy = "shop")
     private List<Product> products;

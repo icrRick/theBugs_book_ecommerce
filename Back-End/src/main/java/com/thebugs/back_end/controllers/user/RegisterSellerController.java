@@ -108,7 +108,6 @@ public class RegisterSellerController {
             @RequestPart(value = "logo", required = false) MultipartFile logo,
             @RequestPart(value = "banner", required = false) MultipartFile banner) {
         try {
-            System.out.println("RegisterSellerTest");
             ResponseData result = g_RegisterSellerService.createSeller(shopBean, addressBean, registerBean, logo,
                     banner);
             return ResponseEntity.status(HttpStatus.valueOf(result.getStatusCode())).body(result);
