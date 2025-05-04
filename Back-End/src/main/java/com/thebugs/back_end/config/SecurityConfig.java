@@ -11,10 +11,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.cors.CorsConfiguration;
 
 import com.thebugs.back_end.services.CustomUserDetailsService;
 import com.thebugs.back_end.services.user.OAuth2UserService;
+import com.thebugs.back_end.utils.CustomAuthenticationEntryPoint;
 import com.thebugs.back_end.utils.JwtAuthenticationFilter;
 import com.thebugs.back_end.utils.OAuth2LoginSuccessHandler;
 
@@ -69,8 +72,8 @@ public class SecurityConfig {
                                 "/forgotpassword", "/updatepassword/**", "/shopdetail/**",
                                 "/payment-online/**", "/reviews/**", "/forgot/**", "/api-ghn/**",
                                 "/oauth2/**", "/login/oauth2/**", "/auth/**",
-                                "/search/**", "/shop/**", "/author/**"
-                        ).permitAll()
+                                "/search/**", "/shop/**", "/author/**")
+                        .permitAll()
                         .requestMatchers("/admin/**").hasAuthority("admin")
                         .requestMatchers("/user/**").hasAnyAuthority("user", "seller")
                         .requestMatchers("/seller/**").hasAuthority("seller")
