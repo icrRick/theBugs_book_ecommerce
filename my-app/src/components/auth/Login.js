@@ -1,6 +1,6 @@
 import React from "react"
-import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { Link, useNavigate,  } from "react-router-dom"
 import { useForm } from "react-hook-form";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -30,13 +30,12 @@ const Login = () => {
         if (userData && userData.role === 3) {
           navigate("/admin/dashboard");
         } else {
-          if(window.location.pathname === "/login"){
+          if (window.location.pathname === "/login") {
             navigate("/home");
-          }else{
+          } else {
             navigate(-1);
           }
         }
-        showSuccessToast("Đăng nhập thành công!");
       } else {
         showErrorToast("Đăng nhập không thành công!");
       }
@@ -47,6 +46,13 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+  };
+
+
+
 
   return (
     <>
@@ -201,7 +207,7 @@ const Login = () => {
                     </div>
                   </div>
 
-              
+
 
                   <div>
                     <button
@@ -215,10 +221,10 @@ const Login = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-start mt-2">
-                    <Link to={'/forgot-password'} className="text-md font-medium text-emerald-600 hover:text-emerald-500">
-                      Quên mật khẩu
-                    </Link>
-                  </div>
+                  <Link to={'/forgot-password'} className="text-md font-medium text-emerald-600 hover:text-emerald-500">
+                    Quên mật khẩu
+                  </Link>
+                </div>
                 <div className="mt-2">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -230,8 +236,8 @@ const Login = () => {
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    <a
-                      href="#"
+                    <button
+                      onClick={handleGoogleLogin}
                       className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                       <svg className="w-5 h-5 text-[#4285F4]" viewBox="0 0 24 24">
@@ -240,11 +246,11 @@ const Login = () => {
                           d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"
                         />
                       </svg>
-                    </a>
+                    </button>
 
-                    <a
-                      href="#"
+                    <button
                       className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      onClick={handleGoogleLogin}
                     >
                       <svg className="w-5 h-5 text-[#1877F2]" viewBox="0 0 24 24">
                         <path
@@ -252,7 +258,7 @@ const Login = () => {
                           d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"
                         />
                       </svg>
-                    </a>
+                    </button>
                   </div>
                 </div>
 

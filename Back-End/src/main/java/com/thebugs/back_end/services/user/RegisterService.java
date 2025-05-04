@@ -46,4 +46,15 @@ public class RegisterService {
                 User userRegister = userJPA.save(user);
                 return userMapper.toDTO(userRegister);
         }
+
+        public User dangky(String fullName,String email, String password){
+                User user=new User();
+                user.setFullName(fullName);
+                user.setEmail(email);
+                user.setActive(true);
+                user.setRole(roleJPA.findById(1).get());
+                user.setPassword(passwordEncoder.encode(password));
+                user.setVerify(false);
+                return userJPA.save(user);
+        }
 }

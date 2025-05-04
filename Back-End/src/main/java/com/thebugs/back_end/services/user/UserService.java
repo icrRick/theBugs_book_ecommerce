@@ -45,6 +45,13 @@ public class UserService {
         }
 
 
+        public User checkUserByEmail(String email) {
+                return userJPA.findByEmail(email)
+                                .orElse(null);
+
+        }
+
+
 
 
 

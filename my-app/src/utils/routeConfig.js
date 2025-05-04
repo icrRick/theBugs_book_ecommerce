@@ -16,6 +16,7 @@ import SellerReportProductDetail from "../components/seller/SellerReportProductD
 import SellerReportShops from "../components/seller/SellerReportShops";
 import SellerReportShopDetail from "../components/seller/SellerReportShopDetail";
 import ConfirmEmail from "../components/user/ConfirmEmail";
+import LoginGoogle from "../components/auth/LoginGoogle";
 const Home = lazy(() => import("../components/user/Home"));
 const Profile = lazy(() => import("../components/user/Profile"));
 const Address = lazy(() => import("../components/user/Address"));
@@ -93,6 +94,7 @@ const AdminProductDetail = lazy(() =>
 
 export const PUBLIC_ROUTES = [
   { path: "/", element: <Navigate to="/home" /> },
+  { path: "login-google", element: <LoginGoogle /> },
   { path: "home", element: <Home /> },
   { path: "product-detail/:id", element: <ProductDetail /> },
   { path: "login", element: <Login /> },
