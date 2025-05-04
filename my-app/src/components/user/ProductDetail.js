@@ -57,6 +57,34 @@ const ProductDetail = () => {
 
         const apiProduct = productData.data;
 
+        // Fetch reviews
+        const reviewsResponse = await fetch(`http://localhost:8080/product-detail/${id}/reviews`)
+        if (!reviewsResponse.ok) {
+          throw new Error(`HTTP error! Status: ${reviewsResponse.status}`)
+        }
+        const reviewsData = await reviewsResponse.json()
+
+        let reviews = []
+        if (reviewsData.status && reviewsData.data) {
+          reviews = reviewsData.data.map(review => ({
+            id: review.id,
+            user: {
+              name: review.user.name,
+              avatar: review.user.avatar || null
+            },
+            date: review.date,
+            rating: review.rating,
+            content: review.content,
+            reply: review.reply || null,
+            reply_at: review.replyAt || null,
+            shop: {
+              name: review.shop.name,
+              logo: review.shop.logo || null,
+              verify: review.shop.verify
+            }
+          }))
+        }
+
         // Map API data to frontend product structure
         const mappedProduct = {
           id: apiProduct.productId,
@@ -131,7 +159,7 @@ const ProductDetail = () => {
             methods: ["Giao hàng tiêu chuẩn", "Giao hàng nhanh"],
             time: "1-3 ngày làm việc",
           },
-          reviews: [],
+          reviews: reviews,
           priceHistory: [],
         };
 
@@ -145,8 +173,7 @@ const ProductDetail = () => {
         if (!similarResponse.ok) {
           throw new Error(`HTTP error! Status: ${similarResponse.status}`);
         }
-        const similarData = await similarResponse.json();
-        console.log("Similar products data:", similarData);
+        const similarData = await similarResponse.json()
 
         if (similarData.status && similarData.data) {
           const mappedSimilarProducts = similarData.data.map((item) => ({
@@ -193,7 +220,6 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     try {
-      console.log(product.product_code, quantity);
       const response = await axiosInstance.post(
         `/user/cart/saveCartItemProductCode?productCode=${product.product_code}&quantity=${quantity}`
       );
@@ -222,11 +248,10 @@ const ProductDetail = () => {
         return;
       }
 
-      setListProductIds(JSON.stringify([product.id]));
-      setListVoucherIds(JSON.stringify([]));
-      setQuantity(quantity);
-      setQuantityByNow(quantity);
-      console.log(getQuantityByNow());
+      setListProductIds(JSON.stringify([product.id]))
+      setListVoucherIds(JSON.stringify([]))
+      setQuantity(quantity)
+      setQuantityByNow(quantity)
 
       navigate("/payment");
     } catch (error) {
@@ -338,7 +363,74 @@ const ProductDetail = () => {
   const flashSalePercentage =
     product.hasFlashSale && product.flashSaleQuantity > 0
       ? (product.flashSaleSold / product.flashSaleQuantity) * 100
-      : 0;
+      : 0
+
+  const renderProductImages = () => {
+    if (!product || !product.images || product.images.length === 0) {
+      return (
+        <div className="rounded-xl overflow-hidden bg-gray-50 mb-4 aspect-[3/4] flex items-center justify-center">
+          <img src="/placeholder.svg" alt="No image available" className="w-full h-full object-contain" />
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <Swiper
+          key={mainSwiperKey}
+          style={{
+            "--swiper-navigation-color": "#fff",
+            "--swiper-pagination-color": "#fff",
+          }}
+          loop={product.images.length > 1}
+          spaceBetween={10}
+          navigation={true}
+          thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+          modules={[FreeMode, Navigation, Thumbs, Zoom]}
+          zoom={true}
+          className="product-main-swiper rounded-xl overflow-hidden bg-gray-50 mb-4 aspect-[3/4]"
+        >
+          {product.images.map((img, index) => (
+            <SwiperSlide key={`main-${img.id}`} onClick={() => handleImageClick(index)}>
+              <div className="swiper-zoom-container w-full h-full cursor-zoom-in">
+                <img
+                  src={img.image || "/placeholder.svg"}
+                  alt={`${product.name} - Hình ${index + 1}`}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+        {product.images.length > 1 && (
+          <Swiper
+            key={thumbsSwiperKey}
+            onSwiper={setThumbsSwiper}
+            loop={false}
+            spaceBetween={10}
+            slidesPerView={5}
+            freeMode={true}
+            watchSlidesProgress={true}
+            modules={[FreeMode, Navigation, Thumbs]}
+            className="product-thumbs-swiper"
+          >
+            {product.images.map((img, index) => (
+              <SwiperSlide key={`thumb-${img.id}`}>
+                <div className="cursor-pointer rounded-md overflow-hidden border-2 hover:border-indigo-500 transition-all duration-200">
+                  <img
+                    src={img.image || "/placeholder.svg"}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover aspect-square"
+                  />
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        )}
+      </>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -371,35 +463,7 @@ const ProductDetail = () => {
           {/* Hình ảnh sản phẩm */}
           <div className="md:col-span-5">
             <div className="relative">
-              <Swiper
-                key={`main-${product.id}`}
-                style={{
-                  "--swiper-navigation-color": "#fff",
-                  "--swiper-pagination-color": "#fff",
-                }}
-                loop={true}
-                spaceBetween={10}
-                navigation={true}
-                thumbs={{ swiper: thumbsSwiper }}
-                modules={[FreeMode, Navigation, Thumbs, Zoom]}
-                zoom={true}
-                className="product-main-swiper rounded-xl overflow-hidden bg-gray-50 mb-4 aspect-[3/4]"
-              >
-                {product.images.map((img, index) => (
-                  <SwiperSlide
-                    key={img.id}
-                    onClick={() => handleImageClick(index)}
-                  >
-                    <div className="swiper-zoom-container w-full h-full cursor-zoom-in">
-                      <img
-                        src={img.image || "/placeholder.svg"}
-                        alt={`${product.name} - Hình ${index + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              {renderProductImages()}
 
               {/* Discount badge */}
               {product.hasFlashSale &&
@@ -413,30 +477,6 @@ const ProductDetail = () => {
                     %
                   </div>
                 )}
-
-              <Swiper
-                key={`thumbs-${product.id}`}
-                onSwiper={setThumbsSwiper}
-                loop={false}
-                spaceBetween={10}
-                slidesPerView={5}
-                freeMode={true}
-                watchSlidesProgress={true}
-                modules={[FreeMode, Navigation, Thumbs]}
-                className="product-thumbs-swiper"
-              >
-                {product.images.map((img, index) => (
-                  <SwiperSlide key={img.id}>
-                    <div className="cursor-pointer rounded-md overflow-hidden border-2 hover:border-indigo-500 transition-all duration-200">
-                      <img
-                        src={img.image || "/placeholder.svg"}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover aspect-square"
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
 
               {/* Share buttons */}
               <div className="flex items-center justify-center mt-6 space-x-4">
@@ -568,15 +608,11 @@ const ProductDetail = () => {
                     ).toLocaleString()}
                   </span>
                   {(selectedVariant?.price || product.price) >
-                    (selectedVariant?.discountPrice ||
-                      product.discountPrice) && (
-                    <span className="text-xl text-gray-500 line-through">
-                      đ
-                      {(
-                        selectedVariant?.price || product.price
-                      ).toLocaleString()}
-                    </span>
-                  )}
+                    (selectedVariant?.discountPrice || product.discountPrice) && (
+                      <span className="text-xl text-gray-500 line-through">
+                        đ{(selectedVariant?.price || product.price).toLocaleString()}
+                      </span>
+                    )}
                 </div>
                 {product.hasFlashSale && (
                   <>
@@ -587,12 +623,9 @@ const ProductDetail = () => {
                     </div>
                     <div className="mt-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-red-600 text-sm font-medium">
-                          Đã bán {product.flashSaleSold}
-                        </span>
+                        <span className="text-red-600 text-sm font-medium">Đã bán {product.flashSaleSold}</span>
                         <span className="text-gray-600 text-sm">
-                          Còn lại:{" "}
-                          {product.flashSaleQuantity - product.flashSaleSold}
+                          Còn lại: {product.flashSaleQuantity - product.flashSaleSold}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -715,8 +748,7 @@ const ProductDetail = () => {
                   <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
                     <i className="bi bi-star-fill text-yellow-400 mr-2"></i>
                     <span>
-                      {product.shop.shopRating} ({product.shop.shopRatingCount}{" "}
-                      đánh giá)
+                      {product.shop.shopRating} ({product.shop.shopRatingCount} đánh giá)
                     </span>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-full px-3 py-1">
@@ -753,16 +785,6 @@ const ProductDetail = () => {
               }`}
             >
               Mô tả sản phẩm
-            </button>
-            <button
-              onClick={() => setActiveTab("specifications")}
-              className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${
-                activeTab === "specifications"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Chi tiết sản phẩm
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
@@ -808,87 +830,6 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Thông số kỹ thuật */}
-          {activeTab === "specifications" && (
-            <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Tác giả
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.author}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Nhà xuất bản
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.publisher}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Năm xuất bản
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.publishYear}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Ngôn ngữ
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.language}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Số trang
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.pages}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Trọng lượng
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.weight}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Kích thước
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.dimensions}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      Loại bìa
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.coverType}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap bg-gray-50 text-sm font-medium text-gray-500 w-1/3">
-                      ISBN
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.isbn}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
 
           {/* Đánh giá */}
           {activeTab === "reviews" && (
@@ -914,17 +855,28 @@ const ProductDetail = () => {
                         ></i>
                       ))}
                     </div>
-                    <div className="text-gray-600">
-                      {product.reviewCount} đánh giá
-                    </div>
+                    <div className="text-gray-600">{product.reviews.length} đánh giá</div>
                   </div>
                 </div>
 
                 {/* Danh sách đánh giá */}
                 <div className="md:w-2/3">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Đánh giá từ khách hàng
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Đánh giá từ khách hàng</h3>
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-600 mr-2">Phản hồi bởi:</span>
+                      <div className="flex items-center">
+                        {product.shop && product.shop.logo && (
+                          <img
+                            src={product.shop.logo || "/placeholder.svg"}
+                            alt={`${product.shop.name} logo`}
+                            className="w-8 h-8 rounded-full object-cover mr-2"
+                          />
+                        )}
+                        <span className="font-medium text-gray-800">{product.shop.name}</span>
+                      </div>
+                    </div>
+                  </div>
                   {product.reviews.length === 0 ? (
                     <p className="text-gray-600">
                       Chưa có đánh giá nào cho sản phẩm này.
@@ -937,6 +889,19 @@ const ProductDetail = () => {
                           className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
                         >
                           <div className="flex items-start">
+                            <div className="w-12 h-12 mr-4">
+                              {review.user.avatar ? (
+                                <img
+                                  src={review.user.avatar || "/placeholder.svg"}
+                                  alt={`${review.user.name}'s avatar`}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
+                                  {review.user.name.charAt(0)}
+                                </div>
+                              )}
+                            </div>
                             <div className="flex-1">
                               <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <h4 className="font-medium text-gray-800">
@@ -950,17 +915,49 @@ const ProductDetail = () => {
                                 {[...Array(5)].map((_, index) => (
                                   <i
                                     key={index}
-                                    className={`bi ${
-                                      index < review.rating
-                                        ? "bi-star-fill"
-                                        : "bi-star"
-                                    }`}
+                                    className={`bi ${index < Math.floor(review.rating) ? "bi-star-fill" : "bi-star"}`}
                                   ></i>
                                 ))}
                               </div>
-                              <p className="text-gray-700 mb-3">
-                                {review.content}
-                              </p>
+                              <p className="text-gray-700 mb-3">{review.content}</p>
+                              {review.reply && (
+                                <div className="ml-4 mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                  <div className="flex items-start">
+                                    <div className="flex-shrink-0 mr-3">
+                                      {review.shop && review.shop.logo && (
+                                        <img
+                                          src={review.shop.logo || "/placeholder.svg"}
+                                          alt={`${review.shop.name} logo`}
+                                          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center mb-1">
+                                        <span className="font-medium text-gray-800">{review.shop.name}</span>
+                                        {review.shop.verify && (
+                                          <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4 text-indigo-500 ml-1"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        )}
+                                        <span className="text-gray-500 text-xs ml-2">
+                                          • {formatDate(review.reply_at)}
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-700">{review.reply}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
