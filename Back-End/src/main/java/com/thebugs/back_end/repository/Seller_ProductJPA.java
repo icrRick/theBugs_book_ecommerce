@@ -8,16 +8,19 @@ import org.springframework.data.jpa.repository.Query;
 import com.thebugs.back_end.entities.Product;
 
 public interface Seller_ProductJPA extends JpaRepository<Product, Integer> {
+   
     @Query("SELECT DISTINCT g FROM Product g " +
-            "LEFT JOIN g.productAuthors pa " +
-            "LEFT JOIN g.productGenres pg " +
-            "LEFT JOIN g.publisher pp " +
-            "WHERE g.shop.id = ?1 " +
-            "AND (?2 = '' OR g.name LIKE %?2% " +
-            "OR pa.author.name LIKE %?2% " +
-            "OR pg.genre.name LIKE %?2% " +
-            "OR pp.name LIKE %?2%) ")
-    Page<Product> findAllByShopIdAndKeyword(int shopId, String keyword, Pageable pageable);
+    "LEFT JOIN g.productAuthors pa " +
+    "LEFT JOIN g.productGenres pg " +
+    "LEFT JOIN g.publisher pp " +
+    "WHERE g.shop.id = ?1 " +
+    "AND (?2 = '' OR " +
+    "LOWER(g.name) LIKE LOWER(CONCAT('%', ?2, '%')) " +
+    "OR LOWER(pa.author.name) LIKE LOWER(CONCAT('%', ?2, '%')) " +
+    "OR LOWER(pg.genre.name) LIKE LOWER(CONCAT('%', ?2, '%')) " +
+    "OR LOWER(pp.name) LIKE LOWER(CONCAT('%', ?2, '%')))")
+Page<Product> findAllByShopIdAndKeyword(int shopId, String keyword, Pageable pageable);
+
 
     @Query("SELECT g FROM Product g WHERE g.shop.id = ?1 and g.id = ?2")
     Product findProductByIdAndShopId(int shopId, int productId);

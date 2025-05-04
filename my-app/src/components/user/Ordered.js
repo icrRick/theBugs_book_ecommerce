@@ -70,7 +70,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-amber-200 bg-amber-50",
-      progress: "w-1/6 bg-amber-500"
+      progress: "w-1/6 bg-amber-500",
     },
     "Đã hủy": {
       color: "bg-red-100 text-red-800 border-red-200",
@@ -89,7 +89,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-red-200 bg-red-50",
-      progress: "w-0 bg-red-500"
+      progress: "w-0 bg-red-500",
     },
     "Đã duyệt": {
       color: "bg-blue-100 text-blue-800 border-blue-200",
@@ -108,7 +108,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-blue-200 bg-blue-50",
-      progress: "w-2/6 bg-blue-500"
+      progress: "w-2/6 bg-blue-500",
     },
     "Đang giao": {
       color: "bg-purple-100 text-purple-800 border-purple-200",
@@ -124,7 +124,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-purple-200 bg-purple-50",
-      progress: "w-4/6 bg-purple-500"
+      progress: "w-4/6 bg-purple-500",
     },
     "Đã giao": {
       color: "bg-indigo-100 text-indigo-800 border-indigo-200",
@@ -140,7 +140,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-indigo-200 bg-indigo-50",
-      progress: "w-5/6 bg-indigo-500"
+      progress: "w-5/6 bg-indigo-500",
     },
     "Đã nhận": {
       color: "bg-green-100 text-green-800 border-green-200",
@@ -160,7 +160,7 @@ const Ordered = () => {
         </svg>
       ),
       badge: "border-green-200 bg-green-50",
-      progress: "w-full bg-green-500"
+      progress: "w-full bg-green-500",
     },
   };
 
@@ -316,7 +316,6 @@ const Ordered = () => {
     } finally {
       fetchAllOrders(keyword, currentPage);
       setIsLoading(false);
-
     }
   };
 
@@ -522,11 +521,33 @@ const Ordered = () => {
     setSearchParams(params);
   }, [debouncedUserName, debouncedStartDate, debouncedEndDate]);
 
-  const filteredOrders = orders;
-
   useEffect(() => {
     searchOrders(keyword, currentPage);
   }, [activeTab]);
+  const filteredOrders = allOrders.filter((order) => {
+    const matchesStatus =
+      !activeTab ||
+      getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab);
+
+    const matchesName =
+      !debouncedUserName ||
+      (order.customerInfo &&
+        order.customerInfo
+          .toLowerCase()
+          .includes(debouncedUserName.toLowerCase()));
+
+    const matchesStartDate =
+      !debouncedStartDate ||
+      (order.orderDate &&
+        new Date(order.orderDate) >= new Date(debouncedStartDate));
+
+    const matchesEndDate =
+      !debouncedEndDate ||
+      (order.orderDate &&
+        new Date(order.orderDate) <= new Date(debouncedEndDate));
+
+    return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
+  });
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalOrders);
@@ -540,24 +561,30 @@ const Ordered = () => {
   const handleRepurchase = async (orderId) => {
     const response = await s_repurchaseCartItem(orderId);
     if (response) {
-      setCartCount(response.reduce((acc, shop) => acc + shop.products.length, 0));
+      setCartCount(
+        response.reduce((acc, shop) => acc + shop.products.length, 0)
+      );
       showSuccessToast("Đã thêm sản phẩm vào giỏ hàng!");
     } else {
       showErrorToast("Đã có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!");
     }
   };
 
-
   const handleRePayment = async (order) => {
-    const orderIds = Array.isArray(orders) ? orders.map(o => o.id) : [orders.id];
+    const orderIds = Array.isArray(orders)
+      ? orders.map((o) => o.id)
+      : [orders.id];
     const orderId = Math.floor(new Date().getTime() / 1000) + 10;
-    const responseVnpay = await axiosInstance.get("/user/payment-online/create-payment", {
-      params: {
-        orderId: orderId,
-        orderInfor: "Thanh toán đơn hàng " + order.id,
-        total: Number(order.totalPrice),
+    const responseVnpay = await axiosInstance.get(
+      "/user/payment-online/create-payment",
+      {
+        params: {
+          orderId: orderId,
+          orderInfor: "Thanh toán đơn hàng " + order.id,
+          total: Number(order.totalPrice),
+        },
       }
-    });
+    );
 
     setListOrderId(JSON.stringify(orderIds));
     if (responseVnpay.status === 200 && responseVnpay.data?.status === true) {
@@ -565,8 +592,6 @@ const Ordered = () => {
     } else {
       showErrorToast("Đã có lỗi xảy ra khi thanh toán lại đơn hàng!");
     }
-
-
   };
   return (
     <div className="w-full mx-auto">
@@ -598,8 +623,18 @@ const Ordered = () => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </div>
               <input
@@ -622,8 +657,18 @@ const Ordered = () => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
               <input
@@ -645,8 +690,18 @@ const Ordered = () => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
               <input
@@ -691,10 +746,11 @@ const Ordered = () => {
               onClick={() => handleTabClick(tab.id)}
               className={`
       px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-      ${activeTab === tab.id
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }
+      ${
+        activeTab === tab.id
+          ? "bg-emerald-50 text-emerald-700 shadow-sm"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      }
     `}
             >
               {tab.label}
@@ -747,14 +803,19 @@ const Ordered = () => {
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-3">
                     <span className="text-gray-500 text-sm">Mã đơn hàng:</span>
-                    <span className="font-medium text-gray-800">#{order?.id}</span>
+                    <span className="font-medium text-gray-800">
+                      #{order?.id}
+                    </span>
                     <span className="text-gray-400">|</span>
-                    <span className="text-gray-500 text-sm">{formatDate(order?.orderDate)}</span>
+                    <span className="text-gray-500 text-sm">
+                      {formatDate(order?.orderDate)}
+                    </span>
                   </div>
                   <div
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${statusConfig[order?.orderStatusName]?.color ||
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${
+                      statusConfig[order?.orderStatusName]?.color ||
                       "bg-gray-100 text-gray-800 border-gray-200"
-                      }`}
+                    }`}
                   >
                     {statusConfig[order?.orderStatusName]?.icon || (
                       <svg
@@ -784,8 +845,18 @@ const Ordered = () => {
                       {/* Thông tin khách hàng */}
                       <div className="rounded-lg p-3">
                         <div className="flex items-start gap-2 mb-2">
-                          <svg className="w-4 h-4 text-gray-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <svg
+                            className="w-4 h-4 text-gray-500 mt-0.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
                           </svg>
                           <div>
                             <span className="text-gray-500">Khách hàng:</span>
@@ -795,8 +866,18 @@ const Ordered = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          <svg
+                            className="w-4 h-4 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
                           </svg>
                           <div className="flex items-center">
                             <span className="text-gray-500">Shop:</span>
@@ -815,33 +896,77 @@ const Ordered = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                              <svg
+                                className="w-4 h-4 text-blue-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                />
                               </svg>
-                              <span className="text-gray-600">{order.paymentMethod || "Online Payment"}</span>
+                              <span className="text-gray-600">
+                                {order.paymentMethod || "Online Payment"}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               {order.paymentStatus === "Đã thanh toán" ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                  className="w-4 h-4 text-green-500"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
                                 </svg>
                               ) : (
-                                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                  className="w-4 h-4 text-amber-500"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
                                 </svg>
                               )}
-                              <span className={
-                                order.paymentStatus === "Đã thanh toán"
-                                  ? "text-green-600"
-                                  : "text-amber-600"
-                              }>
+                              <span
+                                className={
+                                  order.paymentStatus === "Đã thanh toán"
+                                    ? "text-green-600"
+                                    : "text-amber-600"
+                                }
+                              >
                                 {order.paymentStatus || "Chưa thanh toán"}
                               </span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg
+                              className="w-4 h-4 text-emerald-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
                             </svg>
                             <span className="text-gray-500">Tổng tiền:</span>
                             <span className="text-lg font-bold text-emerald-600">
@@ -852,22 +977,31 @@ const Ordered = () => {
                       </div>
 
                       {/* Thông báo */}
-                      {(order.orderStatusName === "Hủy" || order.orderStatusName === "Đã duyệt") && order?.noted && (
-                        <div className={`text-xs rounded-lg p-3 ${order.orderStatusName === "Hủy"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-green-50 text-green-600"
-                          }`}>
-                          <span className="font-medium">
-                            {order.orderStatusName === "Hủy" ? "Lý do hủy:" : "Thông báo:"}
-                          </span>
-                          <p className="mt-0.5 line-clamp-2" title={order?.noted}>
-                            {order.orderStatusName === "Hủy"
-                              ? order?.noted
-                              : "Đã thay đổi số lượng, vào chi tiết để xem."
-                            }
-                          </p>
-                        </div>
-                      )}
+                      {(order.orderStatusName === "Hủy" ||
+                        order.orderStatusName === "Đã duyệt") &&
+                        order?.noted && (
+                          <div
+                            className={`text-xs rounded-lg p-3 ${
+                              order.orderStatusName === "Hủy"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-green-50 text-green-600"
+                            }`}
+                          >
+                            <span className="font-medium">
+                              {order.orderStatusName === "Hủy"
+                                ? "Lý do hủy:"
+                                : "Thông báo:"}
+                            </span>
+                            <p
+                              className="mt-0.5 line-clamp-2"
+                              title={order?.noted}
+                            >
+                              {order.orderStatusName === "Hủy"
+                                ? order?.noted
+                                : "Đã thay đổi số lượng, vào chi tiết để xem."}
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>

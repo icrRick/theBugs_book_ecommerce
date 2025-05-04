@@ -212,6 +212,7 @@ const OrdersSeller = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      setIsLoading(true);
       const response = await axiosInstance.put(
         `/seller/order/update/${orderId}`,
         {
@@ -219,7 +220,7 @@ const OrdersSeller = () => {
           cancelReason: newStatus === 2 ? cancelReason : "",
         }
       );
-      setIsLoading(true);
+
       const { message, status } = response.data;
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString());
@@ -235,7 +236,7 @@ const OrdersSeller = () => {
       console.error("Error updating order status:", error);
       showErrorToast(
         error.response?.data?.message ||
-          "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!"
+        "Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng!"
       );
       closeCancelModal();
       fetchOrders(currentPage, activeTab);
@@ -397,6 +398,7 @@ const OrdersSeller = () => {
 
   return (
     <div className="w-full mx-auto">
+      {isLoading && <Loading />}
       <h2 className="text-xl font-bold text-gray-800 my-6">
         Danh sách đơn hàng
       </h2>
@@ -487,10 +489,9 @@ const OrdersSeller = () => {
               onClick={() => handleTabClick(tab.id)}
               className={`
                 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-                ${
-                  activeTab === tab.id
-                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                ${activeTab === tab.id
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }
               `}
             >
@@ -561,16 +562,16 @@ const OrdersSeller = () => {
                       {order?.paymentMethod || "Đã Thanh Toán"} •{" "}
                       {order?.paymentStatus || "Chưa thanh toán"}
                     </div>
+
                   </div>
 
                   {/* Bên phải - Trạng thái, Tổng tiền, Lý do hủy */}
                   <div className="flex flex-col items-end space-y-2">
                     {/* Trạng thái đơn */}
                     <div
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
-                        statusConfig[order?.orderStatusName]?.color ||
+                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${statusConfig[order?.orderStatusName]?.color ||
                         "bg-gray-100 text-gray-800 border-gray-200"
-                      }`}
+                        }`}
                     >
                       {statusConfig[order?.orderStatusName]?.icon || (
                         <svg
@@ -601,18 +602,7 @@ const OrdersSeller = () => {
                       </span>
                     </div>
 
-                    {/* Lý do hủy hoặc thông báo */}
-                    {order.orderStatusName === "Hủy" && (
-                      <div
-                        className="text-sm text-red-600 text-right font-bold truncate cursor-pointer"
-                        title={order?.noted}
-                      >
-                        Lý do hủy:{" "}
-                        {order?.noted?.length > 70
-                          ? order.noted.substring(0, 50) + "..."
-                          : order.noted}
-                      </div>
-                    )}
+
                     {order?.orderStatusName === "Đã duyệt" && order.noted && (
                       <div className="text-sm text-green-600 text-right font-bold">
                         Thông báo: Đã thay đổi số lượng, vui lòng vào chi tiết
@@ -620,7 +610,22 @@ const OrdersSeller = () => {
                       </div>
                     )}
                   </div>
+
+
                 </div>
+
+              </div>
+              <div>
+                {/* Lý do hủy hoặc thông báo */}
+                {order.orderStatusName === "Hủy" && (
+                  <div
+                    className="text-sm text-red-600 font-bold px-5 "
+                    title={order?.noted}
+                  >
+                    Lý do hủy:{" "}
+                    {order?.noted}
+                  </div>
+                )}
               </div>
 
               {/* Các nút hành động */}
@@ -804,7 +809,7 @@ const OrdersSeller = () => {
           setCurrentPage={handlePageChange}
         />
       )}
-      {isLoading && <Loading />}
+
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">

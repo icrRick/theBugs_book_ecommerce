@@ -204,7 +204,6 @@ public class OrderSellerService {
                         } else {
                                 checkShopId.setNoted(cancelReason);
                                 if (checkShopId.getOrderPayment().getId() == 3) {
-
                                         getUserEmailNoted(orderId);
                                 }
 

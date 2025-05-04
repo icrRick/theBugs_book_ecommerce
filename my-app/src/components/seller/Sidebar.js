@@ -5,6 +5,7 @@ const Sidebar = ({ sidebarOpen }) => {
   const [productMenuOpen, setProductMenuOpen] = useState(false)
   const [promotionMenuOpen, setPromotionMenuOpen] = useState(false)
   const [statsMenuOpen, setStatsMenuOpen] = useState(false)
+  const [reportMenuOpen, setReportMenuOpen] = useState(false)
   const location = useLocation()
 
   const isActiveRoute = (route) => {
@@ -34,6 +35,9 @@ const Sidebar = ({ sidebarOpen }) => {
         break
       case 'stats':
         setStatsMenuOpen(!statsMenuOpen)
+        break
+      case 'report':
+        setReportMenuOpen(!reportMenuOpen)
         break
       default:
         break
@@ -160,6 +164,36 @@ const Sidebar = ({ sidebarOpen }) => {
           )
         }
       ]
+    },
+    {
+      title: 'Báo cáo',
+      isOpen: reportMenuOpen,
+      menuName: 'report',
+      icon: (
+        <svg className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      items: [
+        {
+          title: 'Báo cáo sản phẩm',
+          path: '/seller/report-products',
+          icon: (
+            <svg className="w-4 h-4 mr-2 text-gray-500 transition duration-75 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          )
+        },
+        {
+          title: 'Báo cáo cửa hàng',
+          path: '/seller/report-shops',
+          icon: (
+            <svg className="w-4 h-4 mr-2 text-gray-500 transition duration-75 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )
+        }
+      ]
     }
   ]
 
@@ -172,27 +206,25 @@ const Sidebar = ({ sidebarOpen }) => {
             <li key={index}>
               <Link
                 to={item.path}
-                className={`flex items-center p-2.5 rounded-lg group ${
-                  isActiveRoute(item.path)
+                className={`flex items-center p-2.5 rounded-lg group ${isActiveRoute(item.path)
                     ? 'bg-emerald-50 text-emerald-600'
                     : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
                 onClick={closeAllSubmenus}
               >
                 {item.icon}
                 <span className="ml-3 font-medium">{item.title}</span>
-            </Link>
-          </li>
+              </Link>
+            </li>
           ))}
 
           {/* Menu items có submenu */}
           {dropdownMenus.map((menu, index) => (
             <li key={index}>
-            <button
-              type="button"
-                className={`flex items-center w-full p-2.5 rounded-lg group ${
-                  menu.isOpen ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'
-                }`}
+              <button
+                type="button"
+                className={`flex items-center w-full p-2.5 rounded-lg group ${menu.isOpen ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
                 onClick={() => handleMenuClick(menu.menuName)}
               >
                 {menu.icon}
@@ -206,31 +238,29 @@ const Sidebar = ({ sidebarOpen }) => {
                     fillRule="evenodd"
                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                   />
-              </svg>
-            </button>
+                </svg>
+              </button>
               <ul
-                className={`${
-                  menu.isOpen ? 'max-h-40' : 'max-h-0'
-                } overflow-hidden transition-all duration-300 ease-in-out`}
+                className={`${menu.isOpen ? 'max-h-40' : 'max-h-0'
+                  } overflow-hidden transition-all duration-300 ease-in-out`}
               >
                 {menu.items.map((item, itemIndex) => (
                   <li key={itemIndex}>
                     <Link
                       to={item.path}
-                      className={`flex items-center p-2 pl-11 rounded-lg group ${
-                        isActiveRoute(item.path)
+                      className={`flex items-center p-2 pl-11 rounded-lg group ${isActiveRoute(item.path)
                           ? 'bg-emerald-50 text-emerald-600'
                           : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                
+                        }`}
+
                     >
                       {item.icon}
                       <span className="font-medium">{item.title}</span>
                     </Link>
-              </li>
+                  </li>
                 ))}
-            </ul>
-          </li>
+              </ul>
+            </li>
           ))}
         </ul>
       </div>

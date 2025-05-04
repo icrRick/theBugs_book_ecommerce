@@ -345,7 +345,7 @@ const Search = () => {
                   onChange={handleSortChange}
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="relevance">Độ phù hợp</option>
+                  <option value="relevance"></option>
                   <option value="price-asc">Giá: Thấp đến cao</option>
                   <option value="price-desc">Giá: Cao đến thấp</option>
                   <option value="rating">Đánh giá cao</option>

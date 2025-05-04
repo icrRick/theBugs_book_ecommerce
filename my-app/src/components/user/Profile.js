@@ -124,8 +124,6 @@ const Profile = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-    
-
       const response = await axiosInstance.post("/auth/profile", data);
       if (response.status === 200 &&   response.data.status === true) {
         setUserInfo(response.data.data);
