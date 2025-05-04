@@ -361,9 +361,6 @@ const ShopInfoStep = ({ shopInfo, handleChange, handleNext }) => {
                                     <div>
                                           <label className="block text-gray-700 font-medium mb-2">
                                                 Logo cửa hàng{" "}
-                                                <span className="text-red-500">
-                                                      *
-                                                </span>
                                           </label>
                                           <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                                                 {logoPreview ? (
