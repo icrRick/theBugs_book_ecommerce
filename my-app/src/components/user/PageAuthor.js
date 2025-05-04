@@ -130,17 +130,7 @@ const PageAuthor = () => {
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 {author.name}
               </h1>
-              {author.urlLink && (
-                <a
-                  href={author.urlLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-2 mb-4"
-                >
-                  <i className="fas fa-link"></i>
-                  <span>Ảnh của tác giả</span>
-                </a>
-              )}
+
               <div className=" p-6 rounded-lg inline-block">
                 <div className="text-3xl font-bold text-gray-800">
                   {products.length}
@@ -175,11 +165,11 @@ const PageAuthor = () => {
             {products.map((product) => (
               <div
                 key={product?.productId}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full flex flex-col"
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 <Link
                   to={`/product-detail/${product?.productCode}`}
-                  className="block flex-1 flex flex-col"
+                  className="block"
                 >
                   <div className="relative">
                     <img
@@ -188,20 +178,16 @@ const PageAuthor = () => {
                       className="w-full aspect-[3/4] object-cover"
                     />
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
+                  <div className="p-4">
                     <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 h-12">
                       {product?.productName}
                     </h3>
 
-                    <div className="flex items-center gap-1 mb-2 min-h-[24px]">
-                      {product?.totalReview > 0 ? (
+                    <div className="flex items-center gap-1 mb-2">
+                      {product?.totalReview > 0 && (
                         <span className="text-gray-500 text-sm">
                           ({formatSumCountReview(product?.totalReview)} đánh
                           giá)
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-sm opacity-0">
-                          -
                         </span>
                       )}
                     </div>
@@ -214,14 +200,12 @@ const PageAuthor = () => {
                       </div>
                     </div>
 
-                    <div className="mt-auto">
-                      <div className="text-sm text-gray-500 mb-1">
-                        <span className="font-medium">Thể loại:</span>{" "}
-                        {product?.productGenres}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        {product?.productCategory}
                       </div>
                       <div className="text-sm text-gray-500">
-                        <span className="font-medium">Nhà xuất bản:</span>{" "}
-                        {product?.productPushiser}
+                        {product?.productGenres}
                       </div>
                     </div>
                   </div>
