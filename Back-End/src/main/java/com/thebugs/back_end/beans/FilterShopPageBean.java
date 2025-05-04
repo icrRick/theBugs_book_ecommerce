@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FillterShopPageBean {
+public class FilterShopPageBean {
     private String productName;
     private List<Integer> genresIntegers;
     private List<Integer> authorsIntegers;

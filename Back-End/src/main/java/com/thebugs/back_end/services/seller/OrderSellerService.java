@@ -142,12 +142,15 @@ public class OrderSellerService {
                                         productOrderDTO.setPriceProduct(item.getPrice());
                                         productOrderDTO.setQuantityProduct(item.getQuantity());
                                         productOrderDTO.setTotalPriceProduct(item.getPrice() * item.getQuantity());
+                                        productOrderDTO.setOldPriceProduct(item.getOlPrice());
                                         return productOrderDTO;
                                 })
                                 .collect(Collectors.toList()));
 
                 double total = order.getOrderItems().stream()
                                 .mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
+                double totalOl = order.getOrderItems().stream()
+                                .mapToDouble(item -> item.getOlPrice() * item.getQuantity()).sum();
                 double discountVoucher = order.getVoucher() != null ? order.getVoucher().getDiscountPercentage() : 0;
                 double maxDiscount = order.getVoucher() != null ? order.getVoucher().getMaxDiscount() : 0;
                 double shippingFee = order.getShippingFee();
@@ -158,6 +161,7 @@ public class OrderSellerService {
                 double min = Math.min(totalOrderWithDiscount, maxDiscount);
                 double totalPrice = total - min + shippingFee;
                 map.put("totalPrice", total);
+                map.put("totalOlPrice", totalOl);    
                 map.put("totalDiscount", min);
                 map.put("shippingMethod", shippingFee);
                 map.put("total", totalPrice);
@@ -172,6 +176,11 @@ public class OrderSellerService {
                 boolean checkStatusId = isAllowedTransition(orderId, orderStatusId);
                 Optional<Order> orderOptional = orderJPA.findById(orderId);
                 int currentStatus = orderOptional.get().getOrderStatus().getId();
+                int orderPaymentId = checkShopId.getOrderPayment().getId();
+                if (orderPaymentId == 4) {
+                        throw new IllegalArgumentException(
+                                        "Không thể cập nhật trạng thái đơn hàng khi chưa thanh toán online");
+                }
                 if (currentStatus == 2 || currentStatus == 5) {
                         throw new IllegalArgumentException("Đơn hàng đã ở trạng thái cuối, không thể cập nhật thêm");
                 }

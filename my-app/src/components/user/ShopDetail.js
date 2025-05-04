@@ -1,39 +1,57 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, Link, useLocation } from "react-router-dom"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom"
 import ChatButton from "./ChatButton"
+import { Swiper, SwiperSlide } from "swiper/react"
+import { FreeMode, Autoplay, Pagination as SwiperPagination } from "swiper/modules"
+import "swiper/css"
+import "swiper/css/free-mode"
+import "swiper/css/autoplay"
+import "swiper/css/pagination"
 
 import { showErrorToast } from "../../utils/Toast";
 import ProductCard from "./ProductCard";
 import axios from "axios"
 import Pagination from "../admin/Pagination";
+import Loading from "../../utils/Loading"
+
+// Tạo instance axios để sử dụng xuyên suốt
+const api = axios.create({
+  baseURL: 'http://localhost:8080',
+  timeout: 2000,
+});
+
 const ShopDetail = () => {
   const { id } = useParams()
   const location = useLocation()
   const initialState = location.state || {}
-  
+
   const [shop, setShop] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false)
+  const [showAllGenres, setShowAllGenres] = useState(false);
+  const [showAllAuthors, setShowAllAuthors] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialState.searchQuery || "")
-  const [sortBy, setSortBy] = useState(initialState.sortBy || "price_desc");
+  const [sortBy, setSortBy] = useState(initialState.sortBy || "popular");
   const [items, setItems] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialState.page || 1);
   const [minPrice, setMinPrice] = useState(initialState.minPrice || 0);
   const [maxPrice, setMaxPrice] = useState(initialState.maxPrice || 1000000000);
+  const [priceRangeValue, setPriceRangeValue] = useState(0);
   const [genres, setGenres] = useState(initialState.genres || []);
   const [genreNames, setGenreNames] = useState(initialState.genreNames || []);
   const [authors, setAuthors] = useState(initialState.authors || []);
   const [authorNames, setAuthorNames] = useState(initialState.authorNames || []);
   const [selectedPriceRange, setSelectedPriceRange] = useState(initialState.priceRange || 'all');
+  const navigate = useNavigate();
   const itemsPerPage = 12;
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
-  const updateURL = (params) => {
+  const startItem = useMemo(() => (currentPage - 1) * itemsPerPage + 1, [currentPage, itemsPerPage]);
+  const endItem = useMemo(() => Math.min(currentPage * itemsPerPage, totalItems), [currentPage, itemsPerPage, totalItems]);
+  const [promotion, setPromotion] = useState(null);
+  const updateURL = useCallback((params) => {
     const urlParams = new URLSearchParams(window.location.search);
     Object.keys(params).forEach(key => {
       if (params[key]) {
@@ -43,12 +61,10 @@ const ShopDetail = () => {
       }
     });
     window.history.pushState(null, '', `?${urlParams.toString()}`);
-  };
+  }, []);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    updateURL({ page: newPage });
-    handleFilter(id, newPage);
   };
 
   const handleSearch = (value) => {
@@ -59,229 +75,212 @@ const ShopDetail = () => {
     setSortBy(value);
   };
 
-  const handlePriceRangeChange = (range) => {
-    setSelectedPriceRange(range);
-    switch (range) {
-      case 'all':
-        setMinPrice(0);
-        setMaxPrice(1000000000);
-        break;
-      case '0-50000':
-        setMinPrice(0);
-        setMaxPrice(50000);
-        break;
-      case '50000-100000':
-        setMinPrice(50000);
-        setMaxPrice(100000);
-        break;
-      case '100000-200000':
-        setMinPrice(100000);
-        setMaxPrice(200000);
-        break;
-      case '200000-up':
-        setMinPrice(200000);
-        setMaxPrice(1000000000);
-        break;
-      default:
-        setMinPrice(0);
-        setMaxPrice(1000000000);
+  const handlePriceRangeChange = (e) => {
+    const value = parseInt(e.target.value);
+    setPriceRangeValue(value);
+
+    // Ánh xạ giá trị thanh trượt thành khoảng giá
+    const priceRanges = {
+      0: { min: 0, max: 1000000000 },
+      25: { min: 0, max: 50000 },
+      50: { min: 50000, max: 100000 },
+      75: { min: 100000, max: 200000 },
+      100: { min: 200000, max: 1000000000 }
+    };
+
+    const range = priceRanges[value] || priceRanges[0];
+    setMinPrice(range.min);
+    setMaxPrice(range.max);
+  };
+
+  const handleFilter = async (id, page, isInitial = false) => {
+    if (!id) return;
+
+    try {
+      const requestBody = {
+        "productName": searchQuery || "",
+        "minPrice": minPrice || 0,
+        "maxPrice": maxPrice || 1000000000,
+        "sortType": sortBy || "price_desc",
+        "genresIntegers": genres || [],
+        "authorsIntegers": authors || []
+      };
+
+      if (!isInitial) {
+        updateURL({
+          productName: searchQuery,
+          minPrice: minPrice || 0,
+          maxPrice: maxPrice || 1000000000,
+          sortType: sortBy || "price_desc",
+          page: page || 1,
+          genres: genreNames.join(','),
+          authors: authorNames.join(',')
+        });
+      }
+
+      const response = await api.post(`/shop/filter?shopSlug=${id}&page=${page}`, requestBody);
+      if (response.status === 200 && response.data.status === true) {
+        setItems(response.data.data.arrayList);
+        setTotalItems(response.data.data.totalItems);
+      }
+    } catch (error) {
+      showErrorToast(error.response?.data?.message || "Có lỗi xảy ra");
+      console.error("Lỗi khi lấy dữ liệu:", error);
     }
   };
 
-  const handleFilter = async (id, page) => {
-    try {
-      updateURL({
-        productName: searchQuery,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        sortType: sortBy,
-        page: page
-      });
-      const requestBody = {
-        "productName": searchQuery || "",
-        "minPrice": minPrice,
-        "maxPrice": maxPrice,
-        "sortType": sortBy,
-        "genresIntegers": genres,
-        "authorsIntegers": authors
-      }
-    
-      const response = await axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=${page}`, requestBody);
-      if (response.status === 200 && response.data.status === true) {
-        setItems(response.data.data.arrayList)
-        setTotalItems(response.data.data.totalItems)
-      }
-    } catch (error) {
-      showErrorToast(error.response?.data?.message || "Có lỗi xảy ra")
-      console.error("Lỗi khi lấy dữ liệu:", error)
-    }
-  }
   const handleResetFilter = () => {
     setSearchQuery("");
     setMinPrice(0);
     setMaxPrice(1000000000);
+    setPriceRangeValue(0);
     setSortBy("price_desc");
     setGenres([]);
+    setGenreNames([]);
     setAuthors([]);
+    setAuthorNames([]);
     setSelectedPriceRange('all');
     setCurrentPage(1);
-    updateURL({
-      productName: "",
-      minPrice: 0,
-      maxPrice: 1000000000,
-      sortType: "price_desc",
-      page: 1,
-      genres: "",
-      authors: ""
-    });
-    
-    // Gọi API trực tiếp thay vì thông qua handleFilter
-    axios.post(`http://localhost:8080/shop/filter?shopSlug=${id}&page=1`, {
-      productName: "",
-      minPrice: 0,
-      maxPrice: 1000000000,
-      sortType: "price_desc",
-      genresIntegers: [],
-      authorsIntegers: []
-    })
-      .then(response => {
-        if (response.status === 200 && response.data.status === true) {
-          setItems(response.data.data.arrayList)
-          setTotalItems(response.data.data.totalItems)
-        }
-      })
-      .catch(error => {
-        showErrorToast(error.response?.data?.message || "Có lỗi xảy ra")
-        console.error("Lỗi khi lấy dữ liệu:", error)
-      });
+
+    handleFilter(id, 1);
   }
 
   const handleGenreChange = (genreId, genreName) => {
     setGenres(prev => {
-      if (prev.includes(genreId)) {
-        return prev.filter(id => id !== genreId);
-      }
-      return [...prev, genreId];
+      const newGenres = prev.includes(genreId)
+        ? prev.filter(id => id !== genreId)
+        : [...prev, genreId];
+      return newGenres;
     });
+
     setGenreNames(prev => {
-      if (prev.includes(genreName)) {
-        return prev.filter(name => name !== genreName);
-      }
-      return [...prev, genreName];
+      const newNames = prev.includes(genreName)
+        ? prev.filter(name => name !== genreName)
+        : [...prev, genreName];
+      return newNames;
     });
   };
 
   const handleAuthorChange = (authorId, authorName) => {
     setAuthors(prev => {
-      if (prev.includes(authorId)) {
-        return prev.filter(id => id !== authorId);
-      }
-      return [...prev, authorId];
+      const newAuthors = prev.includes(authorId)
+        ? prev.filter(id => id !== authorId)
+        : [...prev, authorId];
+      return newAuthors;
     });
+
     setAuthorNames(prev => {
-      if (prev.includes(authorName)) {
-        return prev.filter(name => name !== authorName);
-      }
-      return [...prev, authorName];
+      const newNames = prev.includes(authorName)
+        ? prev.filter(name => name !== authorName)
+        : [...prev, authorName];
+      return newNames;
     });
-  }
+  };
 
   const handleApplyFilter = () => {
     setCurrentPage(1);
-    // Cập nhật URL với tất cả các tham số lọc
-    updateURL({
-      productName: searchQuery,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-      sortType: sortBy,
-      page: 1,
-      genres: genreNames.join(','),
-      authors: authorNames.join(',')
-    });
     handleFilter(id, 1);
   };
-  const getQueryParams = () => {
+  const getQueryParams = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
-    const keyword = params.get("productName") || "";
-    const page = parseInt(params.get("page")) || 1;
-    const genresParam = params.get("genres") || "";
-    const authorsParam = params.get("authors") || "";
-    const minPrice = parseInt(params.get("minPrice")) || 0;
-    const maxPrice = parseInt(params.get("maxPrice")) || 1000000000;
-    const sortType = params.get("sortType") || "price_desc";
-    return { 
-      keyword, 
-      page, 
-      genres: genresParam.split(',').filter(g => g), 
-      authors: authorsParam.split(',').filter(a => a), 
-      minPrice, 
-      maxPrice, 
-      sortType 
+
+    // Xử lý các giá trị số
+    const parseSafeInt = (value, defaultValue) => {
+      const parsed = parseInt(value);
+      return isNaN(parsed) ? defaultValue : parsed;
     };
-  };
+
+    // Xử lý các mảng từ chuỗi
+    const parseArray = (value) => {
+      return value ? value.split(',').filter(item => item.trim()) : [];
+    };
+
+    return {
+      keyword: params.get("productName") || "",
+      page: parseSafeInt(params.get("page"), 1),
+      genres: parseArray(params.get("genres")),
+      authors: parseArray(params.get("authors")),
+      minPrice: parseSafeInt(params.get("minPrice"), 0),
+      maxPrice: parseSafeInt(params.get("maxPrice"), 1000000000),
+      sortType: params.get("sortType") || "price_desc"
+    };
+  }, []);
 
   // Thêm useEffect để xử lý params từ URL khi component mount
   useEffect(() => {
     if (id) {
-      if (initialState.fromProductDetail) {
-        handleFilter(id, currentPage)
-      } else {
-        const params = getQueryParams()
-        if (params.keyword) setSearchQuery(params.keyword)
-        if (params.minPrice) setMinPrice(params.minPrice)
-        if (params.maxPrice) setMaxPrice(params.maxPrice)
-        if (params.sortType) setSortBy(params.sortType)
-        if (params.page) setCurrentPage(params.page)
-        handleFilter(id, params.page)
-      }
-    }
-  }, [shop])
-
-  const fechData = async (id) => {
-    setLoading(true)
-    try {
-      console.log("Đang gọi API với shopSlug:", id)
-      const response = await axios.get(`http://localhost:8080/shop/detail?shopSlug=${id}`);
-      console.log("Dữ liệu nhận được:", response.data)
-      if (response.status === 200 && response.data.status === true) {
-        setShop(response.data.data)
-        console.log("Dữ liệu shop sau khi set:", response.data.data)
-      }
-    } catch (error) {
-      showErrorToast(error.response?.data?.message || "Có lỗi xảy ra")
-      console.error("Lỗi khi lấy dữ liệu:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (id) {
       fechData(id);
+      getProductDiscount(id);
     }
-  }, [id])
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
+    if (id && shop) {
+      if (initialState.fromProductDetail) {
+        handleFilter(id, currentPage);
+      } else {
+        const params = getQueryParams();
+        if (params.keyword) setSearchQuery(params.keyword);
+        if (params.minPrice) setMinPrice(params.minPrice);
+        if (params.maxPrice) setMaxPrice(params.maxPrice);
+        if (params.sortType) setSortBy(params.sortType);
+        if (params.page) setCurrentPage(params.page);
+        handleFilter(id, params.page);
+      }
+    }
+  }, [shop, id]);
+
+  useEffect(() => {
+    if (id && shop && currentPage > 1) {
       handleFilter(id, currentPage);
     }
-  }, [id, currentPage])
+  }, [currentPage]);
 
-  const handleChat = () => {
-    console.log("Chat với cửa hàng:", shop?.shopName);
+  const fechData = async (id) => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/shop/detail?shopSlug=${id}`);
+      if (response.status === 200 && response.data.status === true) {
+        setShop(response.data.data);
+      }
+    } catch (error) {
+      
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProductDiscount = async (id) => {
+    try {
+      const response = await api.get(`/shop/promotion?shopSlug=${id}`);
+      if (response.status === 200 && response.data.status === true) {
+        setPromotion(response.data.data);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy khuyến mãi:", error);
+      setPromotion([]);
+    }
   };
 
   const handleReport = () => {
-    console.log("Báo cáo cửa hàng:", shop?.shopName);
+    navigate(`/report-shop/${id}`);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
+  // Sử dụng memo cho các điều kiện render phổ biến
+  const visibleGenres = useMemo(() => {
+    return shop?.genres?.length > 0
+      ? (showAllGenres ? shop.genres : shop.genres.slice(0, 5))
+      : [];
+  }, [shop?.genres, showAllGenres]);
+
+  const visibleAuthors = useMemo(() => {
+    return shop?.authors?.length > 0
+      ? (showAllAuthors ? shop.authors : shop.authors.slice(0, 5))
+      : [];
+  }, [shop?.authors, showAllAuthors]);
+
+
 
   if (!shop) {
     return (
@@ -293,6 +292,7 @@ const ShopDetail = () => {
 
   return (
     <div className="w-full my-4">
+      {loading && <Loading />}
       <div className="relative rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Banner */}
         <div className="h-80 overflow-hidden">
@@ -348,14 +348,14 @@ const ShopDetail = () => {
                     >
                       <i className="bi bi-chat-dots"></i>
                       <span>Chat</span>
-                    </button>
+                    </button> */}
                     <button
                       className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors text-sm"
                       onClick={handleReport}
                     >
                       <i className="bi bi-flag"></i>
                       <span>Báo cáo</span>
-                    </button> */}
+                    </button>
                   </div>
                 </div>
 
@@ -400,6 +400,90 @@ const ShopDetail = () => {
         </div>
       </div>
 
+      {/* dùng swiperjs Free mode carousel nhiều item 1 item chứa hình ảnh số lượng đã bán và còn lại */}
+      {
+        promotion && promotion.length > 0 && (
+          <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Sản phẩm đang giảm giá hôm nay</h2>
+            <div className="relative featured-swiper-container">
+              <Swiper
+                slidesPerView={2}
+                spaceBetween={16}
+                freeMode={{
+                  enabled: true,
+                  sticky: false,
+                  momentumBounce: true,
+                  minimumVelocity: 0.1,
+                  momentum: true
+                }}
+                navigation={false}
+                autoplay={{
+                  delay: 5000,
+                  disableOnInteraction: false,
+                }}
+                pagination={{
+                  el: '.swiper-pagination',
+                  clickable: true,
+                  dynamicBullets: true,
+                  dynamicMainBullets: 3,
+                }}
+                grabCursor={true}
+                breakpoints={{
+                  640: {
+                    slidesPerView: 3,
+                    spaceBetween: 20,
+                  },
+                  768: {
+                    slidesPerView: 4,
+                    spaceBetween: 24,
+                  },
+                  1024: {
+                    slidesPerView: 5,
+                    spaceBetween: 28,
+                  },
+                }}
+                modules={[FreeMode, Autoplay, SwiperPagination]}
+                className="featured-products-swiper"
+              >
+                {promotion?.map((product) => (
+                  <SwiperSlide key={product.id}>
+                    <ProductCard product={product} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+              <div className="swiper-pagination mt-4"></div>
+            </div>
+
+            <style jsx="true">{`
+          .featured-swiper-container {
+            position: relative;
+            padding: 0;
+          }
+          
+          .swiper-pagination {
+            position: relative;
+            bottom: 0;
+            margin-top: 16px;
+          }
+          
+          .swiper-pagination-bullet {
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            background: #ddd;
+            opacity: 1;
+          }
+          
+          .swiper-pagination-bullet-active {
+            background: #4f46e5;
+            width: 24px;
+            border-radius: 4px;
+          }
+        `}</style>
+          </div>
+        )
+      }
+
       {/* Product List */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 mt-6">
         {/* Filter Sidebar */}
@@ -410,7 +494,7 @@ const ShopDetail = () => {
               <li className="text-gray-600">
                 <h4 className="font-medium text-gray-700 mb-3">Thể loại</h4>
                 <ul className="space-y-2">
-                  {shop?.genres?.length > 0 && shop?.genres?.map((genre) => (
+                  {visibleGenres.map((genre) => (
                     <li key={genre.id} className="flex items-center">
                       <input
                         type="checkbox"
@@ -418,18 +502,26 @@ const ShopDetail = () => {
                         value={genre.id}
                         className="mr-2"
                         checked={genres.includes(genre.id)}
-                        onChange={(e) => handleGenreChange(genre.id, genre.name)}
+                        onChange={() => handleGenreChange(genre.id, genre.name)}
                       />
                       <label htmlFor={`genre-${genre.id}`}>{genre.name}</label>
                     </li>
                   ))}
                 </ul>
+                {shop?.genres?.length > 5 && (
+                  <button
+                    onClick={() => setShowAllGenres(!showAllGenres)}
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2"
+                  >
+                    {showAllGenres ? "Thu gọn" : `Xem thêm (${shop.genres.length - 5})`}
+                  </button>
+                )}
               </li>
 
               <li className="text-gray-600">
                 <h4 className="font-medium text-gray-700 mb-3">Tác giả</h4>
                 <ul className="space-y-2">
-                  {shop?.authors?.length > 0 && shop?.authors?.map((author) => (
+                  {visibleAuthors.map((author) => (
                     <li key={author.id} className="flex items-center">
                       <input
                         type="checkbox"
@@ -443,72 +535,43 @@ const ShopDetail = () => {
                     </li>
                   ))}
                 </ul>
+                {shop?.authors?.length > 5 && (
+                  <button
+                    onClick={() => setShowAllAuthors(!showAllAuthors)}
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium mt-2"
+                  >
+                    {showAllAuthors ? "Thu gọn" : `Xem thêm (${shop.authors.length - 5})`}
+                  </button>
+                )}
               </li>
 
               <li className="text-gray-600">
                 <h4 className="font-medium text-gray-700 mb-3">Giá</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
+                <div className="space-y-4">
+                  <div className="relative">
                     <input
-                      type="radio"
-                      name="price"
-                      id="price-all"
-                      value="all"
-                      checked={selectedPriceRange === 'all'}
-                      onChange={() => handlePriceRangeChange('all')}
-                      className="mr-2"
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="25"
+                      value={priceRangeValue}
+                      onChange={handlePriceRangeChange}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                     />
-                    <label htmlFor="price-all">Tất cả</label>
-                  </li>
-                  <li className="flex items-center">
-                    <input
-                      type="radio"
-                      name="price"
-                      id="price-0-50000"
-                      value="0-50000"
-                      checked={selectedPriceRange === '0-50000'}
-                      onChange={() => handlePriceRangeChange('0-50000')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="price-0-50000">Dưới 50.000đ</label>
-                  </li>
-                  <li className="flex items-center">
-                    <input
-                      type="radio"
-                      name="price"
-                      id="price-50000-100000"
-                      value="50000-100000"
-                      checked={selectedPriceRange === '50000-100000'}
-                      onChange={() => handlePriceRangeChange('50000-100000')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="price-50000-100000">50.000đ - 100.000đ</label>
-                  </li>
-                  <li className="flex items-center">
-                    <input
-                      type="radio"
-                      name="price"
-                      id="price-100000-200000"
-                      value="100000-200000"
-                      checked={selectedPriceRange === '100000-200000'}
-                      onChange={() => handlePriceRangeChange('100000-200000')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="price-100000-200000">100.000đ - 200.000đ</label>
-                  </li>
-                  <li className="flex items-center">
-                    <input
-                      type="radio"
-                      name="price"
-                      id="price-200000-up"
-                      value="200000-up"
-                      checked={selectedPriceRange === '200000-up'}
-                      onChange={() => handlePriceRangeChange('200000-up')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="price-200000-up">Trên 200.000đ</label>
-                  </li>
-                </ul>
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <span>Tất cả</span>
+                      <span>50K</span>
+                      <span>100K</span>
+                      <span>200K</span>
+                      <span>200K+</span>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-indigo-600">
+                      Khoảng giá: {minPrice.toLocaleString('vi-VN')}đ - {maxPrice === 1000000000 ? '∞' : maxPrice.toLocaleString('vi-VN') + 'đ'}
+                    </p>
+                  </div>
+                </div>
               </li>
 
               <li className="mt-4 flex gap-2">
@@ -529,7 +592,7 @@ const ShopDetail = () => {
 
         {/* Product List */}
         <div className="lg:col-span-9">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               {/* Search Input */}
               <div className="flex-1">
@@ -565,7 +628,7 @@ const ShopDetail = () => {
               >
                 <i className="bi bi-search"></i>
               </button>
-              
+
               {/* Reset Button */}
               <button
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

@@ -1,5 +1,6 @@
 package com.thebugs.back_end.services.super_admin;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -9,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.dto.AdminRevenueShopDTO;
+import com.thebugs.back_end.entities.Order;
+import com.thebugs.back_end.mappers.AdminRevenueShopMapper;
 import com.thebugs.back_end.repository.OrderJPA;
 
 @Service
@@ -17,9 +20,12 @@ public class AdminRevenueShopService {
     @Autowired
     private OrderJPA orderJPA;
 
-    public List<AdminRevenueShopDTO> getShopRevenueList(Date startDate, Date endDate, Pageable pageable) {
-        Page<AdminRevenueShopDTO> pageResult = orderJPA.getShopRevenuePage(startDate, endDate, pageable);
-        return pageResult.getContent();
+    @Autowired
+    private AdminRevenueShopMapper adminRevenueShopMapper;
+
+    public ArrayList<Object> getShopRevenue(Date startDate, Date endDate, Pageable pageable) {
+        Page<Order> orderPage = orderJPA.getShopRevenuePage(startDate, endDate, pageable);
+        return (ArrayList<Object>) adminRevenueShopMapper.toDTO(orderPage.getContent());
     }
     
 
@@ -28,8 +34,14 @@ public class AdminRevenueShopService {
     }
 
     public double getTotalRevenue(Date startDate, Date endDate) {
-        List<AdminRevenueShopDTO> revenueList = orderJPA.getShopRevenue(startDate, endDate);
-        return revenueList.stream().mapToDouble(dto -> dto.getFixedFee()).sum();
+        double totalRevenue = 0.0;
+        List<Order> orders = orderJPA.getShopRevenue(startDate, endDate);
+        totalRevenue = orders.stream()
+            .mapToDouble(order -> order.getOrderItems().stream()
+                .mapToDouble(item -> item.getOlPrice() * item.getQuantity())
+                .sum() * 0.05)
+            .sum();
+        return totalRevenue;
     }
 
 }

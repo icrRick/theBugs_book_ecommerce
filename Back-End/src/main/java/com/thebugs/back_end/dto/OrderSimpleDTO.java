@@ -10,6 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class OrderSimpleDTO {
+        
+        private String shopSlug;
+        private String shopName;
+        private Integer orderPaymentId;
+
         private Integer id;
         private String customerInfo;
         private Date orderDate;

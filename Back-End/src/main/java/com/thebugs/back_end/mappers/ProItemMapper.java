@@ -38,7 +38,12 @@ public class ProItemMapper {
         map.put("quantity", product.getQuantity());
         map.put("weight", product.getWeight());
         map.put("productCode", product.getProduct_code());
-        map.put("image", product.getImages().getLast().getImageName()!= null ?  product.getImages().getLast().getImageName() : ReplaceName.generatePlaceholderUrl(product.getName()));
+        if (product.getImages() ==null || product.getImages().isEmpty()) {
+            map.put("image",ReplaceName.generatePlaceholderUrl(product.getName()));
+        }else{
+            map.put("image", product.getImages().getLast().getImageName()!= null ?  product.getImages().getLast().getImageName() : ReplaceName.generatePlaceholderUrl(product.getName()));
+
+        }
 
         map.put("shopSlug", product.getShop().getShop_slug());
         map.put("shopName", product.getShop().getName());
@@ -47,17 +52,18 @@ public class ProItemMapper {
         map.put("rate", reviewJPA.getAverageRateByProductId(product.getId()));
         map.put("reviewCount", reviewJPA.countReviewByProductId(product.getId()));
         map.put("purchased", orderItemJPA.countPurchasedByProductId(product.getId()));
-
+        map.put("approve", product.getApprove());
       
         if (product.getPromotionProducts() != null && !product.getPromotionProducts().isEmpty()) {
             Date today = Format.formatDateS(new Date()); // Current date;
             System.out.println("Current date: " + today);
             PromotionProduct validPromotion = product.getPromotionProducts().stream()
                     .filter(promotion -> {
+                        boolean checkactive=promotion.getPromotion().isActive();
                         Date startDate = promotion.getPromotion().getStartDate();
                         Date endDate = promotion.getPromotion().getExpireDate();
                         return (startDate == null || !today.before(startDate))
-                                && (endDate == null || !today.after(endDate));
+                                && (endDate == null || !today.after(endDate)) && checkactive;
                     })
                     .max(Comparator.comparingDouble(promotion -> promotion.getPromotion().getPromotionValue()))
                     .orElse(null);

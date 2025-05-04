@@ -200,7 +200,7 @@ const OrdersSeller = () => {
         setOrders([]);
       }
     } catch (error) {
-      showErrorToast("Đã xảy ra lỗi khi tải đơn hàng.");
+      showErrorToast("Đã xảy ra lỗi khi tải đơn hàng. " + error.response?.data?.message);
       setOrders([]);
     } finally {
       setTimeout(() => {
@@ -367,47 +367,16 @@ const OrdersSeller = () => {
   const handleViewDetails = (orderId) => {
     setIsLoading(true);
     setTimeout(() => {
-      sessionStorage.setItem("selectedOrderId", orderId);
-      const params = new URLSearchParams(searchParams);
-      params.set("selectedOrderId", orderId);
-      navigate(`/seller/order/${orderId}?${params.toString()}`);
+
+      navigate(`/seller/order/${orderId}`);
     }, 300);
   };
-
-  useEffect(() => {
-    let selectedOrderId =
-      searchParams.get("selectedOrderId") ||
-      sessionStorage.getItem("selectedOrderId");
-
-    if (selectedOrderId) {
-      const interval = setInterval(() => {
-        const element = document.getElementById(`order-${selectedOrderId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          clearInterval(interval);
-
-          sessionStorage.removeItem("selectedOrderId");
-
-          const params = new URLSearchParams(searchParams);
-          params.delete("selectedOrderId");
-          setSearchParams(params);
-        }
-      }, 300);
-
-      return () => clearInterval(interval);
-    }
-  }, [orders]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
-  useEffect(() => {
-    const selectedOrderId = sessionStorage.getItem("selectedOrderId");
-    if (!selectedOrderId) {
-      sessionStorage.removeItem("selectedOrderId");
-    }
-  }, []);
+
 
   const formatDate = (dateString) => {
     const options = {

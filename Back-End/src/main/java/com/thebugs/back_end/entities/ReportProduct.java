@@ -41,7 +41,6 @@ public class ReportProduct {
         private Date createAt;
 
         @Temporal(TemporalType.DATE)
-        @Column(nullable = false)
         private Date approvalDate;
 
         @Column(nullable = false)

@@ -3,7 +3,7 @@ package com.thebugs.back_end.controllers.user;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.thebugs.back_end.beans.FillterShopPageBean;
+import com.thebugs.back_end.beans.FilterShopPageBean;
 import com.thebugs.back_end.dto.GenreDTO;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.ShopPageService;
@@ -42,15 +42,16 @@ public class ShopPageController {
     }
 
     @PostMapping("/filter")
-    public ResponseEntity<ResponseData> getFilteredShopPage(@RequestParam(required = false) String shopSlug , @RequestBody(required = false) FillterShopPageBean fillterShopPageBean,
+    public ResponseEntity<ResponseData> getFilteredShopPage(@RequestParam(required = false) String shopSlug , @RequestBody(required = false) FilterShopPageBean filterShopPageBean,
             @RequestParam(defaultValue = "1") int page) {
         try {
+            
             Map<String, Object> response = new HashMap<>();
             Pageable pageable = PageRequest.of(page - 1, 12, Sort.by(Sort.Order.desc("id")));
          
-            List<Object> products = shopPageService.filterProductByShop(shopSlug, fillterShopPageBean, pageable);
+            List<Object> products = shopPageService.filterProductByShop(shopSlug, filterShopPageBean, pageable);
         
-            int count = shopPageService.totalItems(shopSlug, fillterShopPageBean);
+            int count = shopPageService.totalItems(shopSlug, filterShopPageBean);
             response.put("arrayList", products);
             response.put("totalItems", count);
         
@@ -60,5 +61,15 @@ public class ShopPageController {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }
     }
+    @GetMapping("/promotion")
+    public ResponseEntity<ResponseData> getListProductPromotionShopPage(@RequestParam(required = false) String shopSlug) {
+        try {
+            return ResponseEntityUtil.OK("Lấy thông tin thành công",
+                    shopPageService.getList(shopSlug));
+        } catch (Exception e) {
+            return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+        }
+    }
+
 
 }

@@ -12,7 +12,6 @@ import { useAuth } from "../../contexts/AuthContext"
 
 const Payment = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const { setCartCount } = useAuth();
     const { getListProductIds, getListVoucherIds } = cookie();
     const [shops, setShops] = useState([]);
@@ -142,7 +141,7 @@ const Payment = () => {
         const requestBody = {
             productIntegers: productIds,
             voucherIntegers: voucherIds,
-            productQuantity: quantity, 
+            productQuantity: quantity,
         };
 
         try {
@@ -330,7 +329,7 @@ const Payment = () => {
 
                         const paymentData = {
                             orderId: Number(orderId),
-                            orderInfor: "Thanh toan don hang " + orderId,
+                            orderInfor: "Thanh toán đơn hàng " + orderId,
                             total: Number(total),
                         };
 
@@ -383,11 +382,11 @@ const Payment = () => {
                     removeListProductIds();
                     removeListVoucherIds();
                 }
-              
+
             }
         } catch (error) {
             console.error("Lỗi khi đặt hàng:", error.response.data.message);
-            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau." , error.response.data.message);
+            showErrorToast("Đã có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.", error.response.data.message);
         } finally {
             setIsLoading(false);
         }
@@ -423,7 +422,7 @@ const Payment = () => {
 
                             <div className="divide-y divide-gray-200">
                                 {shop.products.map((product) => (
-                                    <div key={product?.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                                    <div key={product?.id} className="p-3 sm:p-4 ">
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
                                                 <img
@@ -434,22 +433,16 @@ const Payment = () => {
                                                 <div className="space-y-1 sm:space-y-2">
                                                     <h4 className="font-medium text-gray-900">
                                                         {product?.name}
-                                                        <p className="text-xs sm:text-sm text-gray-600">
-                                                            {product?.productQuantity} x    {
-                                                                product?.promotionValue > 0 ? (
-                                                                    <>
-                                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.price * (1 - product?.promotionValue / 100))}</span>
-                                                                        <span className="text-gray-400 line-through ml-2">{formatCurrency(product?.price)}</span>
 
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-red-600 font-medium">{formatCurrency(product?.price)}</span>
-                                                                )
-                                                            }
-                                                        </p>
                                                     </h4>
 
                                                     <div className="flex flex-col space-y-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-gray-500">Cân nặng:</span>
+                                                            <span className="text-xs text-gray-600">
+                                                                {product?.weight}
+                                                            </span>
+                                                        </div>
                                                         <div className="flex items-center space-x-2">
                                                             <span className="text-xs font-medium text-gray-500">Thể loại:</span>
                                                             {product?.genres?.length > 0 ? (
@@ -479,15 +472,45 @@ const Payment = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="font-semibold text-red-600 text-sm sm:text-base">
-                                                {
-                                                    product?.promotionValue > 0 ? (
-                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.productQuantity * product?.price * (1 - product?.promotionValue / 100))}</span>
-                                                    ) : (
-                                                        <span className="text-red-600 font-medium">{formatCurrency(product?.productQuantity * product?.price)}</span>
-                                                    )
-                                                }
-                                            </p>
+                                            <div className="flex flex-col justify-end items-end">
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <span className="text-gray-500">
+                                                        {product?.productQuantity} × 
+                                                    </span>
+                                                    {
+                                                        product?.promotionValue > 0 ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-red-600 font-semibold">{formatCurrency(product?.price * (1 - product?.promotionValue / 100))}</span>
+                                                                <span className="text-gray-400 line-through text-xs">{formatCurrency(product?.price)}</span>
+                                                                <span className="text-red-500 text-xs">
+                                                                    -{product?.promotionValue}%
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-700 font-semibold">
+                                                                {formatCurrency(product?.price)}
+                                                            </span>
+                                                        )
+                                                    }
+                                                </div>
+                                                <div className="mt-1.5 flex items-center gap-2">
+                                                    <span className="text-xs text-gray-500">Thành tiền:</span>
+                                                    <p className="font-bold text-red-600 text-base">
+                                                        {
+                                                            product?.promotionValue > 0 ? (
+                                                                <span>
+                                                                    {formatCurrency(product?.productQuantity * product?.price * (1 - product?.promotionValue / 100))}
+                                                                </span>
+                                                            ) : (
+                                                                <span>
+                                                                    {formatCurrency(product?.productQuantity * product?.price)}
+                                                                </span>
+                                                            )
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 ))}
@@ -600,11 +623,11 @@ const Payment = () => {
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá khuyến mãi sản phẩm:</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá trực tiếp:</span>
                                 <span className="text-xs sm:text-sm text-green-600 font-medium">-{formatCurrency(calculatePromotionDiscount())}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá voucher:</span>
+                                <span className="text-xs sm:text-sm text-gray-600">Giảm giá khuyến mãi:</span>
                                 <span className="text-xs sm:text-sm text-green-600 font-medium">-{formatCurrency(calculateTotalDiscount())}</span>
                             </div>
                             <div className="flex justify-between items-center">

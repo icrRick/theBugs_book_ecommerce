@@ -75,104 +75,104 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName, p.product_code")
     List<ProItemDTO> getAllProItemDTO();
 
-        @Query("""
-                            SELECT new com.thebugs.back_end.dto.Seller_ProductPromotionDTO(
-                                p.id, p.name, p.price,
-                                    promo.promotionValue, promo.startDate, promo.expireDate, promo.active
-                            )
-                            FROM Product p
-                            LEFT JOIN p.promotionProducts pp
-                            LEFT JOIN pp.promotion promo
-                            JOIN p.shop s
-                            WHERE s.id = ?1 AND (promo.active = true OR promo IS NULL)
-                        """)
-        Page<Seller_ProductPromotionDTO> getPromotions(Integer shopId, Pageable pageable);
+    @Query("""
+                SELECT new com.thebugs.back_end.dto.Seller_ProductPromotionDTO(
+                    p.id, p.name, p.price,
+                        promo.promotionValue, promo.startDate, promo.expireDate, promo.active
+                )
+                FROM Product p
+                LEFT JOIN p.promotionProducts pp
+                LEFT JOIN pp.promotion promo
+                JOIN p.shop s
+                WHERE s.id = ?1 AND (promo.active = true OR promo IS NULL)
+            """)
+    Page<Seller_ProductPromotionDTO> getPromotions(Integer shopId, Pageable pageable);
 
-        // search product by code tam
+    // search product by code tam
 
-        @Query("""
-                            SELECT new com.thebugs.back_end.dto.SearchProductDTO(
-                                p.id,
-                                p.name,
-                                p.price,
-                                i.imageName,
-                                COALESCE(AVG(r.rate), 0.0),
-                                 CAST(COALESCE(COUNT(r.id), 0) AS INTEGER),
-                                COALESCE(SUM(oi.quantity), 0),
-                                pr.promotionValue,
-                                COALESCE((p.price - (p.price * pr.promotionValue / 100)), 0.0),
-                                p.product_code,
-                                s.id,
-                                s.name
+    @Query("""
+                SELECT new com.thebugs.back_end.dto.SearchProductDTO(
+                    p.id,
+                    p.name,
+                    p.price,
+                    i.imageName,
+                    COALESCE(AVG(r.rate), 0.0),
+                     CAST(COALESCE(COUNT(r.id), 0) AS INTEGER),
+                    COALESCE(SUM(oi.quantity), 0),
+                    pr.promotionValue,
+                    COALESCE((p.price - (p.price * pr.promotionValue / 100)), 0.0),
+                    p.product_code,
+                    s.id,
+                    s.name
 
-                            )
-                            FROM Product p
-                            LEFT JOIN p.images i
-                            LEFT JOIN p.promotionProducts pp
-                           LEFT JOIN pp.promotion pr ON pr.id = pp.promotion.id
-                                AND pr.active = true
-                                AND pr.startDate <= CURRENT_DATE
-                                AND pr.expireDate >= CURRENT_DATE
-                            LEFT JOIN p.productGenres pg
-                            LEFT JOIN p.shop s
-                            LEFT JOIN p.orderItems oi
-                            LEFT JOIN oi.reviews r
-                            WHERE p.active = true
-                              AND p.approve = true
-                              AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
-                             AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(:productName) OR LOWER(p.product_code) = LOWER(:productName))
-                              AND (:minPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) >= :minPrice)
-                              AND (:maxPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) <= :maxPrice)
-                              AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
-                            GROUP BY p.id, p.name, p.price, i.imageName, pr.promotionValue, p.product_code, s.id, s.name
-                            ORDER BY
-                                CASE :sortBy
-                                    WHEN 'price-asc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
-                                    ELSE 0
-                                END ASC,
-                                CASE :sortBy
-                                    WHEN 'price-desc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
-                                    ELSE 0
-                                END DESC,
-                                CASE :sortBy
-                                    WHEN 'rating' THEN COALESCE(AVG(r.rate), 0.0)
-                                    ELSE 0
-                                END DESC,
-                                CASE :sortBy
-                                    WHEN 'bestseller' THEN COALESCE(SUM(oi.quantity), 0)
-                                    ELSE 0
-                                END DESC,
-                                CASE WHEN :sortBy = 'relevance' OR :sortBy IS NULL THEN p.id END DESC
-                        """)
-        Page<SearchProductDTO> searchProducts(
-                        @Param("productName") String productName,
-                        @Param("minPrice") Double minPrice,
-                        @Param("maxPrice") Double maxPrice,
-                        @Param("genresIds") List<Integer> genresIds,
-                        @Param("sortBy") String sortBy,
-                        Pageable pageable);
+                )
+                FROM Product p
+                LEFT JOIN p.images i
+                LEFT JOIN p.promotionProducts pp
+               LEFT JOIN pp.promotion pr ON pr.id = pp.promotion.id
+                    AND pr.active = true
+                    AND pr.startDate <= CURRENT_DATE
+                    AND pr.expireDate >= CURRENT_DATE
+                LEFT JOIN p.productGenres pg
+                LEFT JOIN p.shop s
+                LEFT JOIN p.orderItems oi
+                LEFT JOIN oi.reviews r
+                WHERE p.active = true
+                  AND p.approve = true
+                  AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
+                 AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(:productName) OR LOWER(p.product_code) = LOWER(:productName))
+                  AND (:minPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) >= :minPrice)
+                  AND (:maxPrice IS NULL OR (p.price - (p.price * pr.promotionValue / 100)) <= :maxPrice)
+                  AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
+                GROUP BY p.id, p.name, p.price, i.imageName, pr.promotionValue, p.product_code, s.id, s.name
+                ORDER BY
+                    CASE :sortBy
+                        WHEN 'price-asc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
+                        ELSE 0
+                    END ASC,
+                    CASE :sortBy
+                        WHEN 'price-desc' THEN COALESCE((p.price - (p.price * pr.promotionValue / 100)), p.price)
+                        ELSE 0
+                    END DESC,
+                    CASE :sortBy
+                        WHEN 'rating' THEN COALESCE(AVG(r.rate), 0.0)
+                        ELSE 0
+                    END DESC,
+                    CASE :sortBy
+                        WHEN 'bestseller' THEN COALESCE(SUM(oi.quantity), 0)
+                        ELSE 0
+                    END DESC,
+                    CASE WHEN :sortBy = 'relevance' OR :sortBy IS NULL THEN p.id END DESC
+            """)
+    Page<SearchProductDTO> searchProducts(
+            @Param("productName") String productName,
+            @Param("minPrice") Double minPrice,
+            @Param("maxPrice") Double maxPrice,
+            @Param("genresIds") List<Integer> genresIds,
+            @Param("sortBy") String sortBy,
+            Pageable pageable);
 
-        // @Query("""
-        // SELECT COUNT(DISTINCT p.id)
-        // FROM Product p
-        // LEFT JOIN p.productGenres pg
-        // WHERE p.active = true
-        // AND p.approve = true
-        // AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',
-        // :productName, '%')))
-        // AND (:minPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
-        // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
-        // pr.id = pp.promotion.id), 0) / 100)) >= :minPrice)
-        // AND (:maxPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
-        // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
-        // pr.id = pp.promotion.id), 0) / 100)) <= :maxPrice)
-        // AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
-        // """)
-        // long countProductSearch(
-        // @Param("productName") String productName,
-        // @Param("minPrice") Double minPrice,
-        // @Param("maxPrice") Double maxPrice,
-        // @Param("genresIds") List<Integer> genresIds);
+    // @Query("""
+    // SELECT COUNT(DISTINCT p.id)
+    // FROM Product p
+    // LEFT JOIN p.productGenres pg
+    // WHERE p.active = true
+    // AND p.approve = true
+    // AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%',
+    // :productName, '%')))
+    // AND (:minPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
+    // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
+    // pr.id = pp.promotion.id), 0) / 100)) >= :minPrice)
+    // AND (:maxPrice IS NULL OR (p.price - COALESCE((p.price * (SELECT
+    // pr.promotionValue FROM p.promotionProducts pp JOIN pp.promotion pr WHERE
+    // pr.id = pp.promotion.id), 0) / 100)) <= :maxPrice)
+    // AND (:genresIds IS NULL OR pg.genre.id IN :genresIds)
+    // """)
+    // long countProductSearch(
+    // @Param("productName") String productName,
+    // @Param("minPrice") Double minPrice,
+    // @Param("maxPrice") Double maxPrice,
+    // @Param("genresIds") List<Integer> genresIds);
 
     @Query("SELECT COUNT(s) FROM Product s WHERE s.active = true")
     int countProductByActiveTrue();
@@ -275,16 +275,17 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                 LEFT JOIN pp.promotion promo
                 LEFT JOIN p.orderItems o
                 WHERE p.shop.shop_slug = :shopSlug
+                AND p.active = true AND p.approve = true AND (p.status IS NULL OR (p.status IS NOT NULL AND p.status = false))
                 AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
-                AND (:genreIds IS NULL OR EXISTS (
-                    SELECT 1 FROM ProductGenre pg WHERE pg.product = p AND pg.genre.id IN :genreIds
+                AND (:genresIntegers IS NULL OR EXISTS (
+                    SELECT 1 FROM ProductGenre pg WHERE pg.product = p AND pg.genre.id IN :genresIntegers
                 ))
-                AND (:authorIds IS NULL OR EXISTS (
-                    SELECT 1 FROM ProductAuthor pa WHERE pa.product = p AND pa.author.id IN :authorIds
+                AND (:authorsIntegers IS NULL OR EXISTS (
+                    SELECT 1 FROM ProductAuthor pa WHERE pa.product = p AND pa.author.id IN :authorsIntegers
                 ))
                 AND (:minPrice IS NULL OR p.price >= :minPrice)
                 AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-                AND (:filterDate IS NULL OR p.createdAt >= :filterDate)
+                   AND (:filterDate IS NULL OR p.createdAt >= :filterDate)
                 GROUP BY p.id
                 ORDER BY
                     CASE WHEN :sortType = 'popular' THEN COALESCE(SUM(o.quantity), 0) ELSE 0 END DESC,
@@ -310,12 +311,12 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
     Page<Product> filterProductsWithSort(
             @Param("shopSlug") String shopSlug,
             @Param("productName") String productName,
-            @Param("genreIds") List<Integer> genreIds,
-            @Param("authorIds") List<Integer> authorIds,
+            @Param("genresIntegers") List<Integer> genresIntegers,
+            @Param("authorsIntegers") List<Integer> authorsIntegers,
             @Param("minPrice") Double minPrice,
             @Param("maxPrice") Double maxPrice,
-            @Param("sortType") String sortType,
             @Param("filterDate") LocalDate filterDate,
+            @Param("sortType") String sortType,
             Pageable pageable);
 
     @Query("""
@@ -324,6 +325,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
                 LEFT JOIN pp.promotion promo
                 LEFT JOIN p.orderItems o
                 WHERE p.shop.shop_slug = :shopSlug
+                AND p.active = true AND p.approve = true AND (p.status IS NULL OR (p.status IS NOT NULL AND p.status = false))
                 AND (:productName IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :productName, '%')))
                 AND (:genreIds IS NULL OR EXISTS (
                     SELECT 1 FROM ProductGenre pg WHERE pg.product = p AND pg.genre.id IN :genreIds
@@ -345,30 +347,10 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             @Param("sortType") String sortType,
             @Param("filterDate") LocalDate filterDate);
 
+    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId   AND p.active = true AND p.approve = true AND (p.status IS NULL OR (p.status IS NOT NULL AND p.status = false))")
+    List<Product> findAllByShopId(@Param("shopId") Integer shopId);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND (p.approve IS NOT NULL OR p.approve = true)")
-    List<Product> findAllByShopId(@Param("shopId") Integer shopId);        
+    @Query("SELECT p FROM Product p WHERE p.shop.shop_slug = :shopSlug   AND p.active = true AND p.approve = true AND (p.status IS NULL OR (p.status IS NOT NULL AND p.status = false)) ")
+    List<Product> getAllByShop(@Param("shopSlug") String shopSlug);
 
 }

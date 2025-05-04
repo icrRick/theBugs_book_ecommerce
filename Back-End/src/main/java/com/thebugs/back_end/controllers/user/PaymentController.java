@@ -1,15 +1,16 @@
 package com.thebugs.back_end.controllers.user;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.beans.CartBean;
 import com.thebugs.back_end.beans.PaymentBean;
 import com.thebugs.back_end.beans.ShippingFreeBean;
-
+import com.thebugs.back_end.entities.Order;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.ApiGHNService;
-
+import com.thebugs.back_end.services.user.OrderService;
 import com.thebugs.back_end.services.user.PaymentService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
 
@@ -17,7 +18,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -30,6 +31,10 @@ public class PaymentController {
         private PaymentService paymentService;
 
         @Autowired
+        private OrderService orderService;
+
+
+        @Autowired
         private ApiGHNService apiGHNService;
 
         @PostMapping("/shipping-fee")
@@ -37,7 +42,8 @@ public class PaymentController {
                 try {
                         return ResponseEntityUtil.OK("Lấy phí vận chuyển thành công",
                                         apiGHNService.calculateFee(shippingFreeBean.getShopId(),
-                                                        shippingFreeBean.getAddressUserId(), shippingFreeBean.getWeight()));
+                                                        shippingFreeBean.getAddressUserId(),
+                                                        shippingFreeBean.getWeight()));
                 } catch (Exception e) {
                         return ResponseEntityUtil.badRequest(e.getMessage());
                 }
@@ -67,7 +73,20 @@ public class PaymentController {
                 } catch (Exception e) {
                         return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
                 }
-
         }
+
+        
+        @GetMapping("/re-payment")
+        public ResponseEntity<ResponseData> rePayment(@RequestHeader("Authorization") String authorizationHeader,
+                        @RequestParam Integer orderId) {
+                try {
+                        Order order = orderService.findById(orderId);
+                        return ResponseEntityUtil.OK("Lấy thông tin đơn hàng thành công", order);
+                } catch (Exception e) {
+                        return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
+                }
+        }
+
+        
 
 }
