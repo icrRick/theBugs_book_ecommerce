@@ -1,540 +1,377 @@
-import React, { useState } from 'react';
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
-} from 'recharts';
-import { 
-  FaChartLine, FaMoneyBillWave, FaShoppingCart, FaPercentage, 
-  FaCalendarAlt, FaDownload, FaPrint, FaFilter, FaEllipsisH,
-  FaArrowUp, FaArrowDown, FaEquals
-} from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+
+import axiosInstance from '../../utils/axiosInstance';
+import { showErrorToast, showSuccessToast } from '../../utils/Toast';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { formatCurrency } from '../../utils/Format';
+import Pagination from '../admin/Pagination';
 
 const StatisticRevenue = () => {
-  const [timeRange, setTimeRange] = useState('month');
-  const [compareWith, setCompareWith] = useState('lastPeriod');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
 
-  // Mock data - would be replaced with actual API data
-  const revenueData = [
-    { name: '01/07', revenue: 12500000, orders: 45, lastPeriod: 11000000 },
-    { name: '02/07', revenue: 13200000, orders: 48, lastPeriod: 12000000 },
-    { name: '03/07', revenue: 14800000, orders: 52, lastPeriod: 13500000 },
-    { name: '04/07', revenue: 11900000, orders: 41, lastPeriod: 12800000 },
-    { name: '05/07', revenue: 15600000, orders: 56, lastPeriod: 14200000 },
-    { name: '06/07', revenue: 16800000, orders: 62, lastPeriod: 15000000 },
-    { name: '07/07', revenue: 18200000, orders: 67, lastPeriod: 16500000 },
-    { name: '08/07', revenue: 17500000, orders: 63, lastPeriod: 17000000 },
-    { name: '09/07', revenue: 19800000, orders: 72, lastPeriod: 18200000 },
-    { name: '10/07', revenue: 21500000, orders: 78, lastPeriod: 19500000 },
-    { name: '11/07', revenue: 20200000, orders: 74, lastPeriod: 20800000 },
-    { name: '12/07', revenue: 22800000, orders: 83, lastPeriod: 21000000 },
-    { name: '13/07', revenue: 24500000, orders: 89, lastPeriod: 22500000 },
-    { name: '14/07', revenue: 23200000, orders: 85, lastPeriod: 23000000 },
-  ];
+  const [items, setItems] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
-  const paymentMethodData = [
-    { name: 'Thẻ tín dụng', value: 45 },
-    { name: 'Chuyển khoản', value: 30 },
-    { name: 'Ví điện tử', value: 15 },
-    { name: 'COD', value: 10 },
-  ];
+  const [currentPage, setCurrentPage] = useState(parseInt(queryParams.get('page')) || 1);
+  const [startDate, setStartDate] = useState(queryParams.get('startDate') || '');
+  const [endDate, setEndDate] = useState(queryParams.get('endDate') || '');
 
-  const categoryRevenueData = [
-    { name: 'Áo', revenue: 125000000 },
-    { name: 'Quần', revenue: 98000000 },
-    { name: 'Giày', revenue: 78500000 },
-    { name: 'Túi xách', revenue: 45200000 },
-    { name: 'Phụ kiện', revenue: 32800000 },
-  ];
+  const [isLoading, setIsLoading] = useState(false);
+  const itemsPerPage = 10;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  const monthlyRevenueData = [
-    { name: 'T1', revenue: 320000000 },
-    { name: 'T2', revenue: 345000000 },
-    { name: 'T3', revenue: 378000000 },
-    { name: 'T4', revenue: 412000000 },
-    { name: 'T5', revenue: 389000000 },
-    { name: 'T6', revenue: 425000000 },
-    { name: 'T7', revenue: 456000000 },
-  ];
+  const getQueryParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    const startDate = params.get('startDate') || '';
+    const endDate = params.get('endDate') || '';
+    const currentPage = params.get('page') || 1;
+    return { startDate, endDate, currentPage };
+  }
 
-  // Refined color palette
-  const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'];
-  const CHART_COLORS = {
-    revenue: '#6366f1',
-    lastPeriod: '#94a3b8',
-    area: 'rgba(99, 102, 241, 0.1)'
-  };
+  // Cập nhật ngày và gọi API lần đầu khi component mount
+  useEffect(() => {
+    const start = new Date();
+    start.setDate(start.getDate() - 31);
+    const end = new Date();
+    const startDateString = start.toISOString().split('T')[0];
+    const endDateString = end.toISOString().split('T')[0];
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  };
+    setStartDate(startDateString);
+    setEndDate(endDateString);
 
-  // Calculate total revenue
-  const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
-  const totalOrders = revenueData.reduce((sum, item) => sum + item.orders, 0);
-  const averageOrderValue = totalRevenue / totalOrders;
-  const totalLastPeriod = revenueData.reduce((sum, item) => sum + item.lastPeriod, 0);
-  const revenueGrowth = ((totalRevenue - totalLastPeriod) / totalLastPeriod) * 100;
+    updateUrlParams(startDateString, endDateString, 1);
+    fetchData();
+  }, []); // Chạy 1 lần khi component mount
 
-  // Helper function to render trend icon
-  const renderTrendIcon = (value) => {
-    if (value > 0) {
-      return <FaArrowUp className="text-green-500" />;
-    } else if (value < 0) {
-      return <FaArrowDown className="text-red-500" />;
+  // Lấy dữ liệu từ API
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get(`/seller/revenue/shop/list?startDate=${startDate}&endDate=${endDate}&page=${currentPage}`);
+      if (response.status === 200 && response.data.status === true) {
+        setItems(response.data.data.arrayList);
+        setTotalItems(response.data.data.totalItems);
+        setTotalRevenue(response.data.data.totalRevenue);
+      }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      showErrorToast("Có lỗi xảy ra khi tải dữ liệu thống kê " + error.response?.data?.message || error.message);
+    } finally {
+      setIsLoading(false);
     }
-    return <FaEquals className="text-gray-500" />;
+  };
+
+  // Gọi API mỗi khi startDate, endDate, currentPage thay đổi
+  useEffect(() => {
+    if (getQueryParams().startDate && getQueryParams().endDate && getQueryParams().currentPage) {
+      fetchData();
+    }
+  }, [getQueryParams().startDate, getQueryParams().endDate, getQueryParams().currentPage]);
+
+  // Hàm thay đổi trang
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    updateUrlParams(startDate, endDate, newPage);
+  };
+
+  // Hàm làm mới trang
+  const handleRefresh = () => {
+    setCurrentPage(1);
+    setStartDate('');
+    setEndDate('');
+    updateUrlParams('', '', 1);
+    fetchData();
+  };
+
+  // Hàm tìm kiếm
+  const handleSearch = () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (end < start) {
+      showErrorToast("Ngày kết thúc phải sau ngày bắt đầu");
+      return;
+    }
+
+    if (diffDays > 31) {
+      showErrorToast("Khoảng thời gian tìm kiếm không được vượt quá 31 ngày");
+      return;
+    }
+
+    setCurrentPage(1); // Đặt lại trang về 1
+    updateUrlParams(startDate, endDate, 1);
+    fetchData(); // Gọi lại API sau khi kiểm tra điều kiện hợp lệ
+  };
+
+  // Cập nhật URL query parameters
+  const updateUrlParams = (startDate, endDate, page) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (page > 1) params.append('page', page);
+
+    navigate({
+      pathname: location.pathname,
+      search: params.toString()
+    });
+  };
+
+  // Hàm thay đổi ngày bắt đầu
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+    const startDate = new Date(e.target.value);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 31);
+    setEndDate(endDate.toISOString().split('T')[0]);
+  };
+
+  // Hàm thay đổi ngày kết thúc
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
   };
 
   return (
-    <div className="p-8 bg-white rounded-xl">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Thống kê doanh thu</h1>
-          <p className="text-gray-500 mt-1">Phân tích doanh thu và hiệu quả kinh doanh</p>
-        </div>
-        <div className="flex space-x-3">
-          <div className="relative">
-            <select 
-              className="appearance-none pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all shadow-sm"
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="week">7 ngày qua</option>
-              <option value="month">30 ngày qua</option>
-              <option value="quarter">Quý này</option>
-              <option value="year">Năm nay</option>
-            </select>
-            <FaCalendarAlt className="absolute left-3.5 top-3 text-gray-400" />
-          </div>
-          <div className="flex space-x-2">
-            <button className="p-2.5 text-gray-600 hover:text-indigo-600 bg-white border border-gray-200 rounded-lg shadow-sm transition-all">
-              <FaDownload />
-            </button>
-            <button className="p-2.5 text-gray-600 hover:text-indigo-600 bg-white border border-gray-200 rounded-lg shadow-sm transition-all">
-              <FaPrint />
-            </button>
-          </div>
-          <button className="px-4 py-2.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-sm hover:bg-indigo-100 transition-all shadow-sm flex items-center">
-            <FaFilter className="mr-2" /> Lọc nâng cao
-          </button>
-        </div>
-      </div>
-
-      {/* Overview metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng doanh thu</p>
-              <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(totalRevenue)}</h3>
-              <div className="flex items-center mt-2">
-                <span className={`text-xs font-medium px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                  revenueGrowth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {renderTrendIcon(revenueGrowth)}
-                  {Math.abs(revenueGrowth).toFixed(1)}%
-                </span>
-                <span className="text-xs text-gray-500 ml-1.5">so với kỳ trước</span>
+    <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center text-sm text-gray-500 mb-1">
+                <a href="#" className="hover:text-blue-600 transition-colors duration-200">Trang chủ</a>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 mx-2 text-gray-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+                <span className="text-gray-700 font-medium">Thống kê</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Thống kê doanh thu cửa hàng</h1>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1">Thống kê doanh thu từng cửa hàng trong hệ thống</p>
+                </div>
               </div>
             </div>
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-              <FaMoneyBillWave className="text-xl" />
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tổng đơn hàng</p>
-              <h3 className="text-2xl font-bold text-gray-800">{totalOrders}</h3>
-              <div className="flex items-center mt-2">
-                <span className="text-xs font-medium px-1.5 py-0.5 bg-green-100 text-green-700 rounded flex items-center gap-1">
-                  <FaArrowUp />
-                  8.3%
-                </span>
-                <span className="text-xs text-gray-500 ml-1.5">so với kỳ trước</span>
-              </div>
-            </div>
-            <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-              <FaShoppingCart className="text-xl" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Giá trị đơn trung bình</p>
-              <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(averageOrderValue)}</h3>
-              <div className="flex items-center mt-2">
-                <span className="text-xs font-medium px-1.5 py-0.5 bg-green-100 text-green-700 rounded flex items-center gap-1">
-                  <FaArrowUp />
-                  2.5%
-                </span>
-                <span className="text-xs text-gray-500 ml-1.5">so với kỳ trước</span>
-              </div>
-            </div>
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-              <FaChartLine className="text-xl" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tỷ lệ lợi nhuận</p>
-              <h3 className="text-2xl font-bold text-gray-800">24.8%</h3>
-              <div className="flex items-center mt-2">
-                <span className="text-xs font-medium px-1.5 py-0.5 bg-green-100 text-green-700 rounded flex items-center gap-1">
-                  <FaArrowUp />
-                  1.2%
-                </span>
-                <span className="text-xs text-gray-500 ml-1.5">so với kỳ trước</span>
-              </div>
-            </div>
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-              <FaPercentage className="text-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Revenue trend chart */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">Xu hướng doanh thu</h2>
-            <p className="text-sm text-gray-500 mt-1">So sánh doanh thu với kỳ trước</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <select 
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 bg-white shadow-sm"
-              value={compareWith}
-              onChange={(e) => setCompareWith(e.target.value)}
-            >
-              <option value="lastPeriod">So sánh với kỳ trước</option>
-              <option value="lastYear">So sánh với cùng kỳ năm trước</option>
-              <option value="target">So sánh với mục tiêu</option>
-            </select>
-          </div>
-        </div>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={revenueData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={CHART_COLORS.revenue} stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor={CHART_COLORS.revenue} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="name" stroke="#888" axisLine={false} tickLine={false} />
-              <YAxis stroke="#888" axisLine={false} tickLine={false} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
-                  borderRadius: '8px', 
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
-                  border: 'none',
-                  padding: '12px'
-                }}
-                formatter={(value) => [formatCurrency(value), 'Doanh thu']}
-              />
-              <Legend 
-                verticalAlign="top" 
-                height={36} 
-                formatter={(value) => value === 'revenue' ? 'Doanh thu hiện tại' : 'Doanh thu kỳ trước'} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke={CHART_COLORS.revenue} 
-                fillOpacity={1}
-                fill="url(#colorRevenue)"
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 0 }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="lastPeriod" 
-                stroke={CHART_COLORS.lastPeriod} 
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                fill="none"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Payment methods and category revenue */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">Phương thức thanh toán</h2>
-            <p className="text-sm text-gray-500 mt-1">Phân bố theo phương thức thanh toán</p>
-          </div>
-          <div className="h-64 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={paymentMethodData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {paymentMethodData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]} 
-                      stroke="none"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [`${value}%`, 'Tỷ lệ']}
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    borderRadius: '8px', 
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
-                    border: 'none',
-                    padding: '12px'
-                  }}
-                />
-                <Legend 
-                  layout="vertical" 
-                  verticalAlign="middle" 
-                  align="right"
-                  iconType="circle"
-                  iconSize={8}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">Doanh thu theo danh mục</h2>
-            <p className="text-sm text-gray-500 mt-1">Phân tích doanh thu theo từng danh mục</p>
-          </div>
-          <div className="h-64 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={categoryRevenueData}
-                layout="vertical"
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            <div className="flex items-center">
+              <button
+                onClick={handleRefresh}
+                className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                <XAxis type="number" stroke="#888" axisLine={false} tickLine={false} />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  stroke="#888" 
-                  axisLine={false} 
-                  tickLine={false}
-                  width={80}
-                />
-                <Tooltip 
-                  formatter={(value) => [formatCurrency(value), 'Doanh thu']}
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    borderRadius: '8px', 
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
-                    border: 'none',
-                    padding: '12px'
-                  }}
-                />
-                <Bar 
-                  dataKey="revenue" 
-                  fill={CHART_COLORS.revenue} 
-                  radius={[0, 4, 4, 0]}
-                  barSize={20}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="hidden xs:inline">Làm mới</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Monthly revenue chart */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800">Doanh thu theo tháng</h2>
-          <p className="text-sm text-gray-500 mt-1">Phân tích xu hướng doanh thu theo tháng</p>
-        </div>
-        <div className="h-80 mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={monthlyRevenueData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              barSize={40}
-            >
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={COLORS[0]} stopOpacity={1}/>
-                  <stop offset="100%" stopColor={COLORS[1]} stopOpacity={0.8}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis 
-                dataKey="name" 
-                stroke="#888" 
-                axisLine={false} 
-                tickLine={false}
-                padding={{ left: 10, right: 10 }}
-              />
-              <YAxis 
-                stroke="#888" 
-                axisLine={false} 
-                tickLine={false}
-              />
-              <Tooltip 
-                formatter={(value) => [formatCurrency(value), 'Doanh thu']}
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
-                  borderRadius: '8px', 
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
-                  border: 'none',
-                  padding: '12px'
-                }}
-              />
-              <Bar 
-                dataKey="revenue" 
-                fill="url(#barGradient)" 
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {/* Main Content */}
+      <div className="p-4">
+        <div className="mb-6">
+          {/* Date Range Picker */}
+          <div className="flex items-center gap-4">
+            <div className="w-56">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out shadow-sm"
+                />
+              </div>
+            </div>
 
-      {/* Revenue breakdown table */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800">Chi tiết doanh thu</h2>
-          <p className="text-sm text-gray-500 mt-1">Phân tích chi tiết doanh thu và lợi nhuận</p>
+            <div className="w-56">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={handleEndDateChange}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out shadow-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSearch}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <svg className="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Tìm kiếm
+            </button>
+            <div className='flex items-center gap-2 text-sm font-medium text-gray-900'>
+              <div>Tổng doanh thu:</div>
+              <div className="text-red-600 text-lg font-bold ml-auto">{formatCurrency(totalRevenue)}</div>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto mt-4">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nguồn doanh thu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Doanh thu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chi phí
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Lợi nhuận
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tỷ suất lợi nhuận
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              <tr className="hover:bg-gray-50 transition-all duration-150">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">Sản phẩm</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">{formatCurrency(325000000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-600">{formatCurrency(243750000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-green-600">{formatCurrency(81250000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">25.0%</div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <FaEllipsisH />
-                  </button>
-                </td>
-              </tr>
-              <tr className="hover:bg-gray-50 transition-all duration-150">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">Phí vận chuyển</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">{formatCurrency(45000000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-600">{formatCurrency(38250000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-green-600">{formatCurrency(6750000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">15.0%</div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <FaEllipsisH />
-                  </button>
-                </td>
-              </tr>
-              <tr className="hover:bg-gray-50 transition-all duration-150">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">Dịch vụ bổ sung</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">{formatCurrency(18500000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-600">{formatCurrency(7400000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-green-600">{formatCurrency(11100000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-800">60.0%</div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <FaEllipsisH />
-                  </button>
-                </td>
-              </tr>
-              <tr className="bg-gray-50 font-medium">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-gray-800">Tổng cộng</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-gray-800">{formatCurrency(388500000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-gray-800">{formatCurrency(289400000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-green-600">{formatCurrency(99100000)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-gray-800">25.5%</div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        {/* Results stats */}
+        <div className="flex flex-wrap justify-between items-center mb-4">
+          <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
+            <span className="hidden sm:inline">Hiển thị</span>{" "}
+            <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+            <span className="hidden sm:inline">trên</span>{" "}
+            <span className="font-medium">{totalItems}</span> cửa hàng{" "}
+            <span className="inline sm:hidden">• Trang {currentPage}</span>
+          </div>
+
+
+        </div>
+
+        {/* Table Container */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {isLoading && items.length > 0 && (
+            <div className="p-4 flex justify-center">
+              <div className="animate-pulse flex space-x-2 items-center">
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
+                <span className="text-xs sm:text-sm text-gray-500">Đang tải...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Table for tablet and desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr className="bg-gray-50">
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Id
+                  </th>
+
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ngày tạo
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doanh thu gốc
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doanh thu sau khi giảm giá
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phí cố định (5%)
+                  </th>
+
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doanh thu sau khi trừ phí
+                  </th>
+
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.length === 0 && !isLoading ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-10 text-center text-sm text-gray-500">
+                      <div className="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 w-8 sm:w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <span>Không tìm thấy dữ liệu</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item) => (
+                    <tr key={item.orderId} className="hover:bg-blue-50 transition-colors duration-150">
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.orderId}</div>
+                      </td>
+
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {item?.createdAt}
+                        </div>
+                      </td>
+
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalOlPrice || 0)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalPromoPrice || 0)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalOlPrice * 0.05 || 0)}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                          {formatCurrency(item?.totalPromoPrice - (item?.totalOlPrice * 0.05) || 0)}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card view for small screens */}
+          <div className="md:hidden">
+            {items.length === 0 && !isLoading ? (
+              <div className="px-4 py-8 text-center text-sm text-gray-500">
+                <div className="flex flex-col items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <span>Không tìm thấy dữ liệu</span>
+                </div>
+              </div>
+            ) : (
+              items.map((item) => (
+                <div key={item.orderId} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">ID: {item?.orderId}</span>
+                  </div>
+                  <div className="text-xs text-gray-600 mb-1">Ngày tạo: {item?.createdAt}</div>
+                  <div className="text-xs text-gray-600 mb-1">Doanh thu gốc: {formatCurrency(item?.totalOlPrice || 0)}</div>
+                  <div className="text-xs text-gray-600 mb-1">Doanh thu sau khi giảm giá: {formatCurrency(item?.totalPromoPrice || 0)}</div>
+                  <div className="text-xs text-gray-600 mb-1">Phí cố định (5%): {formatCurrency(item?.totalOlPrice * 0.05 || 0)}</div>
+                  <div className="text-xs text-gray-600">Doanh thu sau khi trừ phí: {formatCurrency(item?.totalPromoPrice - (item?.totalOlPrice * 0.05) || 0)}</div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {items.length > 0 && (
+            <div className={`border-t border-gray-200 ${isLoading ? 'opacity-50' : ''}`}>
+              <Pagination currentPage={currentPage} totalPages={Math.ceil(totalItems / 10)} setCurrentPage={handlePageChange} />
+            </div>
+          )}
         </div>
       </div>
     </div>
