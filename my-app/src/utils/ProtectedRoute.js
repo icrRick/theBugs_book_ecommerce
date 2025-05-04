@@ -30,7 +30,7 @@ const ProtectedRoute = ({ requiredRoles = [], children }) => {
 
     if (!isAuthenticated || !userInfo) {
         if (!hasShownToast) {
-            showErrorToast("Vui lòng đăng nhập để tiếp tục");
+            // showErrorToast("Vui lòng đăng nhập để tiếp tục");
             setHasShownToast(true);
         }
         return <Navigate to="/login" replace state={{ from: location }} />;

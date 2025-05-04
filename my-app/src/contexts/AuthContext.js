@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { removeToken, setToken, getToken } from '../utils/cookie';
 import axiosInstance from '../utils/axiosInstance';
 import { s_countCartItems, s_getCartItems } from '../components/service/cartItemService';
+import { showSuccessToast } from '../utils/Toast';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -55,7 +56,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (token) => {
     setToken(token);
-    return fetchUserInfo();
+    const userData = await fetchUserInfo();
+    if (userData) {
+      showSuccessToast("Đăng nhập thành công!");
+    }
+    return userData;
   };
 
   const logout = () => {
