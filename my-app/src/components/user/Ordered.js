@@ -29,9 +29,11 @@ const Ordered = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
-
+  const debouncedUserName = useDebounce(filters.userName, 300);
+  const debouncedStartDate = useDebounce(filters.startDate, 300);
+  const debouncedEndDate = useDebounce(filters.endDate, 300);
   const [currentPage, setCurrentPage] = useState(
-    parseInt(searchParams.get("page")) || 1
+    Number.parseInt(searchParams.get("page")) || 1
   );
   const pageSize = 10;
   const [totalPages, setTotalPages] = useState(0);
@@ -212,72 +214,108 @@ const Ordered = () => {
     }
   };
 
-  const fetchAllOrders = async (keyword = "", page = 1) => {
+  const fetchOrders = async (
+    page = currentPage,
+    tabStatus = activeTab,
+    searchKeyword = keyword
+  ) => {
     setIsLoading(true);
     showErrorToast(null);
-    axiosInstance
-      .get("/user/order", {
-        params: {
-          keyword: keyword || undefined,
-          page: page,
-          size: pageSize,
-        },
-      })
-      .then((response) => {
-        console.log(response);
-        setAllOrders(response.data.data.objects);
-        setOrders(response.data.data.objects);
-        setTotalOrders(response.data.data.totalItems || 0);
-        setTotalPages(Math.ceil(response.data.data.totalItems / pageSize));
-      })
-      .catch((error) => {
-        console.log(error);
-        setAllOrders([]);
-        setOrders([]);
-      })
-      .finally(() => {
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 300);
-      });
-  };
 
-  const searchOrders = async (keyword = "", page = 1) => {
-    setIsLoading(true);
     try {
       const params = {
-        keyword: keyword || undefined,
+        keyword: searchKeyword || undefined,
         userName: filters.userName || undefined,
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
-        statusOrder: activeTab || undefined,
+        statusOrder: tabStatus || undefined,
         page: page,
         size: pageSize,
       };
+
       const response = await axiosInstance.get("/user/order", { params });
-      const { data, message } = response.data;
+      const { data, message, status } = response.data;
 
       if (response.status === 200) {
         const ordersList = data.objects || [];
         setOrders(ordersList);
+        setAllOrders(ordersList);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));
-        //setTabCounts(calculateTabCounts(ordersList));
       } else {
-        console.error("Failed to search orders:", message);
+        console.error("Failed to fetch orders:", message);
         setOrders([]);
+        setAllOrders([]);
       }
     } catch (error) {
-      console.error("Error searching orders:", error);
+      console.error("Error fetching orders:", error);
       setOrders([]);
+      setAllOrders([]);
     } finally {
       setTimeout(() => {
         setIsLoading(false);
-      }, 200);
+      }, 300);
     }
   };
 
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    setCurrentPage(1);
+    updateUrlParams({ status: tabId, page: 1 });
+    fetchOrders(1, tabId);
+  };
+
+  const handlePageChange = (newPage) => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+    setCurrentPage(newPage);
+    updateUrlParams({ page: newPage });
+    fetchOrders(newPage);
+  };
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+
+    if (
+      filters.startDate &&
+      filters.endDate &&
+      new Date(filters.startDate) > new Date(filters.endDate)
+    ) {
+      showErrorToast("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+      return;
+    }
+
+    setCurrentPage(1);
+    updateUrlParams({ ...filters, page: 1 });
+    fetchOrders(1);
+  };
+
+  const updateUrlParams = (newParams) => {
+    const params = new URLSearchParams(searchParams);
+
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value.toString());
+      } else {
+        params.delete(key);
+      }
+    });
+
+    if (keyword && !newParams.hasOwnProperty("keyword"))
+      params.set("keyword", keyword);
+    if (activeTab && !newParams.hasOwnProperty("status"))
+      params.set("status", activeTab);
+    if (filters.userName && !newParams.hasOwnProperty("userName"))
+      params.set("userName", filters.userName);
+    if (filters.startDate && !newParams.hasOwnProperty("startDate"))
+      params.set("startDate", filters.startDate);
+    if (filters.endDate && !newParams.hasOwnProperty("endDate"))
+      params.set("endDate", filters.endDate);
+
+    setSearchParams(params);
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
+    setIsLoading(true);
     try {
       const response = await axiosInstance.put(
         `/user/order/update/${orderId}`,
@@ -290,19 +328,10 @@ const Ordered = () => {
       const { message, status } = response.data;
       if (status) {
         const statusName = getStatusNameFromId(newStatus.toString());
-
         showSuccessToast(
           `Trạng thái đơn hàng đã được cập nhật thành ${statusName}!`
         );
-
-        setOrders((prevOrders) =>
-          prevOrders.map((order) =>
-            order.id === orderId
-              ? { ...order, orderStatusName: statusName }
-              : order
-          )
-        );
-        fetchAllOrders(keyword, currentPage);
+        fetchOrders();
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`);
       }
@@ -314,21 +343,8 @@ const Ordered = () => {
         showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái");
       }
     } finally {
-      fetchAllOrders(keyword, currentPage);
       setIsLoading(false);
     }
-  };
-
-  const openCancelModal = (orderId) => {
-    setOrderToCancel(orderId);
-    setShowCancelModal(true);
-    setCancelReason("");
-  };
-
-  const closeCancelModal = () => {
-    setShowCancelModal(false);
-    setOrderToCancel(null);
-    setCancelReason("");
   };
 
   const handleCancelOrder = async () => {
@@ -336,9 +352,9 @@ const Ordered = () => {
       showErrorToast("Lý do hủy không được để trống!");
       return;
     }
+
     setIsLoading(true);
     try {
-      setIsLoading(true);
       const response = await axiosInstance.put(
         `/user/order/update/${orderToCancel}`,
         {
@@ -346,96 +362,27 @@ const Ordered = () => {
           cancelReason: cancelReason,
         }
       );
+
       const { message, status } = response.data;
       if (status) {
         showSuccessToast("Đơn hàng đã được hủy thành công!");
         closeCancelModal();
-        searchOrders(keyword, currentPage);
+        fetchOrders();
       } else {
         showErrorToast(`Hủy đơn hàng thất bại: ${message}`);
         closeCancelModal();
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
+      if (error.response?.data?.message) {
         showErrorToast(error.response.data.message);
-        closeCancelModal();
+      } else {
+        console.error("Error cancelling order:", error);
+        showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng");
       }
-      console.error("Error cancelling order:", error);
-      showErrorToast("Đã xảy ra lỗi khi hủy đơn hàng");
       closeCancelModal();
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 200);
+      setIsLoading(false);
     }
-  };
-
-  const handleTabClick = (tabId) => {
-    setActiveTab(tabId);
-    setCurrentPage(1);
-
-    const params = new URLSearchParams();
-    if (tabId) params.set("status", tabId);
-    if (keyword) params.set("keyword", keyword);
-    if (filters.userName) params.set("userName", filters.userName);
-    if (filters.startDate) params.set("startDate", filters.startDate);
-    if (filters.endDate) params.set("endDate", filters.endDate);
-    params.set("page", 1);
-    setSearchParams(params);
-  };
-
-  const handlePageChange = (newPage) => {
-    window.scrollTo({ top: 0, behavior: "auto" });
-    setCurrentPage(newPage);
-    const params = new URLSearchParams();
-    if (keyword) params.set("keyword", keyword);
-    if (activeTab) params.set("status", activeTab);
-    if (filters.userName) params.set("userName", filters.userName);
-    if (filters.startDate) params.set("startDate", filters.startDate);
-    if (filters.endDate) params.set("endDate", filters.endDate);
-    params.set("page", newPage);
-    setSearchParams(params);
-  };
-
-  const handleFilterChange = (e) => {
-    const { id, value } = e.target;
-    let fieldName;
-    if (id === "name-filter") {
-      fieldName = "userName";
-    } else if (id === "start-date") {
-      fieldName = "startDate";
-    } else if (id === "end-date") {
-      fieldName = "endDate";
-    }
-    setFilters((prev) => ({
-      ...prev,
-      [fieldName]: value,
-    }));
-  };
-
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    const params = new URLSearchParams();
-    if (keyword) params.set("keyword", keyword);
-    if (activeTab) params.set("status", activeTab);
-    if (filters.userName) params.set("userName", filters.userName);
-    if (filters.startDate) params.set("startDate", filters.startDate);
-    if (filters.endDate) params.set("endDate", filters.endDate);
-    if (
-      filters.startDate &&
-      filters.endDate &&
-      new Date(filters.startDate) > new Date(filters.endDate)
-    ) {
-      showErrorToast("Ngày bắt đầu không được lớn hơn ngày kết thúc");
-      return;
-    }
-    params.set("page", 1);
-    setSearchParams(params);
   };
 
   const handleViewDetails = (orderId) => {
@@ -444,18 +391,49 @@ const Ordered = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
-    const keyword = params.get("keyword") || "";
-    const page = parseInt(params.get("page")) || 1;
-    setKeyword(keyword);
-    setCurrentPage(page);
+    const urlKeyword = params.get("keyword") || "";
+    const urlPage = Number.parseInt(params.get("page")) || 1;
+    const urlStatus = params.get("status") || "";
+
+    setKeyword(urlKeyword);
+    setCurrentPage(urlPage);
+    setActiveTab(urlStatus);
     setFilters({
       userName: params.get("userName") || "",
       startDate: params.get("startDate") || "",
       endDate: params.get("endDate") || "",
     });
 
-    fetchAllOrders(keyword, page);
+    fetchOrders(urlPage, urlStatus, urlKeyword);
   }, []);
+
+  useEffect(() => {
+    if (
+      debouncedUserName !== undefined ||
+      debouncedStartDate !== undefined ||
+      debouncedEndDate !== undefined
+    ) {
+      updateUrlParams({
+        userName: debouncedUserName,
+        startDate: debouncedStartDate,
+        endDate: debouncedEndDate,
+        page: 1,
+      });
+
+      if (
+        debouncedUserName !== filters.userName ||
+        debouncedStartDate !== filters.startDate ||
+        debouncedEndDate !== filters.endDate
+      ) {
+        setCurrentPage(1);
+        fetchOrders(1);
+      }
+    }
+  }, [
+    useDebounce(filters.userName, 300),
+    useDebounce(filters.startDate, 300),
+    useDebounce(filters.endDate, 300),
+  ]);
 
   useEffect(() => {
     let selectedOrderId = searchParams.get("selectedOrderId");
@@ -472,10 +450,7 @@ const Ordered = () => {
           clearInterval(interval);
 
           sessionStorage.removeItem("selectedOrderId");
-
-          const params = new URLSearchParams(searchParams);
-          params.delete("selectedOrderId");
-          setSearchParams(params);
+          updateUrlParams({ selectedOrderId: null });
         }
       }, 300);
 
@@ -491,60 +466,6 @@ const Ordered = () => {
     };
     return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
-
-  //fillter fe
-  const debouncedUserName = useDebounce(filters.userName, 300);
-  const debouncedStartDate = useDebounce(filters.startDate, 300);
-  const debouncedEndDate = useDebounce(filters.endDate, 300);
-
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    if (debouncedUserName) {
-      params.set("userName", debouncedUserName);
-    } else {
-      params.delete("userName");
-    }
-
-    if (debouncedStartDate) {
-      params.set("startDate", debouncedStartDate);
-    } else {
-      params.delete("startDate");
-    }
-
-    if (debouncedEndDate) {
-      params.set("endDate", debouncedEndDate);
-    } else {
-      params.delete("endDate");
-    }
-
-    params.set("page", 1);
-    setSearchParams(params);
-  }, [debouncedUserName, debouncedStartDate, debouncedEndDate]);
-
-  const filteredOrders = allOrders.filter((order) => {
-    const matchesStatus =
-      !activeTab ||
-      getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab);
-
-    const matchesName =
-      !debouncedUserName ||
-      (order.customerInfo &&
-        order.customerInfo
-          .toLowerCase()
-          .includes(debouncedUserName.toLowerCase()));
-
-    const matchesStartDate =
-      !debouncedStartDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) >= new Date(debouncedStartDate));
-
-    const matchesEndDate =
-      !debouncedEndDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) <= new Date(debouncedEndDate));
-
-    return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
-  });
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalOrders);
@@ -590,6 +511,25 @@ const Ordered = () => {
       showErrorToast("Đã có lỗi xảy ra khi thanh toán lại đơn hàng!");
     }
   };
+
+  const handleFilterChange = (e) => {
+    const { id, value } = e.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [id]: value,
+    }));
+  };
+
+  const openCancelModal = (orderId) => {
+    setOrderToCancel(orderId);
+    setShowCancelModal(true);
+  };
+
+  const closeCancelModal = () => {
+    setShowCancelModal(false);
+    setCancelReason("");
+  };
+
   return (
     <div className="w-full mx-auto">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -636,7 +576,7 @@ const Ordered = () => {
               </div>
               <input
                 type="text"
-                id="name-filter"
+                id="userName"
                 placeholder="Tên khách hàng"
                 value={filters.userName}
                 onChange={handleFilterChange}
@@ -670,7 +610,7 @@ const Ordered = () => {
               </div>
               <input
                 type="date"
-                id="start-date"
+                id="startDate"
                 value={filters.startDate || ""}
                 onChange={handleFilterChange}
                 className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
@@ -703,7 +643,7 @@ const Ordered = () => {
               </div>
               <input
                 type="date"
-                id="end-date"
+                id="endDate"
                 value={filters.endDate || ""}
                 onChange={handleFilterChange}
                 className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
@@ -784,15 +724,14 @@ const Ordered = () => {
                 </div>
               </div>
             ))
-        ) : filteredOrders?.length > 0 ? (
-          filteredOrders.map((order) => (
+        ) : orders?.length > 0 ? (
+          orders.map((order) => (
             <div
               id={`order-${order?.id}`}
               key={order?.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-700 hover:shadow-md "
             >
               <div className="p-4">
-                {/* Header - Mã đơn + Trạng thái */}
                 <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-3">
                     <span className="text-gray-500 text-sm">Mã đơn hàng:</span>
@@ -830,12 +769,9 @@ const Ordered = () => {
                   </div>
                 </div>
 
-                {/* Main Content */}
                 <div className="flex flex-col md:flex-row justify-between gap-6">
-                  {/* Left Column - Thông tin */}
                   <div className="flex-1">
                     <div className="space-y-2.5 text-sm">
-                      {/* Thông tin khách hàng */}
                       <div className="rounded-lg p-3">
                         <div className="flex items-start gap-2 mb-2">
                           <svg
@@ -884,7 +820,6 @@ const Ordered = () => {
                         </div>
                       </div>
 
-                      {/* Thông tin thanh toán */}
                       <div className=" rounded-lg p-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -969,7 +904,6 @@ const Ordered = () => {
                         </div>
                       </div>
 
-                      {/* Thông báo */}
                       {(order.orderStatusName === "Hủy" ||
                         order.orderStatusName === "Đã duyệt") &&
                         order?.noted && (
