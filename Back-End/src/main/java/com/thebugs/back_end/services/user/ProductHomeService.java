@@ -57,10 +57,6 @@ public class ProductHomeService {
                 } else {
                         products = productRepository.getHomeProducts(pageable, thirtyDaysAgo).getContent();
                 }
-                for (HomeProductDTO product : products) {
-                        List<String> authorNames = productRepository.findAuthorNamesByProductId(product.getProductId());
-                        product.setAuthorNames(authorNames);
-                }
                 return products;
         }
 

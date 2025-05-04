@@ -29,12 +29,16 @@ public class ProductDetailDTO {
         private List<String> genres; // Danh sách thể loại
         private List<String> images; // Danh sách tên hình ảnh
         private ShopDTO shop; // Thêm trường shop
+        private Boolean hasFlashSale; // Sản phẩm có tham gia flash sale hay không
+        private Integer flashSaleQuantity; // Tổng số lượng trong flash sale
+        private Integer flashSaleSold; // Số lượng đã bán trong flash sale
 
         // Constructor cho JPQL
         public ProductDetailDTO(Integer productId, String productName, String product_code, Double price,
                         Double discountedPrice, Double discountPercentage, Double weight, LocalDate createdAt,
                         String description, Double rate, Integer reviewCount, Integer soldQuantity,
-                        Integer stockQuantity, String publisher) {
+                        Integer stockQuantity, String publisher, Boolean hasFlashSale, Integer flashSaleQuantity,
+                        Integer flashSaleSold) {
                 this.productId = productId;
                 this.productName = productName;
                 this.product_code = product_code;
@@ -49,6 +53,9 @@ public class ProductDetailDTO {
                 this.soldQuantity = soldQuantity;
                 this.stockQuantity = stockQuantity;
                 this.publisher = publisher;
+                this.hasFlashSale = hasFlashSale;
+                this.flashSaleQuantity = flashSaleQuantity;
+                this.flashSaleSold = flashSaleSold;
         }
 
         // Lớp lồng ghép ShopDTO
@@ -59,8 +66,24 @@ public class ProductDetailDTO {
                 private String logo;
                 private String name;
                 private Boolean verify;
+                private Double shopRating; // Điểm đánh giá trung bình của shop
+                private Integer shopRatingCount; // Số lượng đánh giá của shop
+                private Integer productsCount; // Số lượng sản phẩm của shop
+                private String shop_slug; // Mã định danh duy nhất của shop trong URL
 
                 // Constructor cho JPQL
+                public ShopDTO(Integer id, String logo, String name, Boolean verify, Double shopRating,
+                                Integer shopRatingCount, Integer productsCount, String shop_slug) {
+                        this.id = id;
+                        this.logo = logo;
+                        this.name = name;
+                        this.verify = verify;
+                        this.shopRating = shopRating;
+                        this.shopRatingCount = shopRatingCount;
+                        this.productsCount = productsCount;
+                        this.shop_slug = shop_slug;
+                }
+
                 public ShopDTO(Integer id, String logo, String name, Boolean verify) {
                         this.id = id;
                         this.logo = logo;

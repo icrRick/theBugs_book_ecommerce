@@ -47,7 +47,6 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.weight, i.imageName")
     Optional<ProItemDTO> getProItemDTO(Integer productId);
 
-    // code cua tam
     @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.id = :productId")
     Optional<Product> findProductByShopId(@Param("shopId") Integer shopId,
             @Param("productId") Integer productId);
@@ -188,7 +187,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "p.name, " +
             "p.product_code, " +
             "p.price, " +
-            "(p.price - COALESCE((p.price * pr.promotionValue / 100), 0.0)), " +
+            "(p.price - COALESCE((p.price * COALESCE(pr.promotionValue, 0) / 100), 0.0)), " +
             "COALESCE(pr.promotionValue, 0.0), " +
             "p.weight, " +
             "p.createdAt, " +
@@ -197,36 +196,48 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "CAST(COALESCE(COUNT(r.id), 0) AS INTEGER), " +
             "CAST(COALESCE(SUM(oi.quantity), 0) AS INTEGER), " +
             "p.quantity, " +
-            "COALESCE(p.publisher.name, '')) " +
+            "COALESCE(p.publisher.name, ''), " +
+            "CASE WHEN COALESCE(pr.flashSale, false) = true AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END, "
+            +
+            "CASE WHEN COALESCE(pr.flashSale, false) = true THEN COALESCE(pp.quantity, 0) ELSE 0 END, " +
+            "CASE WHEN COALESCE(pr.flashSale, false) = true THEN COALESCE(pp.soldQuantity, 0) ELSE 0 END) " +
             "FROM Product p " +
-            "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
-            "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id AND pr.active = true " +
+            "LEFT JOIN p.promotionProducts pp " +
+            "LEFT JOIN pp.promotion pr " +
             "LEFT JOIN p.orderItems oi " +
             "LEFT JOIN oi.reviews r " +
+            "LEFT JOIN p.publisher pub " +
             "WHERE p.id = :productId AND p.active = true AND p.approve = true " +
-            "GROUP BY p.id, p.name, p.product_code, p.price, pr.promotionValue, p.weight, p.createdAt, p.description, p.quantity, p.publisher.name")
+            "GROUP BY p.id, p.name, p.product_code, p.price, COALESCE(pr.promotionValue, 0.0), COALESCE(pr.flashSale, false), COALESCE(pr.active, false), COALESCE(pr.startDate, CURRENT_DATE), COALESCE(pr.expireDate, CURRENT_DATE), COALESCE(pp.quantity, 0), COALESCE(pp.soldQuantity, 0), p.weight, p.createdAt, p.description, p.quantity, COALESCE(pub.name, '')")
     ProductDetailDTO findProductDetailById(@Param("productId") Integer productId);
 
-    @Query("SELECT a.name " +
-            "FROM Product p " +
-            "JOIN p.productAuthors pa " +
-            "JOIN pa.author a " +
-            "WHERE p.id = :productId")
+    @Query("SELECT new com.thebugs.back_end.dto.ProductDetailDTO$ShopDTO(" +
+            "s.id, " +
+            "s.image, " +
+            "s.name, " +
+            "u.verify, " +
+            "COALESCE(ROUND(AVG(r.rate), 1), 0.0), " +
+            "CAST(COALESCE(COUNT(r.id), 0) AS INTEGER), " + // Đếm số lượng đánh giá từ reviews
+            "CAST(COALESCE((SELECT COUNT(sp.id) FROM Product sp WHERE sp.shop.id = s.id AND sp.active = true AND sp.approve = true), 0) AS INTEGER), "
+            +
+            "s.shop_slug) " +
+            "FROM Shop s " +
+            "JOIN User u ON s.user.id = u.id " +
+            "LEFT JOIN s.products p2 " + // Nối với tất cả sản phẩm của cửa hàng
+            "LEFT JOIN p2.orderItems oi " +
+            "LEFT JOIN oi.reviews r " +
+            "WHERE s.id = (SELECT p.shop.id FROM Product p WHERE p.id = :productId) " +
+            "GROUP BY s.id, s.image, s.name, u.verify, s.shop_slug")
+    ProductDetailDTO.ShopDTO findShopDetailsByProductIdWithRatings(@Param("productId") Integer productId);
+
+    @Query("SELECT i.imageName FROM Image i WHERE i.product.id = :productId")
+    List<String> findImageNamesByProductId(@Param("productId") Integer productId);
+
+    @Query("SELECT a.name FROM Author a JOIN a.productAuthors pa WHERE pa.product.id = :productId")
     List<String> findAuthorNamesByProductId(@Param("productId") Integer productId);
 
-    @Query("SELECT g.name " +
-            "FROM Product p " +
-            "JOIN p.productGenres pg " +
-            "JOIN pg.genre g " +
-            "WHERE p.id = :productId")
+    @Query("SELECT g.name FROM Genre g JOIN g.productGenres pg WHERE pg.product.id = :productId")
     List<String> findGenreNamesByProductId(@Param("productId") Integer productId);
-
-    @Query("SELECT i.imageName " +
-            "FROM Product p " +
-            "JOIN p.images i " +
-            "WHERE p.id = :productId " +
-            "ORDER BY i.id")
-    List<String> findImageNamesByProductId(@Param("productId") Integer productId);
 
     @Query("SELECT g FROM Genre g WHERE ?1 IS NULL OR g.name LIKE %?1%")
     Page<Genre> findProductByName(String keyword, Pageable pageable);
@@ -241,7 +252,7 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "p.price, " +
             "(p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)), " +
             "COALESCE(pr.promotionValue, 0), " +
-            "COALESCE(AVG(r.rate), 0)) " + // <-- Không còn images
+            "COALESCE(AVG(r.rate), 0)) " +
             "FROM Product p " +
             "LEFT JOIN p.productGenres pg " +
             "LEFT JOIN p.promotionProducts pp " +
@@ -258,8 +269,8 @@ public interface ProductJPA extends JpaRepository<Product, Integer> {
             "ORDER BY (p.price * (1 - COALESCE(pr.promotionValue, 0) / 100)) DESC")
     List<RelatedProductDTO> findRelatedProducts(@Param("productCode") String productCode);
 
-    @Query("SELECT p.product_code FROM Product p WHERE p.id = :productId")
-    String findProductCodeById(@Param("productId") Integer productId);
+    @Query("SELECT p FROM Product p WHERE p.product_code = :product_code")
+    Optional<Product> findProductCodeById(@Param("product_code") String product_code);
 
     @Query("SELECT new com.thebugs.back_end.dto.ProductDetailDTO$ShopDTO(s.id, s.image, s.name, u.verify) " +
             "FROM Shop s " +

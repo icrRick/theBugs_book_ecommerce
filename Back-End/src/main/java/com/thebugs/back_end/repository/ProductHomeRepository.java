@@ -17,24 +17,27 @@ import com.thebugs.back_end.entities.Product;
 public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
 
         @Query(value = """
-                        SELECT new com.thebugs.back_end.dto.HomeProductDTO(
-                            p.id,
-                            p.name,
-                            p.price,
-                            i.imageName,
-                            COALESCE((SELECT AVG(r.rate) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0.0),
-                            pr.promotionValue,
-                            CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END,
-                            COALESCE((p.price * pr.promotionValue / 100), 0.0),
-                            p.product_code,
-                            NULL
-                        )
-                        FROM Product p
-                        LEFT JOIN p.images i
-                        LEFT JOIN p.promotionProducts pp
-                        LEFT JOIN pp.promotion pr
-                        WHERE p.active = true AND p.approve = true AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
-                        ORDER BY p.id DESC
+                            SELECT new com.thebugs.back_end.dto.HomeProductDTO(
+                                p.id,
+                                p.name,
+                                p.price,
+                                i.imageName,
+                                COALESCE((SELECT AVG(r.rate) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0.0),
+                                COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0),
+                                COALESCE(pr.promotionValue, 0.0),
+                                CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END,
+                                CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE
+                                THEN COALESCE((p.price * pr.promotionValue / 100), 0.0) ELSE 0.0 END,
+                                p.product_code,
+                                CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END
+                            )
+                            FROM Product p
+                            LEFT JOIN p.images i
+                            LEFT JOIN p.promotionProducts pp
+                            LEFT JOIN pp.promotion pr
+                            WHERE p.active = true AND p.approve = true
+                            AND (i.id = (SELECT MIN(i2.id) FROM Image i2 WHERE i2.product.id = p.id))
+                            ORDER BY p.id DESC
                         """)
         Page<HomeProductDTO> getHomeProducts(Pageable pageable, @Param("thirtyDaysAgo") LocalDate thirtyDaysAgo);
 
@@ -44,11 +47,16 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         +
                         "COALESCE((SELECT ROUND(AVG(r.rate), 1) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0.0), "
                         +
+                        "COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id IN (SELECT oi.id FROM OrderItem oi WHERE oi.product.id = p.id)), 0), "
+                        +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "COALESCE(p.price * pr.promotionValue / 100, 0.0), " +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        +
+                        "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "NULL" +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        +
                         ") " +
                         "FROM Product p " +
                         "LEFT JOIN PromotionProduct pp ON p.id = pp.product.id " +
@@ -65,11 +73,15 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "COALESCE((SELECT i.imageName FROM Image i WHERE i.product.id = p.id ORDER BY i.id LIMIT 1), '/placeholder.svg'), "
                         +
                         "COALESCE(ROUND(AVG(r.rate), 1), 0.0), " +
+                        "COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id = oi.id), 0), " +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "COALESCE(p.price * pr.promotionValue / 100, 0.0), " +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        +
+                        "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "NULL" +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        +
                         ") " +
                         "FROM Product p " +
                         "LEFT JOIN OrderItem oi ON p.id = oi.product.id " +
@@ -87,11 +99,15 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "COALESCE((SELECT i.imageName FROM Image i WHERE i.product.id = p.id ORDER BY i.id LIMIT 1), '/placeholder.svg'), "
                         +
                         "COALESCE(ROUND(AVG(r.rate), 1), 0.0), " +
+                        "COALESCE((SELECT COUNT(r) FROM Review r WHERE r.orderItem.id = oi.id), 0), " +
                         "COALESCE(pr.promotionValue, 0.0), " +
                         "CASE WHEN p.createdAt >= :thirtyDaysAgo THEN true ELSE false END, " +
-                        "COALESCE(p.price * pr.promotionValue / 100, 0.0), " +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        +
+                        "THEN COALESCE(p.price * pr.promotionValue / 100, 0.0) ELSE 0.0 END, " +
                         "p.product_code, " +
-                        "NULL" +
+                        "CASE WHEN COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE THEN true ELSE false END"
+                        +
                         ") " +
                         "FROM Product p " +
                         "LEFT JOIN OrderItem oi ON p.id = oi.product.id " +
@@ -100,6 +116,8 @@ public interface ProductHomeRepository extends JpaRepository<Product, Integer> {
                         "LEFT JOIN Promotion pr ON pp.promotion.id = pr.id AND pr.active = true " +
                         "WHERE p.active = true AND p.approve = true " +
                         "AND pr.promotionValue IS NOT NULL " +
+                        "AND COALESCE(pr.active, false) = true AND pr.startDate <= CURRENT_DATE AND pr.expireDate >= CURRENT_DATE "
+                        +
                         "GROUP BY p.id, p.name, p.price, pr.promotionValue, p.createdAt " +
                         "ORDER BY pr.promotionValue DESC")
         List<HomeProductDTO> findSaleProducts(Pageable pageable, @Param("thirtyDaysAgo") LocalDate thirtyDaysAgo);
