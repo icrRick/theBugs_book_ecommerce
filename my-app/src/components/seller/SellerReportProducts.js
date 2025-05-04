@@ -22,7 +22,7 @@ const SellerReportProducts = () => {
 
   const fetchData = async (active, page) => {
     try {
-      const response = await axiosInstance.get(`/user/report/product/list?active=${active}&page=${page}`);
+      const response = await axiosInstance.get(`/seller/report/product/list?active=${active}&page=${page}`);
       if (response.status === 200 && response.data.status === true) {
         setReports(response.data.data.arrayList);
         setTotalItems(response.data.data.totalItems);

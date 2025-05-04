@@ -77,7 +77,7 @@ public class SecurityConfig {
                                                                 "/shopdetail/**",
                                                                 "/payment-online/**",
                                                                 "/reviews/**", "/forgot/**", "/api-ghn/**",
-                                                                "/search/**","/shop/**")
+                                                                "/search/**", "/shop/**", "/author/**")
                                                 .permitAll()
                                                 .requestMatchers("/admin/**").hasAuthority("admin")
                                                 .requestMatchers("/user/**").hasAnyAuthority("user", "seller")

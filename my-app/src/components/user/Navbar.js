@@ -18,10 +18,9 @@ const Navbar = () => {
   const [searchHistory, setSearchHistory] = useState([]);
   const navigate = useNavigate();
 
-
   const { cartCount, setCartCount } = useAuth();
   useEffect(() => {
-    s_countCartItems().then(response => {
+    s_countCartItems().then((response) => {
       setCartCount(response);
     });
   }, []);
@@ -180,12 +179,18 @@ const Navbar = () => {
     saveSearchHistory(trimmed);
     setShowSuggestions(false);
 
-    const newParams = new URLSearchParams(window.location.search);
-    newParams.set("keyword", trimmed);
-    newParams.set("page", 1);
-
-    setSearchParams(newParams);
+    navigate(`/search?keyword=${encodeURIComponent(trimmed)}`, {
+      state: { keyword: trimmed },
+      replace: true,
+    });
   };
+
+  useEffect(() => {
+    if (window.location.pathname === "/home") {
+      setSearchKeyword("");
+      setShowSuggestions(false);
+    }
+  }, [window.location.pathname]);
 
   const handleNavigateCart = () => {
     navigate("/cart");
@@ -211,22 +216,28 @@ const Navbar = () => {
               </Link>
             </div>
             <div className="hidden sm:ml-4 sm:flex sm:items-center sm:space-x-3 md:space-x-4 lg:space-x-8">
-              {
-                userInfo === null ?
-                  (<Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
-                    Bán hàng cùng THEBUGS
-                  </Link>) : (
-                    userInfo.role === 1 ?
-                      <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
-                        Bán hàng cùng THEBUGS
-                      </Link>
-                      :
-                      <></>
-                  )}
+              {userInfo === null ? (
+                <Link
+                  to="/register-seller"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium"
+                >
+                  Bán hàng cùng THEBUGS
+                </Link>
+              ) : userInfo.role === 1 ? (
+                <Link
+                  to="/register-seller"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium"
+                >
+                  Bán hàng cùng THEBUGS
+                </Link>
+              ) : (
+                <></>
+              )}
 
-
-
-              <Link to="/search" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
+              <Link
+                to="/search"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium"
+              >
                 Sản phẩm
               </Link>
               {/* Thanh tìm kiếm */}
@@ -266,7 +277,7 @@ const Navbar = () => {
                         Lịch sử tìm kiếm
                       </span>
                       <button
-                        onClick={() => {
+                        onMouseDown={() => {
                           localStorage.removeItem("searchHistory");
                           setSearchHistory([]);
                         }}
@@ -279,24 +290,28 @@ const Navbar = () => {
                       {searchHistory.map((item, index) => (
                         <li
                           key={index}
+                          onMouseDown={() => {
+                            handleSelectHistoryKeyword(item);
+                          }}
                           className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer group"
                         >
                           <div
                             role="button"
                             tabIndex={0}
                             className="text-sm text-gray-700 group-hover:text-indigo-600"
-                            onClick={() => handleSelectHistoryKeyword(item)}
                           >
                             {item}
                           </div>
 
                           <button
                             className="text-gray-400 text-xs hover:text-red-500"
-                            onClick={(e) => {
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
+
                               const updated = searchHistory.filter(
-                                (_, i) => i !== index
-                              );
+                                (i) => i !== item
+                              ); // Xóa đúng item
                               localStorage.setItem(
                                 "searchHistory",
                                 JSON.stringify(updated)
@@ -366,15 +381,19 @@ const Navbar = () => {
               >
                 <img
                   className="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
-                  src={userInfo?.avatar || "https://placehold.co/100x100/2ecc71/ffffff?text={userInfo?.fullName}"}
+                  src={
+                    userInfo?.avatar ||
+                    "https://placehold.co/100x100/2ecc71/ffffff?text={userInfo?.fullName}"
+                  }
                   alt="User avatar"
                 />
                 <span className="hidden lg:inline-block text-sm font-medium">
                   Tài khoản
                 </span>
                 <svg
-                  className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""
-                    }`}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
+                    isDropdownOpen ? "transform rotate-180" : ""
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -509,14 +528,18 @@ const Navbar = () => {
               </div>
             </div>
 
-            {
-              isAuthenticated && userInfo && userInfo.role === 1 && (
-                <Link to="/register-seller" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium">
-                  Bán hàng cùng THEBUGS
-                </Link>
-              )
-            }
-            <Link to={'/search'} className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium">
+            {isAuthenticated && userInfo && userInfo.role === 1 && (
+              <Link
+                to="/register-seller"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-2 py-1 border-b-2 text-sm font-medium"
+              >
+                Bán hàng cùng THEBUGS
+              </Link>
+            )}
+            <Link
+              to={"/search"}
+              className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-sm font-medium"
+            >
               Sản phẩm
             </Link>
 
@@ -553,8 +576,9 @@ const Navbar = () => {
                 />
                 <span className="text-sm font-medium">Tài khoản</span>
                 <svg
-                  className={`w-3 h-3 transition-transform ${isDropdownOpen ? "transform rotate-180" : ""
-                    }`}
+                  className={`w-3 h-3 transition-transform ${
+                    isDropdownOpen ? "transform rotate-180" : ""
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

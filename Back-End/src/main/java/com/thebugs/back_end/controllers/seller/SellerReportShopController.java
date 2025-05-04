@@ -16,15 +16,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.services.seller.Seller_ReportProductService;
+
+import com.thebugs.back_end.services.seller.Seller_ReportShopService;
 import com.thebugs.back_end.utils.ResponseEntityUtil;
 
 @RestController
-@RequestMapping("/seller/report/product")
-public class SellerReportProductController {
-
+@RequestMapping("/seller/report/shop")
+public class SellerReportShopController {
     @Autowired
-    private Seller_ReportProductService seller_ReportProductService;
+    private Seller_ReportShopService sellerReportShopService;
 
     @GetMapping("/list")
     public ResponseEntity<ResponseData> getPage(@RequestHeader("Authorization") String authorizationHeader,
@@ -33,10 +33,10 @@ public class SellerReportProductController {
         try {
             Map<String, Object> response = new HashMap<>();
             Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Order.desc("id")));
-            ArrayList<Object> items = seller_ReportProductService.findReportProductsByActive(active,
+            ArrayList<Object> items = sellerReportShopService.findReportShopsByActive(active,
                     authorizationHeader,
                     pageable);
-            int count = seller_ReportProductService.totalItems(active, authorizationHeader);
+            int count = sellerReportShopService.totalItems(active, authorizationHeader);
             response.put("arrayList", items);
             response.put("totalItems", count);
             return ResponseEntityUtil.OK("Lấy thông tin thành công", response);
@@ -51,7 +51,7 @@ public class SellerReportProductController {
             @RequestParam Integer id) {
         try {
             return ResponseEntityUtil.OK("Lấy thông tin thành công",
-                    seller_ReportProductService.getReportProductDetail(authorizationHeader, id));
+                    sellerReportShopService.getReportProductDetail(authorizationHeader, id));
         } catch (Exception e) {
             return ResponseEntityUtil.badRequest("Lỗi " + e.getMessage());
         }

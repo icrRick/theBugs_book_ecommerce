@@ -32,20 +32,10 @@ public interface AuthorJPA extends JpaRepository<Author, Integer> {
                         "ORDER BY COUNT(pa.product.id) DESC")
         List<HomeAuthorDTO> findFeaturedAuthors(Pageable pageable);
 
-
-
-
-
-
-
-
-
-
-
-
-         @Query("SELECT DISTINCT a FROM Product p " +
+        @Query("SELECT DISTINCT a FROM Product p " +
                         "JOIN p.productAuthors pa " +
                         "JOIN pa.author a " +
                         "WHERE p.shop.shop_slug = :shopSlug")
         List<Author> findDistinctAuthorsByShopSlug(@Param("shopSlug") String shopSlug);
+
 }

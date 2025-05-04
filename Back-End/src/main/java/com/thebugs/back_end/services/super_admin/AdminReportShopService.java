@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.thebugs.back_end.entities.Product;
-import com.thebugs.back_end.entities.ReportProduct;
 import com.thebugs.back_end.entities.ReportShop;
 import com.thebugs.back_end.entities.ReportShopImage;
 import com.thebugs.back_end.entities.Shop;
@@ -24,7 +23,6 @@ import com.thebugs.back_end.repository.ReportShopJPA;
 import com.thebugs.back_end.repository.RoleJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 import com.thebugs.back_end.repository.UserJPA;
-import com.thebugs.back_end.services.user.ProductService;
 import com.thebugs.back_end.utils.EmailUtil;
 
 @Service
@@ -36,17 +34,14 @@ public class AdminReportShopService {
     @Autowired
     private AdminReportMapper adminReportMapper;
 
-
     @Autowired
     private ShopJPA shopJPA;
-
 
     @Autowired
     private UserJPA userJPA;
 
     @Autowired
     private RoleJPA roleJPA;
-
 
     @Autowired
     private ProductJPA productJPA;
@@ -123,7 +118,7 @@ public class AdminReportShopService {
 
         for (ReportShop reportShop : reportShops) {
             try {
-          
+
                 reportShop.setActive(true);
                 reportShop.setApprovalDate(new Date());
                 reportShopJPA.save(reportShop);
@@ -136,7 +131,6 @@ public class AdminReportShopService {
                     System.err.println("Gửi email cho người dùng thất bại: " + emailUser);
                 }
 
-      
                 Integer shopId = reportShop.getShop().getId();
                 if (!emailedShops.contains(shopId)) {
                     emailedShops.add(shopId);
@@ -161,16 +155,16 @@ public class AdminReportShopService {
                 e.printStackTrace();
             }
         }
-        Shop shop = reportShops.get(0).getShop(); 
+        Shop shop = reportShops.get(0).getShop();
         shop.setStatus(true);
         shopJPA.save(shop);
-        User user =shop.getUser();
+        User user = shop.getUser();
         user.setRole(roleJPA.findById(1).get());
         userJPA.save(user);
-        List <Product> products = productJPA.findAllByShopId(shop.getId());
+        List<Product> products = productJPA.findAllByShopId(shop.getId());
         for (Product product : products) {
             product.setStatus(true);
-            
+
             productJPA.save(product);
         }
         return true;

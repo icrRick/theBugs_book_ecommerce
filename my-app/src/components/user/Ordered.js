@@ -7,9 +7,6 @@ import Pagination from "../admin/Pagination";
 import { showErrorToast, showSuccessToast } from "../../utils/Toast";
 import { formatCurrency } from "../../utils/Format";
 import Loading from "../../utils/Loading";
-import { s_repurchaseCartItem } from "../service/cartItemService";
-import { useAuth } from "../../contexts/AuthContext";
-import { setListOrderId } from "../../utils/cookie";
 
 const Ordered = () => {
   const navigate = useNavigate();
@@ -58,7 +55,7 @@ const Ordered = () => {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
+          className="h-5 w-5"
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -69,15 +66,13 @@ const Ordered = () => {
           />
         </svg>
       ),
-      badge: "border-amber-200 bg-amber-50",
-      progress: "w-1/6 bg-amber-500"
     },
     "Đã hủy": {
       color: "bg-red-100 text-red-800 border-red-200",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
+          className="h-5 w-5"
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -88,15 +83,13 @@ const Ordered = () => {
           />
         </svg>
       ),
-      badge: "border-red-200 bg-red-50",
-      progress: "w-0 bg-red-500"
     },
     "Đã duyệt": {
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
+          className="h-5 w-5"
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -107,15 +100,13 @@ const Ordered = () => {
           />
         </svg>
       ),
-      badge: "border-blue-200 bg-blue-50",
-      progress: "w-2/6 bg-blue-500"
     },
     "Đang giao": {
       color: "bg-purple-100 text-purple-800 border-purple-200",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
+          className="h-5 w-5"
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -123,31 +114,13 @@ const Ordered = () => {
           <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
         </svg>
       ),
-      badge: "border-purple-200 bg-purple-50",
-      progress: "w-4/6 bg-purple-500"
-    },
-    "Đã giao": {
-      color: "bg-indigo-100 text-indigo-800 border-indigo-200",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path d="M12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-        </svg>
-      ),
-      badge: "border-indigo-200 bg-indigo-50",
-      progress: "w-5/6 bg-indigo-500"
     },
     "Đã nhận": {
       color: "bg-green-100 text-green-800 border-green-200",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 mr-1"
+          className="h-5 w-5"
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -159,8 +132,6 @@ const Ordered = () => {
           />
         </svg>
       ),
-      badge: "border-green-200 bg-green-50",
-      progress: "w-full bg-green-500"
     },
   };
 
@@ -250,7 +221,7 @@ const Ordered = () => {
         userName: filters.userName || undefined,
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
-        statusOrder: activeTab || undefined,
+        statusOrder: activeTab !== "" ? activeTab : undefined,
         page: page,
         size: pageSize,
       };
@@ -262,7 +233,6 @@ const Ordered = () => {
         setOrders(ordersList);
         setTotalOrders(data.totalItems || 0);
         setTotalPages(Math.ceil(data.totalItems / pageSize));
-        //setTabCounts(calculateTabCounts(ordersList));
       } else {
         console.error("Failed to search orders:", message);
         setOrders([]);
@@ -302,7 +272,6 @@ const Ordered = () => {
               : order
           )
         );
-        fetchAllOrders(keyword, currentPage);
       } else {
         showErrorToast(`Cập nhật trạng thái thất bại: ${message}`);
       }
@@ -314,9 +283,7 @@ const Ordered = () => {
         showErrorToast("Đã có lỗi xảy ra khi cập nhật trạng thái");
       }
     } finally {
-      fetchAllOrders(keyword, currentPage);
       setIsLoading(false);
-
     }
   };
 
@@ -440,7 +407,10 @@ const Ordered = () => {
   };
 
   const handleViewDetails = (orderId) => {
-    navigate(`/account/order/${orderId}`);
+    sessionStorage.setItem("selectedOrderId", orderId);
+    const params = new URLSearchParams(searchParams);
+    params.set("selectedOrderId", orderId);
+    navigate(`/account/order/${orderId}?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -455,8 +425,8 @@ const Ordered = () => {
       endDate: params.get("endDate") || "",
     });
 
-    fetchAllOrders(keyword, page);
-  }, []);
+    searchOrders(keyword, page);
+  }, [searchParams]);
 
   useEffect(() => {
     let selectedOrderId = searchParams.get("selectedOrderId");
@@ -522,30 +492,11 @@ const Ordered = () => {
     setSearchParams(params);
   }, [debouncedUserName, debouncedStartDate, debouncedEndDate]);
 
-  const filteredOrders = allOrders.filter((order) => {
-    const matchesStatus =
-      !activeTab ||
-      getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab);
+  const filteredOrders = orders;
 
-    const matchesName =
-      !debouncedUserName ||
-      (order.customerInfo &&
-        order.customerInfo
-          .toLowerCase()
-          .includes(debouncedUserName.toLowerCase()));
-
-    const matchesStartDate =
-      !debouncedStartDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) >= new Date(debouncedStartDate));
-
-    const matchesEndDate =
-      !debouncedEndDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) <= new Date(debouncedEndDate));
-
-    return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
-  });
+  useEffect(() => {
+    searchOrders(keyword, currentPage);
+  }, [activeTab]);
 
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalOrders);
@@ -554,134 +505,66 @@ const Ordered = () => {
       ? `Hiển thị ${startIndex}-${endIndex} trên ${totalOrders} đơn hàng`
       : "Không có đơn hàng";
 
-  const { setCartCount } = useAuth();
-
-  const handleRepurchase = async (orderId) => {
-    const response = await s_repurchaseCartItem(orderId);
-    if (response) {
-      setCartCount(response.reduce((acc, shop) => acc + shop.products.length, 0));
-      showSuccessToast("Đã thêm sản phẩm vào giỏ hàng!");
-    } else {
-      showErrorToast("Đã có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!");
-    }
-  };
-
-
-  const handleRePayment = async (order) => {
-    const orderIds = Array.isArray(orders) ? orders.map(o => o.id) : [orders.id];
-    const orderId = Math.floor(new Date().getTime() / 1000) + 10;
-    const responseVnpay = await axiosInstance.get("/user/payment-online/create-payment", {
-      params: {
-        orderId: orderId,
-        orderInfor: "Thanh toán đơn hàng " + order.id,
-        total: Number(order.totalPrice),
-      }
-    });
-
-    setListOrderId(JSON.stringify(orderIds));
-    if (responseVnpay.status === 200 && responseVnpay.data?.status === true) {
-      window.location.href = responseVnpay.data.data;
-    } else {
-      showErrorToast("Đã có lỗi xảy ra khi thanh toán lại đơn hàng!");
-    }
-
-
-  };
   return (
     <div className="w-full mx-auto">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 mr-2 text-blue-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-          </svg>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">
           Bộ lọc đơn hàng
         </h2>
         <form onSubmit={handleFilterSubmit} className="grid grid-cols-12 gap-4">
-          <div className="col-span-5 space-y-2">
+          <div className="col-span-7 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="name-filter"
             >
               Tên khách hàng
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                id="name-filter"
-                placeholder="Tên khách hàng"
-                value={filters.userName}
-                onChange={handleFilterChange}
-                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              />
-            </div>
+            <input
+              type="text"
+              id="name-filter"
+              placeholder="Nhập tên khách hàng..."
+              value={filters.userName}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+            />
           </div>
 
-          <div className="col-span-3 space-y-2">
+          <div className="col-span-2 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="start-date"
             >
               Từ ngày
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <input
-                type="date"
-                id="start-date"
-                value={filters.startDate || ""}
-                onChange={handleFilterChange}
-                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              />
-            </div>
+            <input
+              type="date"
+              id="start-date"
+              value={filters.startDate || ""}
+              onChange={handleFilterChange}
+              className="min-w-[140px] w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+            />
           </div>
 
-          <div className="col-span-3 space-y-2">
+          <div className="col-span-2 space-y-2">
             <label
               className="block text-sm font-medium text-gray-700"
               htmlFor="end-date"
             >
               Đến ngày
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <input
-                type="date"
-                id="end-date"
-                value={filters.endDate || ""}
-                onChange={handleFilterChange}
-                className="w-full pl-10 px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-              />
-            </div>
+            <input
+              type="date"
+              id="end-date"
+              value={filters.endDate || ""}
+              onChange={handleFilterChange}
+              className="min-w-[140px] w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+            />
           </div>
 
           <div className="col-span-1 flex items-end">
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center space-x-1 shadow-sm"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition duration-150 ease-in-out flex items-center justify-center space-x-1"
             >
               <svg
                 className="w-4 h-4"
@@ -702,18 +585,19 @@ const Ordered = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-lg  border border-gray-200 shadow-sm mb-6 overflow-x-auto">
-        <div className="flex space-x-1 p-2 min-w-max ">
+      <div className="bg-white rounded-lg shadow-sm mb-6 overflow-x-auto">
+        <div className="flex space-x-1 p-1 min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={`
       px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200
-      ${activeTab === tab.id
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }
+      ${
+        activeTab === tab.id
+          ? "bg-emerald-50 text-emerald-700 shadow-sm"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      }
     `}
             >
               {tab.label}
@@ -723,14 +607,18 @@ const Ordered = () => {
       </div>
       <div className="mb-4 text-sm text-gray-600 ml-2 mb-2">{displayText}</div>
 
-      <div className="space-y-6 min-h-[calc(100vh-300px)]">
+      <div
+        className={`space-y-6 ${
+          filteredOrders.length < 2 ? "min-h-[calc(100vh-600px)]" : ""
+        }`}
+      >
         {isLoading ? (
           Array(3)
             .fill(0)
             .map((_, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-md p-6 animate-pulse"
+                className="bg-white rounded-lg shadow-sm p-6 animate-pulse"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-4">
@@ -755,148 +643,104 @@ const Ordered = () => {
             <div
               id={`order-${order?.id}`}
               key={order?.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-700 hover:shadow-md "
+              className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-700 hover:shadow-md "
             >
-              <div className="p-4">
-                {/* Header - Mã đơn + Trạng thái */}
-                <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-sm">Mã đơn hàng:</span>
-                    <span className="font-medium text-gray-800">#{order?.id}</span>
-                    <span className="text-gray-400">|</span>
-                    <span className="text-gray-500 text-sm">{formatDate(order?.orderDate)}</span>
-                  </div>
-                  <div
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${statusConfig[order?.orderStatusName]?.color ||
-                      "bg-gray-100 text-gray-800 border-gray-200"
-                      }`}
-                  >
-                    {statusConfig[order?.orderStatusName]?.icon || (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3.5 w-3.5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                    <span className="font-medium">
-                      {order.orderStatusName || "Không xác định"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Main Content */}
-                <div className="flex flex-col md:flex-row justify-between gap-6">
-                  {/* Left Column - Thông tin */}
-                  <div className="flex-1">
-                    <div className="space-y-2.5 text-sm">
-                      {/* Thông tin khách hàng */}
-                      <div className="rounded-lg p-3">
-                        <div className="flex items-start gap-2 mb-2">
-                          <svg className="w-4 h-4 text-gray-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <div>
-                            <span className="text-gray-500">Khách hàng:</span>
-                            <p className="font-medium text-gray-800 break-words mt-0.5">
-                              {order?.customerInfo}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                          <div className="flex items-center">
-                            <span className="text-gray-500">Shop:</span>
-                            <a
-                              href={`/shop/${order?.shopSlug}`}
-                              className="ml-1 font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {order?.shopName}
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Thông tin thanh toán */}
-                      <div className=" rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                              </svg>
-                              <span className="text-gray-600">{order.paymentMethod || "Online Payment"}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {order.paymentStatus === "Đã thanh toán" ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              )}
-                              <span className={
-                                order.paymentStatus === "Đã thanh toán"
-                                  ? "text-green-600"
-                                  : "text-amber-600"
-                              }>
-                                {order.paymentStatus || "Chưa thanh toán"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-gray-500">Tổng tiền:</span>
-                            <span className="text-lg font-bold text-emerald-600">
-                              {formatCurrency(order?.totalPrice)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Thông báo */}
-                      {(order.orderStatusName === "Hủy" || order.orderStatusName === "Đã duyệt") && order?.noted && (
-                        <div className={`text-xs rounded-lg p-3 ${order.orderStatusName === "Hủy"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-green-50 text-green-600"
-                          }`}>
-                          <span className="font-medium">
-                            {order.orderStatusName === "Hủy" ? "Lý do hủy:" : "Thông báo:"}
-                          </span>
-                          <p className="mt-0.5 line-clamp-2" title={order?.noted}>
-                            {order.orderStatusName === "Hủy"
-                              ? order?.noted
-                              : "Đã thay đổi số lượng, vào chi tiết để xem."
-                            }
-                          </p>
-                        </div>
-                      )}
+              <div className="p-5">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                  {/* Bên trái - Thông tin khách hàng */}
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-500 text-sm">
+                        Mã đơn hàng:
+                      </span>
+                      <span className="font-medium">#{order?.id}</span>
                     </div>
+                    <div className="flex items-start gap-1">
+                      <span className="text-gray-500 text-sm flex-shrink-0 whitespace-nowrap">
+                        Khách hàng:
+                      </span>
+                      <span
+                        className="font-medium break-words max-w-[500px] overflow-hidden text-ellipsis line-clamp-3"
+                        title={order?.customerInfo}
+                      >
+                        {order?.customerInfo}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-500 text-sm">Ngày đặt:</span>
+                      <span>{formatDate(order?.orderDate)}</span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {order.paymentMethod || "Đã Thanh Toán"} •{" "}
+                      {order.paymentStatus || "Chưa thanh toán"}
+                    </div>
+                  </div>
+
+                  {/* Bên phải - Trạng thái + Tổng tiền + Lý do + Các nút */}
+                  <div className="flex flex-col items-end space-y-2">
+                    {/* Trạng thái đơn hàng */}
+                    <div
+                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-sm border ${
+                        statusConfig[order?.orderStatusName]?.color ||
+                        "bg-gray-100 text-gray-800 border-gray-200"
+                      }`}
+                    >
+                      {statusConfig[order?.orderStatusName]?.icon || (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                      <span className="font-medium">
+                        {order.orderStatusName || "Không xác định"}
+                      </span>
+                    </div>
+                    {/* Tổng tiền */}
+                    <div className="flex items-center">
+                      <span className="text-gray-600 mr-2 text-sm">
+                        Tổng tiền:
+                      </span>
+                      <span className="text-lg font-bold text-emerald-600">
+                        {formatCurrency(order?.totalPrice)}
+                      </span>
+                    </div>
+                    {order.orderStatusName === "Hủy" && order?.noted && (
+                      <div
+                        className="text-sm text-red-600 text-right truncate cursor-pointer font-bold"
+                        title={order?.noted}
+                      >
+                        Lý do hủy:{" "}
+                        {order?.noted?.length > 70
+                          ? order.noted.substring(0, 40) + "..."
+                          : order.noted}
+                      </div>
+                    )}
+                    {order.orderStatusName === "Đã duyệt" && order?.noted && (
+                      <div className="text-sm text-green-600 text-right">
+                        Thông báo: Đã thay đổi số lượng, vào chi tiết để xem.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => handleViewDetails(order.id)}
-                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-1 shadow-sm"
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1.5"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-blue-600"
+                      className="h-5 w-5"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -913,11 +757,11 @@ const Ordered = () => {
                     <>
                       <button
                         onClick={() => openCancelModal(order.id)}
-                        className="px-3 py-1.5 text-sm bg-white border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors flex items-center space-x-1 shadow-sm"
+                        className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-1.5"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
+                          className="h-5 w-5"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -934,11 +778,11 @@ const Ordered = () => {
                   {order.orderStatusName === "Đã giao" && (
                     <button
                       onClick={() => updateOrderStatus(order.id, 6)}
-                      className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center space-x-1 shadow-sm"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1.5"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-5 w-5"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -954,12 +798,39 @@ const Ordered = () => {
                   )}
                   {order.orderStatusName === "Đã nhận" && (
                     <button
-                      onClick={() => handleRepurchase(order.id)}
-                      className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors flex items-center space-x-1 shadow-sm"
+                      onClick={async () => {
+                        try {
+                          const response = await axiosInstance.get(
+                            `/user/order/${order.id}`
+                          );
+                          const data = response.data.data;
+                          const orderItems = data.orderItems;
+                          const productsToBuyAgain = orderItems.map((item) => ({
+                            id: item.productId,
+                            productName: item?.productName,
+                            productImage: item?.productImage,
+                            priceProduct: formatCurrency(item?.priceProduct),
+                            quantityProduct: item?.quantityProduct,
+                            totalPriceProduct: formatCurrency(
+                              item?.totalPriceProduct
+                            ),
+                            shopId: item?.shopId,
+                            shopName: item?.shopName,
+                          }));
+                          navigate("/payment", {
+                            state: {
+                              selectedProducts: productsToBuyAgain,
+                            },
+                          });
+                        } catch (error) {
+                          showErrorToast("Đã xảy ra lỗi khi mua lại!!!");
+                        }
+                      }}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-1.5"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-5 w-5"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -972,32 +843,12 @@ const Ordered = () => {
                       <span>Mua lại</span>
                     </button>
                   )}
-                  {order.orderPaymentId === 4 && (
-                    <button
-                      onClick={() => handleRePayment(order)}
-                      className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors flex items-center space-x-1 shadow-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span>Thanh toán lại</span>
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1014,7 +865,7 @@ const Ordered = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Không có đơn hàng nào
             </h3>
             <p className="text-gray-600 mb-6">
@@ -1022,7 +873,7 @@ const Ordered = () => {
             </p>
             <button
               onClick={() => navigate("/")}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center shadow-sm"
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors inline-flex items-center"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1067,7 +918,7 @@ const Ordered = () => {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Vui lòng nhập lý do hủy đơn hàng..."
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
                 rows={3}
               ></textarea>
               {!cancelReason.trim() && (
@@ -1079,13 +930,13 @@ const Ordered = () => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={closeCancelModal}
-                className="px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleCancelOrder}
-                className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 disabled={!cancelReason.trim()}
               >
                 Xác nhận hủy
