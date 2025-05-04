@@ -1,5 +1,8 @@
 package com.thebugs.back_end.services.user;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,12 +35,14 @@ import com.thebugs.back_end.repository.RoleJPA;
 import com.thebugs.back_end.repository.ShopJPA;
 import com.thebugs.back_end.repository.UserJPA;
 import com.thebugs.back_end.resp.ResponseData;
-import com.thebugs.back_end.utils.CloudinaryUpload;
-import com.thebugs.back_end.utils.ColorUtil;
-import com.thebugs.back_end.utils.WebClientConfig;
+import com.thebugs.back_end.utils.*;
 
 @Service
 public class RegisterSellerService {
+
+    private final EmailUtil emailUtil;
+
+    private final JwtUtil jwtUtil;
     @Autowired
     private UserService g_UserService;
     @Autowired
@@ -53,6 +58,11 @@ public class RegisterSellerService {
 
     @Autowired
     private WebClientConfig g_WebClientConfig;
+
+    RegisterSellerService(JwtUtil jwtUtil, EmailUtil emailUtil) {
+        this.jwtUtil = jwtUtil;
+        this.emailUtil = emailUtil;
+    }
 
     public UserDTO getUserByToken(String authorizationHeader) {
         return g_UserService.getUserDTO(authorizationHeader);
@@ -79,13 +89,46 @@ public class RegisterSellerService {
         }
     }
 
+    public boolean checkTokenConfirmEmail(String token, int userId) {
+        return jwtUtil.validateToken(
+                token,
+                userId,
+                "CONFIRM");
+    }
+
+    public ResponseData updateExpireAfterConfirm(int userId) {
+        try {
+            Optional<User> userOptional = g_UserJPA.findById(userId);
+            if (userOptional.isPresent()) {
+                Shop shop = userOptional.get().getShop();
+                shop.setExpiredAt(null);
+                g_ShopJPA.save(shop);
+                return new ResponseData(true, "Cập nhật thành công", null, 200);
+            } else {
+                return new ResponseData(false, "Người dùng không tồn tại", null, 404);
+            }
+        } catch (Exception e) {
+            return new ResponseData(false, e.getMessage(), null, 500);
+        }
+    }
+
     @Transactional
     public ResponseData createSeller(ShopBean shopBean, AddressBean addressBean,
             UserRegisterBean registerBean, MultipartFile logo, MultipartFile banner) {
         try {
-            User user = Optional.ofNullable(registerBean.getId())
-                    .flatMap(g_UserJPA::findById)
-                    .orElseGet(() -> registerUser(registerBean));
+            boolean isRegisted = true; // Biến để lưu trạng thái đăng ký
+
+            // Kiểm tra xem người dùng đã tồn tại chưa
+            User user = null;
+            if (registerBean.getId() != null) {
+                user = g_UserJPA.findById(registerBean.getId()).orElse(null);
+            }
+
+            if (user == null) {
+                // Nếu người dùng chưa tồn tại, tiến hành đăng ký
+                user = registerUser(registerBean);
+                isRegisted = false; // Người dùng mới đăng ký
+            }
 
             if (user == null || user.getId() == null) {
                 throw new RuntimeException("Không thể đăng ký người dùng.");
@@ -105,7 +148,10 @@ public class RegisterSellerService {
             shop.setBanner(bannerUrl);
             shop.setTotalPayout(0.0);
             shop.setUser(user);
-
+            if (!isRegisted) {
+                ZonedDateTime nowInVietnam = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+                shop.setExpiredAt(nowInVietnam.toLocalDateTime().plusMinutes(15));
+            }
             Shop savedShop = g_ShopJPA.save(shop);
             if (savedShop.getId() == null) {
                 throw new RuntimeException("Không thể đăng ký shop.");
@@ -117,7 +163,12 @@ public class RegisterSellerService {
                 throw new RuntimeException("Không thể đăng ký địa chỉ.");
             }
 
-            return new ResponseData(true, "Đăng ký thành công", null, 201);
+            if (!isRegisted) {
+                String token = jwtUtil.generateToken(user.getId(), user.getRole().getId(), "CONFIRM");
+                emailUtil.sendEmailConfirmEmail(user.getEmail(), token, user.getId());
+            }
+
+            return new ResponseData(true, "Đăng ký thành công, vui lòng kiểm tra email để xác nhận đăng ký", null, 201);
 
         } catch (Exception e) {
             return new ResponseData(false, e.getMessage(), null, 500);

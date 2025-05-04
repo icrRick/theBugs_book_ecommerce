@@ -39,13 +39,13 @@ public class EmailUtil {
         }
     }
 
-    public boolean sendEmailConfirmEmail(String toEmail, String token) {
+    public boolean sendEmailConfirmEmail(String toEmail, String token, Integer userId) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(toEmail);
             helper.setSubject("Xác nhận địa chỉ email");
-            helper.setText(confirmEmailContent(token), true);
+            helper.setText(confirmEmailContent(token, userId), true);
             helper.setFrom("lehqpc07896@fpt.edu.vn");
             mailSender.send(message);
             System.out.println("✅ Confirmation email sent to " + toEmail);
@@ -742,9 +742,8 @@ public class EmailUtil {
         }
     }
 
-    public String confirmEmailContent(String token) {
-        String confirmLink = "http://localhost:3000/confirm-email?token=" + token;
-
+    public String confirmEmailContent(String token, Integer userId) {
+        String confirmLink = "http://localhost:3000/confirm-email?token=" + token + "&userId=" + userId;
         return """
                 <!DOCTYPE html>
                 <html>
@@ -797,7 +796,7 @@ public class EmailUtil {
                 </body>
                 </html>
                 """
-                .formatted("http://localhost:3000/confirm-email?token=" + token);
+                .formatted(confirmLink);
     }
 
 }

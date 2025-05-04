@@ -19,6 +19,8 @@ import com.thebugs.back_end.utils.ColorUtil;
 
 import jakarta.validation.Valid;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +100,26 @@ public class RegisterSellerController {
     public ResponseEntity<GHN_Ward_DTO> getWardInfor(@RequestParam int districtID) {
         GHN_Ward_DTO result = g_RegisterSellerService.getWardInfor(districtID);
         return ResponseEntity.status(HttpStatus.valueOf(result.getCode())).body(result);
+    }
+
+    @GetMapping("/confirm-email")
+    public ResponseEntity<ResponseData> getWardInfor(@RequestParam String token, @RequestParam int userId) {
+        boolean status = g_RegisterSellerService.checkTokenConfirmEmail(token, userId);
+        ResponseData result = new ResponseData();
+        if (status) {
+            result = g_RegisterSellerService.updateExpireAfterConfirm(userId);
+        } else {
+            result.setStatus(status);
+            if (status) {
+                result.setStatusCode(200);
+                result.setMessage("Xác thực email thành công");
+            } else {
+                result.setStatusCode(401);
+                result.setMessage("Xác thực email thất bại");
+            }
+        }
+        result.setData(null);
+        return ResponseEntity.status(HttpStatus.valueOf(result.getStatusCode())).body(result);
     }
 
     @PostMapping("/register-seller")
