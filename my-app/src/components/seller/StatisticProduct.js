@@ -186,8 +186,7 @@ const StatisticProduct = () => {
                 <p className="text-sm text-gray-500">
                   <span className="text-xs font-medium px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
                     Đã bán:
-                  </span>
-                  {" "}
+                  </span>{" "}
                   {statisticalData.mostSoldProduct?.soldQuantity || "0"}
                 </p>
               </div>
@@ -400,12 +399,7 @@ const StatisticProduct = () => {
               onChange={(e) => setSortBy(e.target.value)}
             >
               <option value="sales">Sắp xếp theo số lượng bán</option>
-              <option value="revenue">Sắp xếp theo doanh thu</option>
-              <option value="wareHouseProduct">Sắp xếp theo tồn kho</option>
             </select>
-            <button className="p-2 text-gray-500 hover:text-indigo-600 transition bg-white border border-gray-200 rounded-lg shadow-sm">
-              <FaSortAmountDown />
-            </button>
           </div>
         </div>
         <div className="overflow-x-auto">
