@@ -221,7 +221,7 @@ const Ordered = () => {
         userName: filters.userName || undefined,
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
-        statusOrder: activeTab || undefined,
+        statusOrder: activeTab !== "" ? activeTab : undefined,
         page: page,
         size: pageSize,
       };
@@ -425,8 +425,8 @@ const Ordered = () => {
       endDate: params.get("endDate") || "",
     });
 
-    fetchAllOrders(keyword, page);
-  }, []);
+    searchOrders(keyword, page);
+  }, [searchParams]);
 
   useEffect(() => {
     let selectedOrderId = searchParams.get("selectedOrderId");
@@ -492,37 +492,17 @@ const Ordered = () => {
     setSearchParams(params);
   }, [debouncedUserName, debouncedStartDate, debouncedEndDate]);
 
-  const filteredOrders = allOrders.filter((order) => {
-    const matchesStatus =
-      !activeTab ||
-      getStatusIdFromName(order.orderStatusName) === Number.parseInt(activeTab);
+  const filteredOrders = orders;
 
-    const matchesName =
-      !debouncedUserName ||
-      (order.customerInfo &&
-        order.customerInfo
-          .toLowerCase()
-          .includes(debouncedUserName.toLowerCase()));
+  useEffect(() => {
+    searchOrders(keyword, currentPage);
+  }, [activeTab]);
 
-    const matchesStartDate =
-      !debouncedStartDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) >= new Date(debouncedStartDate));
-
-    const matchesEndDate =
-      !debouncedEndDate ||
-      (order.orderDate &&
-        new Date(order.orderDate) <= new Date(debouncedEndDate));
-
-    return matchesStatus && matchesName && matchesStartDate && matchesEndDate;
-  });
-
-  const filteredTotal = filteredOrders.length;
   const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, filteredTotal);
+  const endIndex = Math.min(currentPage * pageSize, totalOrders);
   const displayText =
-    filteredTotal > 0
-      ? `Hiển thị ${startIndex}-${endIndex} trên ${filteredTotal} đơn hàng`
+    totalOrders > 0
+      ? `Hiển thị ${startIndex}-${endIndex} trên ${totalOrders} đơn hàng`
       : "Không có đơn hàng";
 
   return (
@@ -561,7 +541,7 @@ const Ordered = () => {
               id="start-date"
               value={filters.startDate || ""}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+              className="min-w-[140px] w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
             />
           </div>
 
@@ -577,7 +557,7 @@ const Ordered = () => {
               id="end-date"
               value={filters.endDate || ""}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
+              className="min-w-[140px] w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out"
             />
           </div>
 
@@ -627,7 +607,11 @@ const Ordered = () => {
       </div>
       <div className="mb-4 text-sm text-gray-600 ml-2 mb-2">{displayText}</div>
 
-      <div className="space-y-6 min-h-[calc(100vh-300px)]">
+      <div
+        className={`space-y-6 ${
+          filteredOrders.length < 2 ? "min-h-[calc(100vh-600px)]" : ""
+        }`}
+      >
         {isLoading ? (
           Array(3)
             .fill(0)
@@ -905,10 +889,10 @@ const Ordered = () => {
         )}
       </div>
 
-      {filteredTotal > 0 && (
+      {totalOrders > 0 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={Math.ceil(filteredTotal / pageSize)}
+          totalPages={totalPages}
           setCurrentPage={handlePageChange}
         />
       )}
