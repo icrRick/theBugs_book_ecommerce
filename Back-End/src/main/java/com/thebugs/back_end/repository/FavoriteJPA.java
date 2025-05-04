@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-
 import com.thebugs.back_end.entities.Favorite;
 
 public interface FavoriteJPA extends JpaRepository<Favorite, Integer> {
@@ -16,4 +15,6 @@ public interface FavoriteJPA extends JpaRepository<Favorite, Integer> {
         @Query("SELECT f FROM Favorite f WHERE f.user.id = ?1 AND f.product.id = ?2")
         Optional<Favorite> findByUserIdAndProductId(Integer userId, Integer productId);
 
+        @Query("SELECT COUNT(f) > 0 FROM Favorite f WHERE f.user.id = ?1 AND f.product.id = ?2")
+        boolean existsByUserIdAndProductId(Integer userId, Integer productId);
 }

@@ -24,13 +24,16 @@ public class FavoriteService {
 
     @Autowired
     private FavoriteMapper favoriteMapper;
-    
+
     public List<ProItemDTO> getListFavorite(String authorizationHeader) {
         User user = userService.getUserToken(authorizationHeader);
 
         return favoriteMapper.toDtos(user.getFavorites());
     }
 
+    public boolean isFavorite(Integer userId, Integer productId) {
+        return favoriteJPA.existsByUserIdAndProductId(userId, productId);
+    }
 
     public Favorite addAndRemoveFavorite(String authorizationHeader, Integer productId) {
         User user = userService.getUserToken(authorizationHeader);

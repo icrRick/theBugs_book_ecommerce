@@ -6,8 +6,11 @@ import com.thebugs.back_end.dto.ProItemDTO;
 import com.thebugs.back_end.entities.Favorite;
 import com.thebugs.back_end.resp.ResponseData;
 import com.thebugs.back_end.services.user.FavoriteService;
+import com.thebugs.back_end.services.user.UserService;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,9 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class FavoriteController {
         @Autowired
         private FavoriteService favoriteService;
-        
+
+        @Autowired
+        private UserService g_UserService;
         @GetMapping("/list")
-        public ResponseEntity<ResponseData> getListFavorite(@RequestHeader("Authorization") String authorizationHeader) {
+        public ResponseEntity<ResponseData> getListFavorite(
+                        @RequestHeader("Authorization") String authorizationHeader) {
                 ResponseData responseData = new ResponseData();
                 try {
                         List<ProItemDTO> listFavorite = favoriteService.getListFavorite(authorizationHeader);
@@ -42,7 +48,8 @@ public class FavoriteController {
         }
 
         @PostMapping("/add-and-remove")
-        public ResponseEntity<ResponseData> addAndRemoveFavorite(@RequestHeader("Authorization") String authorizationHeader,  @RequestParam Integer productId) {
+        public ResponseEntity<ResponseData> addAndRemoveFavorite(
+                        @RequestHeader("Authorization") String authorizationHeader, @RequestParam Integer productId) {
                 ResponseData responseData = new ResponseData();
                 try {
                         Favorite favorite = favoriteService.addAndRemoveFavorite(authorizationHeader, productId);
@@ -65,5 +72,14 @@ public class FavoriteController {
                 }
         }
 
+        @GetMapping("/check")
+        public ResponseEntity<Map<String, Boolean>> checkFavorite(
+                        @RequestHeader("Authorization") String authorizationHeader,
+                        @RequestParam Integer productId) {
+                int userId = g_UserService.getUserToken(authorizationHeader).getId();
+                boolean isFavorite = favoriteService.isFavorite(userId, productId);
+                Map<String, Boolean> response = Collections.singletonMap("isFavorite", isFavorite);
+                return ResponseEntity.ok(response);
+        }
 
 }
