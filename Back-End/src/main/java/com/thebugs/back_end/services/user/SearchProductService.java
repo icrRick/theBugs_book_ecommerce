@@ -1,14 +1,11 @@
 package com.thebugs.back_end.services.user;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.management.RuntimeErrorException;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,7 +47,7 @@ public class SearchProductService {
                 .collect(Collectors.joining("")) + "%";
     }
 
-    public Map<String, Object> searchProduct(String keyword, List<Integer> genresID,
+    public Map<String, Object> searchProduct(String keyword, List<String> genreNames,
             Double minPrice, Double maxPrice,
             String sortBy, int page) {
 
@@ -60,8 +57,16 @@ public class SearchProductService {
             keyword = createCharacterPattern(keyword);
         }
 
+        List<Integer> genresIDs = null;
+        if (genreNames != null && !genreNames.isEmpty()) {
+            genresIDs = genreJPA.findByNameIn(genreNames)
+                    .stream()
+                    .map(g -> g.getId())
+                    .collect(Collectors.toList());
+        }
+
         Pageable pageable = PageRequest.of(page - 1, 16);
-        Page<SearchProductDTO> result = productJPA.searchProducts(keyword, minPrice, maxPrice, genresID, sortBy,
+        Page<SearchProductDTO> result = productJPA.searchProducts(keyword, minPrice, maxPrice, genresIDs, sortBy,
                 pageable);
 
         Map<String, Object> map = new HashMap<>();

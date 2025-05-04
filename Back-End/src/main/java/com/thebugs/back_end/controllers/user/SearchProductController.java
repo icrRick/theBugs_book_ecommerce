@@ -25,7 +25,7 @@ public class SearchProductController {
     @GetMapping("")
     public ResponseEntity<ResponseData> searchProduct(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) List<Integer> genresID,
+            @RequestParam(required = false, name = "genres") List<String> genreNames,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false, defaultValue = "relevance") String sortBy,
@@ -35,7 +35,7 @@ public class SearchProductController {
             responseData.setStatus(true);
             responseData.setMessage("Tìm kiếm danh sách thành công");
             responseData
-                    .setData(searchProductService.searchProduct(keyword, genresID, minPrice, maxPrice, sortBy, page));
+                    .setData(searchProductService.searchProduct(keyword, genreNames, minPrice, maxPrice, sortBy, page));
             return ResponseEntity.ok().body(responseData);
         } catch (Exception e) {
             return ResponseEntity.badRequest()

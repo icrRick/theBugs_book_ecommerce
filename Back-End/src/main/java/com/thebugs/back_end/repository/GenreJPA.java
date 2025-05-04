@@ -43,4 +43,7 @@ public interface GenreJPA extends JpaRepository<Genre, Integer> {
                         "WHERE p.shop.shop_slug = :shopSlug")
         List<Genre> findDistinctGenresByShopSlug(@Param("shopSlug") String shopSlug);
 
+        // code của tâm
+        List<Genre> findByNameIn(List<String> names);
+
 }
