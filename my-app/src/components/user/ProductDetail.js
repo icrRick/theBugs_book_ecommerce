@@ -17,6 +17,8 @@ import {
   setListVoucherIds,
   setQuantityByNow,
 } from "../../utils/cookie";
+import { s_saveCartItem } from "../service/cartItemService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const ProductDetail = () => {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
@@ -32,6 +34,7 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const { id } = useParams();
+  const {setCartCount } = useAuth();
   const navigate = useNavigate();
   const descriptionRef = useRef(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -222,17 +225,14 @@ const ProductDetail = () => {
     }
   };
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (id, quantity) => {
     try {
-      const response = await axiosInstance.post(
-        `/user/cart/saveCartItemProductCode?productCode=${product.product_code}&quantity=${quantity}`
-      );
-      if (response.status === 200 && response.data.status === true) {
-        setShowAddToCartNotification(true);
-        setTimeout(() => setShowAddToCartNotification(false), 3000);
-        showSuccessToast(response.data.message);
+      const response = await s_saveCartItem(id, quantity);
+      if (response) {
+        showSuccessToast("Thêm vào giỏ hàng thành công");
+        setCartCount(response);
       } else {
-        showErrorToast(response.data.message);
+        showErrorToast("Có lỗi khi thêm vào giỏ hàng");
       }
     } catch (error) {
       console.log(error);
@@ -718,7 +718,7 @@ const ProductDetail = () => {
               {/* Nút mua hàng */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
-                  onClick={handleAddToCart}
+                  onClick={() => handleAddToCart(product.id, quantity)}
                   className="flex-1 px-6 py-3 border-2 border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium flex items-center justify-center"
                 >
                   <i className="bi bi-cart-plus text-xl mr-2"></i>

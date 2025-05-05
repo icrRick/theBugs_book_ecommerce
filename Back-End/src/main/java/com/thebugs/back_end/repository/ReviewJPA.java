@@ -70,7 +70,7 @@ public interface ReviewJPA extends JpaRepository<Review, Integer> {
     int countReviewByProductId(@Param("productId") Integer productId);
 
     @Query("""
-                SELECT AVG(r.rate)
+                SELECT     COALESCE(AVG(r.rate), 0)
                 FROM Review r
                 WHERE r.orderItem.product.shop.id = :shopId
             """)

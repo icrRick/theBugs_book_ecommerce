@@ -209,7 +209,7 @@ const Stores = () => {
 
 
 
-                 
+
                     <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       TT khóa
                     </th>
@@ -253,13 +253,13 @@ const Stores = () => {
                         <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                           <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopCreatAt}</div>
                         </td>
-                       
+
                         <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
                           <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${item?.status
                             ? 'bg-red-100 text-red-800'
                             : 'bg-green-100 text-green-800'
                             }`}>
-                            {item?.status === null ? "Chờ khóa" : item?.status === true ? "Đã khóa" : "Chưa khóa"}
+                            {item?.status === null ? "Đang hoạt động" : item?.status === true ? "Đã khóa" : "Đang hoạt động"}
                           </span>
                         </td>
                         <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">

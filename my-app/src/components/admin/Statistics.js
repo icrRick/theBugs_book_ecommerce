@@ -41,10 +41,10 @@ const Statistics = () => {
     const end = new Date();
     const startDateString = start.toISOString().split('T')[0];
     const endDateString = end.toISOString().split('T')[0];
-  
+
     setStartDate(startDateString);
     setEndDate(endDateString);
-  
+
     updateUrlParams(startDateString, endDateString, 1);
     fetchData();
   }, []); // Chạy 1 lần khi component mount
@@ -55,9 +55,9 @@ const Statistics = () => {
       setIsLoading(true);
       const response = await axiosInstance.get(`/admin/revenue/shop/list?startDate=${startDate}&endDate=${endDate}&page=${currentPage}`);
       if (response.status === 200 && response.data.status === true) {
-        setItems(response.data.data.arrayList);
-        setTotalItems(response.data.data.totalItems);
-        setTotalRevenue(response.data.data.totalRevenue);
+        setItems(response.data.data.arrayList || []);
+        setTotalItems(response.data.data.totalItems || 0);
+        setTotalRevenue(response.data.data.totalRevenue || 0);
       }
     } catch (error) {
       console.error("Error fetching statistics:", error);
@@ -139,7 +139,7 @@ const Statistics = () => {
   };
 
   return (
-    <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
+    <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full h-screen">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="p-4">
@@ -229,12 +229,11 @@ const Statistics = () => {
             </div>
           </div>
         </div>
-
         {/* Results stats */}
         <div className="flex flex-wrap justify-between items-center mb-4">
           <div className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
             <span className="hidden sm:inline">Hiển thị</span>{" "}
-            <span className="font-medium">{items.length > 0 ? startItem : 0}-{items.length > 0 ? endItem : 0}</span>{" "}
+            <span className="font-medium">{items?.length > 0 ? startItem : 0}-{items?.length > 0 ? endItem : 0}</span>{" "}
             <span className="hidden sm:inline">trên</span>{" "}
             <span className="font-medium">{totalItems}</span> cửa hàng{" "}
             <span className="inline sm:hidden">• Trang {currentPage}</span>
@@ -245,124 +244,126 @@ const Statistics = () => {
 
         {/* Table Container */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {isLoading && items.length > 0 && (
-            <div className="p-4 flex justify-center">
-              <div className="animate-pulse flex space-x-2 items-center">
-                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
-                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
-                <div className="h-2 sm:h-3 w-2 sm:w-3 bg-blue-400 rounded-full"></div>
-                <span className="text-xs sm:text-sm text-gray-500">Đang tải...</span>
+          {isLoading && (
+            <div className="p-6 flex justify-center items-center">
+              <div className="animate-pulse flex flex-col items-center">
+                <div className="flex space-x-2 items-center mb-3">
+                  <div className="h-3 w-3 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="h-3 w-3 bg-blue-500 rounded-full animate-bounce delay-150"></div>
+                  <div className="h-3 w-3 bg-blue-500 rounded-full animate-bounce delay-300"></div>
+                </div>
+                <span className="text-sm text-gray-500">Đang tải dữ liệu...</span>
               </div>
             </div>
           )}
+          
+          {!isLoading && (
+            <>
+              {/* Table for tablet and desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 ">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tên cửa hàng
+                      </th>
+                      <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tổng doanh thu
+                      </th>
 
-          {/* Table for tablet and desktop */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50">
+                      <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Doanh thu cửa hàng
+                      </th>
 
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên cửa hàng
-                  </th>
-
-
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tổng doanh thu
-                  </th>
-
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doanh thu cửa hàng
-                  </th>
-                  
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phí cố định (5%)
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doanh thu cửa hàng nhận được
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {items.length === 0 && !isLoading ? (
-                  <tr>
-                    <td colSpan="7" className="px-6 py-10 text-center text-sm text-gray-500">
-                      <div className="flex flex-col items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-10 w-8 sm:w-10 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <span>Không tìm thấy dữ liệu</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((item) => (
-                    <tr key={item.shopId} className="hover:bg-blue-50 transition-colors duration-150">
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopName}</div>
-                      </td>
-
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {formatCurrency(item?.totalOlpriceRevenue || 0)}
-                        </div>
-                      </td>
-                    
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {formatCurrency(item?.totalPriceRevenue || 0)}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {formatCurrency(item?.feePlatform || 0)}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
-                          {formatCurrency(item?.totalPriceRevenue - item?.feePlatform || 0)}
-                        </div>
-                      </td>
-
-
+                      <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Phí cố định (5%)
+                      </th>
+                      <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Doanh thu cửa hàng nhận được
+                      </th>
                     </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {items?.length > 0 && items?.map((item) => (
+                      <tr key={item.shopId} className="hover:bg-blue-50 transition-colors duration-150">
+                        <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopName}</div>
+                        </td>
+
+                        <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                            {formatCurrency(item?.totalOlpriceRevenue || 0)}
+                          </div>
+                        </td>
+
+                        <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                            {formatCurrency(item?.totalPriceRevenue || 0)}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                            {formatCurrency(item?.feePlatform || 0)}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">
+                            {formatCurrency((item?.totalPriceRevenue || 0) - (item?.feePlatform || 0))}
+                          </div>
+                        </td>
+
+
+                      </tr>
+                    ))}
+                    {items?.length === 0 && !isLoading && (
+                      <tr>
+                        <td colSpan="5" className="px-4 py-16 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            <p className="text-gray-500 text-lg font-medium">Không có dữ liệu</p>
+                            <p className="text-gray-400 text-sm mt-2">Vui lòng thử thay đổi bộ lọc thời gian hoặc làm mới</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile card view for small screens */}
+              <div className="md:hidden">
+                {items?.length === 0 && !isLoading ? (
+                  <div className="py-20 flex flex-col items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <p className="text-gray-500 text-base font-medium">Không tìm thấy cửa hàng nào</p>
+                    <p className="text-gray-400 text-xs mt-2 text-center px-4">Vui lòng thử thay đổi bộ lọc thời gian</p>
+                  </div>
+                ) : (
+                  items?.map((item) => (
+                    <div key={item.shopId} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">{item?.shopName}</span>
+                      </div>
+                      <div className="text-xs text-gray-600 mb-1">Tổng doanh thu: {formatCurrency(item?.totalOlpriceRevenue || 0)}</div>
+                      <div className="text-xs text-gray-600 mb-1">Doanh thu cửa hàng: {formatCurrency(item?.totalPriceRevenue || 0)}</div>
+                      <div className="text-xs text-gray-600 mb-1">Phí cố định: {formatCurrency(item?.feePlatform || 0)}</div>
+                      <div className="text-xs text-gray-600">Doanh thu nhận được: {formatCurrency((item?.totalPriceRevenue || 0) - (item?.feePlatform || 0))}</div>
+                    </div>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile card view for small screens */}
-          <div className="md:hidden">
-            {items.length === 0 && !isLoading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
-                <div className="flex flex-col items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
-                  <span>Không tìm thấy cửa hàng nào</span>
-                </div>
               </div>
-            ) : (
-              items.map((item) => (
-                <div key={item.shopId} className="border-t border-gray-200 px-4 py-3 hover:bg-blue-50 transition-colors duration-150">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">{item?.shopName}</span>
 
-                  </div>
-                  <div className="text-xs text-gray-600 mb-1">Tổng doanh thu: {formatCurrency(item?.totalRevenue || 0)}</div>
-                  <div className="text-xs text-gray-600 mb-1">Phí cố định: {formatCurrency(item?.fixedFee || 0)}</div>
-                  <div className="text-xs text-gray-600">Tổng tiền: {formatCurrency(item?.netPay || 0)}</div>
+              {/* Pagination */}
+              {items?.length > 0 && (
+                <div className={`border-t border-gray-200 ${isLoading ? 'opacity-50' : ''}`}>
+                  <Pagination currentPage={currentPage} totalPages={Math.ceil(totalItems / 10)} setCurrentPage={handlePageChange} />
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* Pagination */}
-          {items.length > 0 && (
-            <div className={`border-t border-gray-200 ${isLoading ? 'opacity-50' : ''}`}>
-              <Pagination currentPage={currentPage} totalPages={Math.ceil(totalItems / 10)} setCurrentPage={handlePageChange} />
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -15,7 +15,8 @@ public class VoucherDTO {
     private Date createAt;
     private Date startDate;
     private Date expireDate;
-    private Integer quantity;
+    private int quantity;
+    private int quantityVoucherOrder;
     private Double discountPercentage;
     private Double minTotalOrder;
     private Double maxDiscount;

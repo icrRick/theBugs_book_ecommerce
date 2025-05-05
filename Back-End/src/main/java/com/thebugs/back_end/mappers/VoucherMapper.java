@@ -24,6 +24,7 @@ public class VoucherMapper {
         voucherDTO.setDiscountPercentage(voucher.getDiscountPercentage());
         voucherDTO.setDescription(voucher.getDescription());
         voucherDTO.setActive(voucher.getActive());
+        voucherDTO.setQuantityVoucherOrder(voucher.getOrders().size());
         return voucherDTO;
     }
 

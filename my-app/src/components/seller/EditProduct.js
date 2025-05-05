@@ -121,7 +121,7 @@ const EditProduct = () => {
                                     categories: mapToSelectOptions(
                                           product.genres
                                     ),
-                                    publisher: product.publisher_id,
+                                    publisher_id: product.publisher_id,
                               });
                         } else {
                               console.error("Invalid product data structure");
@@ -137,24 +137,19 @@ const EditProduct = () => {
 
       // ================== useEffect thứ ba: đồng bộ publisher ==================
       useEffect(() => {
-            if (publisherOptions.length > 0) {
+            if (publisherOptions.length > 0 && formData.publisher_id) {
                   const selectedPublisher = publisherOptions.find(
                         (publisher) => publisher.value === formData.publisher_id
                   );
-                  console.log("Selected: ");
-                  console.log(selectedPublisher);
-                  if (
-                        selectedPublisher &&
-                        formData.publisher !== selectedPublisher
-                  ) {
+                  
+                  if (selectedPublisher) {
                         setFormData((prev) => ({
                               ...prev,
                               publisher: selectedPublisher,
                         }));
                   }
             }
-            console.log("Publisher Options: ", publisherOptions);
-      }, [publisherOptions, formData.publisher_id, formData.publisher]);
+      }, [publisherOptions, formData.publisher_id]);
 
       // ================== useEffect thứ tư: log formData ==================
       useEffect(() => {
@@ -228,7 +223,7 @@ const EditProduct = () => {
                   authors_id: extractIds(formData.authors),
                   genres_id: extractIds(formData.categories),
                   product_code: formData.product_code,
-                  publisher_id: formData.publisher.value,
+                  publisher_id: formData.publisher ? formData.publisher.value : null,
                   oldImage: formData.images.map((img) => img.id),
                   active: formData.active,
             };

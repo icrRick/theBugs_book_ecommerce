@@ -405,11 +405,11 @@ const AdminShopDetail = () => {
                                     <p className="text-sm font-medium text-gray-500">Trạng thái hoạt động</p>
                                 </div>
                                 <div className="col-span-8">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shopDetail?.active === true
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shopDetail?.shopActive === true
                                         ? 'bg-green-100 text-green-800'
                                         : 'bg-red-100 text-red-800'
                                         }`}>
-                                        {shopDetail?.active === true ? 'Đang hoạt động' : 'Đã tạm dừng'}
+                                        {shopDetail?.shopActive === true ? 'Đang hoạt động' : 'Đã tạm dừng'}
                                     </span>
                                 </div>
                             </div>

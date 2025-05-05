@@ -87,8 +87,10 @@ public class CartItemService {
         User user = userService.getUserToken(authorizationHeader);
         Product product = productService.getProductById(productId);
         PromotionProduct promotionValue = null;
-        if (user.getShop().getId() == productService.getProductById(productId).getShop().getId()) {
-            throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
+        if (user.getShop() !=null) {
+            if (user.getShop().getId() == product.getShop().getId()) {
+                throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
+            }
         }
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng không hợp lệ");
@@ -142,9 +144,12 @@ public class CartItemService {
         if (quantity > product.getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
-        if (user.getShop() != null && user.getShop().getId() == product.getShop().getId()) {
-            throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
+        if (user.getShop() !=null) {
+            if (user.getShop().getId() == product.getShop().getId()) {
+                throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
+            }
         }
+      
         CartItem cartItem = findProductCodeByUser(productCode, user.getId());
         if (cartItem != null) {
             cartItem.setQuantity(cartItem.getQuantity() + quantity);

@@ -236,10 +236,10 @@ const Products = () => {
                     <tr key={item.id} className="hover:bg-blue-50 transition-colors duration-150">
            
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.shopName}</div>
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{item?.shopName}</div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-[120px] md:max-w-[180px] lg:max-w-none">{item?.productName}</div>
+                      <td className="px-4 sm:px-6 py-3">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 break-words max-w-[200px]">{item?.productName}</div>
                       </td>
                    
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">
@@ -248,7 +248,7 @@ const Products = () => {
                             ? 'bg-red-100 text-red-800'
                             : 'bg-green-100 text-green-800'
                         }`}>
-                          {item?.status ? "Đã khóa" : "Không khóa"}
+                          {item?.status ? "Đã khóa" : "Đang hoạt động"}
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 whitespace-nowrap hidden md:table-cell">

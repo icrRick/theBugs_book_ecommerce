@@ -126,23 +126,23 @@ const VoucherCard = ({ item, onDelete, onViewDetail }) => {
                 }
               </div>
             </div>
-            <div className="mt-2 h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
-              <div 
-                className={`h-full rounded-full transition-all duration-700 ease-in-out transform ${
-                  item?.quantity > 10 
-                    ? 'bg-gradient-to-r from-green-400 via-emerald-500 to-teal-400 w-full scale-x-100' 
-                    : item?.quantity > 0 
-                      ? 'bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-400 w-1/3 scale-x-75' 
-                      : 'bg-gradient-to-r from-red-400 via-rose-500 to-pink-400 w-0 scale-x-0'
-                }`}
-                style={{
-                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transformOrigin: 'left'
-                }}
-              >
-                <div className="w-full h-full relative">
-                  <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0)_25%,rgba(255,255,255,0.4)_50%,rgba(255,255,255,0)_75%)] bg-[length:250%_100%] animate-[shine_2s_infinite_linear]"></div>
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,0.1),rgba(255,255,255,0))] animate-pulse"></div>
+            
+            {/* Thêm phần hiển thị số lượng voucher đã sử dụng */}
+            <div className="mt-2 flex items-center space-x-2">
+              <div className="relative flex items-center justify-center">
+                <div className="relative bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-full flex items-center justify-center shadow-sm shadow-purple-500/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">Đã sử dụng</span>
+                <div className="flex items-baseline space-x-1 mt-0.5">
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {item?.used_count || 0}
+                  </span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">lượt</span>
                 </div>
               </div>
             </div>
