@@ -43,19 +43,19 @@ const SellerReportShops = () => {
     } else {
       params.set("active", tab);
     }
-    navigate(`/account/report-shops?${params.toString()}`);
+    navigate(`/seller/report-shops?${params.toString()}`);
     fetchData(tab, 1);
   };
 
   const handleViewDetails = (report) => {
-    navigate(`/account/report-shop-detail/${report.id}`);
+    navigate(`/seller/report-shop/${report.id}`);
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     const params = new URLSearchParams(window.location.search);
     params.set("page", page);
-    navigate(`/account/report-shops?${params.toString()}`);
+    navigate(`/seller/report-shops?${params.toString()}`);
   };
 
   const getQueryParams = () => {
