@@ -59,7 +59,8 @@ public interface StatisticalProductJPA extends JpaRepository<Product, Integer> {
                 LEFT JOIN p.productGenres pg
                 LEFT JOIN pg.genre g
                 WHERE p.shop.id = :shopId
-                  AND (oi.id IS NULL OR oi.order.createdAt BETWEEN :startDate AND :endDate)
+                  AND oi.order.orderStatus.id = 6
+                  AND (oi.order.createdAt BETWEEN :startDate AND :endDate)
                 GROUP BY p.id, p.name
             """)
     List<Object[]> getProductSummaryByShopId(
