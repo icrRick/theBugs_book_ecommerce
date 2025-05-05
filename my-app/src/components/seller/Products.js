@@ -367,7 +367,7 @@ const Products = () => {
                                                                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg"></div>
                                                             </div>
                                                       </td>
-                                                      <td className="px-6 py-4 whitespace-nowrap">
+                                                      <td className="px-6 py-4 ">
                                                             <div className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
                                                                   {product.name}
                                                             </div>

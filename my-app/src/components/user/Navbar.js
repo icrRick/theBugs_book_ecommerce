@@ -24,7 +24,8 @@ const Navbar = () => {
     s_countCartItems().then(response => {
       setCartCount(response);
     });
-  }, []);
+  }, [cartCount]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

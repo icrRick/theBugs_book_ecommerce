@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { Link, useParams } from 'react-router-dom';
 import Loading from '../../utils/Loading';
 import { showErrorToast, showSuccessToast } from '../../utils/Toast';
 import { formatCurrency } from '../../utils/Format';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/free-mode';
+import 'swiper/css/navigation';
+import 'swiper/css/thumbs';
 
 const AdminProductDetail = () => {
     const [showApproveModal, setShowApproveModal] = useState(false);
@@ -11,6 +19,7 @@ const AdminProductDetail = () => {
     const [rejectReason, setRejectReason] = useState('');
     const [selectedRejectReasons, setSelectedRejectReasons] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [thumbsSwiper, setThumbsSwiper] = useState(null);
 
     const { productCode } = useParams();
 
@@ -99,7 +108,6 @@ const AdminProductDetail = () => {
     }, [productCode]);
 
     return (
-
         <div className="my-4 bg-white rounded-lg shadow-sm overflow-hidden max-w-full">
             {isLoading && <Loading />}
             <div className="bg-white shadow-sm border-b border-gray-200">
@@ -323,6 +331,83 @@ const AdminProductDetail = () => {
                     </div>
 
 
+                </div>
+
+                {/* Product Images Gallery */}
+                <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Hình ảnh sản phẩm ({productDetail?.images?.length || 0})
+                    </h3>
+                    
+                    {productDetail?.images && productDetail.images.length > 0 ? (
+                        <div className="product-images-gallery">
+                            <Swiper
+                                style={{
+                                    '--swiper-navigation-color': '#4F46E5',
+                                    '--swiper-pagination-color': '#4F46E5',
+                                }}
+                                spaceBetween={10}
+                                navigation={true}
+                                thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+                                modules={[FreeMode, Navigation, Thumbs]}
+                                className="mb-3 rounded-lg overflow-hidden shadow-sm"
+                            >
+                                {productDetail.images.map((image, index) => (
+                                    <SwiperSlide key={index}>
+                                        <div className="flex items-center justify-center h-80 bg-gray-50">
+                                            <img 
+                                                src={image?.name} 
+                                                alt={`Ảnh sản phẩm ${index + 1}`} 
+                                                className="max-h-full max-w-full object-contain"
+                                            />
+                                        </div>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                            <Swiper
+                                onSwiper={setThumbsSwiper}
+                                spaceBetween={8}
+                                slidesPerView={5}
+                                freeMode={true}
+                                watchSlidesProgress={true}
+                                modules={[FreeMode, Navigation, Thumbs]}
+                                className="thumbs-gallery"
+                                breakpoints={{
+                                    640: {
+                                        slidesPerView: 5,
+                                    },
+                                    768: {
+                                        slidesPerView: 6,
+                                    },
+                                    1024: {
+                                        slidesPerView: 8,
+                                    },
+                                }}
+                            >
+                                {productDetail.images.map((image, index) => (
+                                    <SwiperSlide key={index}>
+                                        <div className="cursor-pointer h-16 rounded-md overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors">
+                                            <img 
+                                                src={image?.name} 
+                                                alt={`Ảnh nhỏ ${index + 1}`} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center border border-dashed border-gray-300 rounded-lg">
+                            <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-gray-500 text-sm">Không có hình ảnh nào</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Product Description */}
