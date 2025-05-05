@@ -21,4 +21,6 @@ public interface UserJPA extends JpaRepository<User, Integer> {
         @Query("SELECT u FROM User u WHERE u.role.id = 3 AND u.active = true")
         List<User> findEmailAdmin();
 
+        @Query("SELECT u FROM User u  WHERE u.cccd = ?1")
+        Optional<User> findByIdCCCDExist(String cccd);
 }

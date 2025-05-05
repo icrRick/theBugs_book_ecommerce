@@ -71,8 +71,18 @@ public class RegisterSellerController {
     @PostMapping("/id-recognition")
     public ResponseEntity<ResponseData> idRecognition(
             @RequestParam List<MultipartFile> images) {
-        ResponseData responseData = g_RegisterSellerService.idRecognition(images);
-        return ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode())).body(responseData);
+                try{
+                    ResponseData responseData = g_RegisterSellerService.idRecognition(images);
+                    return ResponseEntity.status(HttpStatus.valueOf(responseData.getStatusCode())).body(responseData);
+                }catch(Exception e){
+                    ResponseData res = new ResponseData();
+                    res.setStatus(false);
+                    res.setMessage(e.getMessage());
+                    res.setData(null);
+
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+                }
+        
     }
 
     @PostMapping("/face-match")

@@ -511,11 +511,7 @@ const Home = () => {
                 >
                   <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
                     <div className="relative h-40 overflow-hidden">
-                      <img
-                        src={genre.urlImage || "/placeholder.svg"}
-                        alt={genre.name}
-                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                      />
+                      
                       <div
                         className={`absolute inset-0 bg-gradient-to-t ${genreColors[index % genreColors.length]} opacity-70 group-hover:opacity-80 transition-opacity duration-300`}
                       ></div>

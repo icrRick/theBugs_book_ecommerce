@@ -259,7 +259,7 @@ public class RegisterSellerService {
         }
     }
 
-    public ResponseData idRecognition(List<MultipartFile> images) {
+    public ResponseData idRecognition(List<MultipartFile> images) throws Exception {
         FPT_Id_DTO frontImage = idRecognitionImage(images.getFirst());
         FPT_Id_DTO backImage = idRecognitionImage(images.getLast());
         ColorUtil.print(ColorUtil.BLUE, "ERROR ID");
@@ -274,6 +274,11 @@ public class RegisterSellerService {
 
         frontImage.getData().get(0).setIssue_date(backImage.getData().get(0).getIssue_date());
         frontImage.getData().get(0).setIssue_loc(backImage.getData().get(0).getIssue_loc());
+
+        Optional<User> userCheck = g_UserJPA.findByIdCCCDExist(frontImage.getData().getFirst().getId());
+        if (userCheck.isPresent()) {
+            throw new Exception("Căn cước công dân đã tồn tại");
+        }
         // 10. Build response chung
         return new ResponseData(true, message.toString(), frontImage, 201);
     }
