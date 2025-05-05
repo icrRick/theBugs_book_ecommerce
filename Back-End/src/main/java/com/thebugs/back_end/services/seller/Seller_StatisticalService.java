@@ -59,7 +59,7 @@ public class Seller_StatisticalService {
       dto.setProductName((String) row[0]);
       dto.setProductCode((String) row[1]);
       dto.setGenre((String) row[2]);
-      dto.setSoldProduct(row[3] != null ? ((Number) row[3]).longValue()/2 : 0L);
+      dto.setSoldProduct(row[3] != null ? ((Number) row[3]).longValue() : 0L);
       dto.setWareHouseProduct(row[4] != null ? ((Number) row[4]).intValue() : 0);
       dto.setRevenue(row[5] != null ? ((Number) row[5]).doubleValue() : 0.0);
       dtoList.add(dto);

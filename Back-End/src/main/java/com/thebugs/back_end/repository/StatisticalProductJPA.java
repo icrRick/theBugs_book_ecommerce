@@ -51,9 +51,9 @@ public interface StatisticalProductJPA extends JpaRepository<Product, Integer> {
                     p.name,
                     p.product_code,
                     GROUP_CONCAT(DISTINCT g.name),
-                    COALESCE(SUM(oi.quantity), 0) as soldProduct,
+                    COALESCE(SUM(oi.quantity)/2, 0) as soldProduct,
                     p.quantity,
-                    COALESCE(SUM(oi.quantity * oi.price), 0)
+                    COALESCE(SUM(oi.quantity * oi.price)/2, 0)
                 FROM Product p
                 LEFT JOIN p.orderItems oi
                 LEFT JOIN p.productGenres pg
