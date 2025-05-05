@@ -124,6 +124,7 @@ const Reviews = () => {
         showErrorToast(error.response.data.message);
       })
       .finally(() => {
+        setReplyingTo(null);
         setLoading(false);
       });
   };

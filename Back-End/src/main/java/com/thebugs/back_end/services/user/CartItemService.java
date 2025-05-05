@@ -94,7 +94,7 @@ public class CartItemService {
             throw new IllegalArgumentException("Số lượng không hợp lệ");
         }
         if (product.getPromotionProducts() != null && !product.getPromotionProducts().isEmpty()) {
-            Date today = Format.formatDateS(new Date()); 
+            Date today = Format.formatDateS(new Date());
             System.out.println("Current date: " + today);
             PromotionProduct validPromotion = product.getPromotionProducts().stream()
                     .filter(promotion -> {
@@ -107,18 +107,19 @@ public class CartItemService {
                     .orElse(null);
 
             if (validPromotion != null) {
-                promotionValue =validPromotion;
+                promotionValue = validPromotion;
             } else {
                 promotionValue = null;
             }
         }
-        if (promotionValue != null && promotionValue.getPromotion().getPromotionValue() > 0 && quantity > promotionValue.getQuantity()) {
+        if (promotionValue != null && promotionValue.getPromotion().getPromotionValue() > 0
+                && quantity > promotionValue.getQuantity()) {
             throw new IllegalArgumentException("Số lượng không hợp lệ với mã giảm giá");
-        }else{
+        } else {
             if (quantity > product.getQuantity()) {
                 throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
             }
-        }    
+        }
         CartItem cartItem = findProductByUser(productId, user.getId());
         if (cartItem != null) {
             cartItem.setQuantity(quantity);
@@ -141,7 +142,7 @@ public class CartItemService {
         if (quantity > product.getQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá số lượng còn lại");
         }
-        if (user.getShop().getId() == product.getShop().getId()) {
+        if (user.getShop() != null && user.getShop().getId() == product.getShop().getId()) {
             throw new IllegalArgumentException("Sản phẩm này thuộc shop của bạn không thể thêm vào giỏ hàng");
         }
         CartItem cartItem = findProductCodeByUser(productCode, user.getId());

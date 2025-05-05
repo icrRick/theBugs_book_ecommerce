@@ -92,7 +92,7 @@ const ProductDetail = () => {
         // Map API data to frontend product structure
         const mappedProduct = {
           id: apiProduct.productId,
-          product_code: apiProduct.productCode,
+          product_code: apiProduct.product_code,
           name: apiProduct.productName,
           description: apiProduct.description || "Không có mô tả",
           fullDescription: apiProduct.description || "Không có mô tả",
@@ -330,6 +330,8 @@ const ProductDetail = () => {
   };
   useEffect(() => {
     if (product) {
+      console.log("Product");
+      console.log(product);
       fetchFavoriteStatus();
     }
   }, [product]);
