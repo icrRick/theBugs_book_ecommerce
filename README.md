@@ -47,15 +47,3 @@ Dự án mô phỏng một hệ thống thực tế với các tính năng như 
 - Quản lý danh mục sách
 - Xem báo cáo tổng quan
 
----
-
-## 🚀 Cách triển khai
-
-### 1. Backend
-
-- **Yêu cầu**: Java 11+, Maven, MySQL
-- **Cài đặt**:
-  ```bash
-  git clone https://github.com/icrRick/theBugs_book_ecommerce.git
-  cd theBugs_book_ecommerce/Back-End
-  mvn clean install
